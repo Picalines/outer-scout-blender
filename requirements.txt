@@ -1,0 +1,1 @@
+blender-stubs==3.12.27
