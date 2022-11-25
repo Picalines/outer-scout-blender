@@ -136,9 +136,16 @@ class OWSceneImporter(Operator, ImportHelper):
         def init_depth_clip_node(node: bpy.types.CompositorNodeMovieClip):
             depth_video_path = str(Path(self.filepath).parent.joinpath("depth.mp4"))
             node.clip = bpy.data.movieclips.load(depth_video_path)
+            node.clip.name = 'OW_depth'
 
         def init_scale_node(node: bpy.types.CompositorNodeScale):
             node.space = "RENDER_SIZE"
+
+        def init_erode_node(node: bpy.types.CompositorNodeDilateErode):
+            node.distance = -1
+
+        def init_blur_node(node: bpy.types.CompositorNodeBlur):
+            node.size_x = node.size_y = 2
 
         def init_math_node(operation: str):
             def init(node: bpy.types.CompositorNodeMath):
@@ -185,14 +192,18 @@ class OWSceneImporter(Operator, ImportHelper):
                             ),
                             right=1,
                         ),
-                        right=NodeBuilder(bpy.types.CompositorNodeSepRGBA,
-                            output=0,
-                            Image=NodeBuilder(bpy.types.CompositorNodeBlur,
-                                Image=NodeBuilder(bpy.types.CompositorNodeScale,
-                                    init=init_scale_node,
-                                    Image=NodeBuilder(bpy.types.CompositorNodeMovieClip,
-                                        init=init_depth_clip_node,
-                                        output="Image",
+                        right=NodeBuilder(bpy.types.CompositorNodeDilateErode,
+                            init=init_erode_node,
+                            Mask=NodeBuilder(bpy.types.CompositorNodeSepRGBA,
+                                output="R",
+                                Image=NodeBuilder(bpy.types.CompositorNodeBlur,
+                                    init=init_blur_node,
+                                    Image=NodeBuilder(bpy.types.CompositorNodeScale,
+                                        init=init_scale_node,
+                                        Image=NodeBuilder(bpy.types.CompositorNodeMovieClip,
+                                            init=init_depth_clip_node,
+                                            output="Image",
+                                        ),
                                     ),
                                 ),
                             ),
