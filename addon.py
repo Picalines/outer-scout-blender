@@ -1,6 +1,8 @@
-import os
 from pathlib import Path
 from math import radians
+from typing import Iterable
+from itertools import chain as iter_chain
+from re import compile as compile_regex, sub as regex_sub
 
 import bpy
 from bpy_extras.io_utils import ImportHelper
@@ -9,7 +11,7 @@ from bpy.types import Operator, Object, Camera, Scene
 from mathutils import Vector, Quaternion, Euler
 
 from .node_utils import arrange_nodes, NodeBuilder, create_node
-from .ow_scene_data import OWSceneData, load_ow_scene_data
+from .ow_scene_data import OWSceneData, TransformData as OWTransformData, load_ow_scene_data
 
 
 class OWSceneImporter(Operator, ImportHelper):
@@ -24,10 +26,10 @@ class OWSceneImporter(Operator, ImportHelper):
         maxlen= 255
     )
 
-    ow_bodies_folder : StringProperty(
-        name = "Outer Wilds bodies (planets) folder",
-        description = "test",
-        default = "D:\\Projects\\Blender\\_owBodies\\",
+    ow_meshes_folder : StringProperty(
+        name = "Outer Wilds extracted (meshes) folder",
+        description = "Use AssetStudio to do that",
+        default = "D:\\Projects\\Blender\\OuterWilds\\extracted\\Mesh\\",
         subtype = "DIR_PATH",
     )
 
@@ -36,53 +38,36 @@ class OWSceneImporter(Operator, ImportHelper):
 
         ow_data = load_ow_scene_data(self.filepath)
 
-        if ow_data["body"]["name"] in bpy.data.objects:
-            self.report({"ERROR"}, "create new project before importing OW scene!")
-            return {"CANCELED"}
-
-        # create OW body
-        ow_body = self.load_ow_body(ow_data)
-        if ow_body is None:
-            self.report({"ERROR"}, f"couldn't load .blend file of '{ow_data['body']['name']}'")
-            return {"CANCELED"}
-
-        ow_body.rotation_mode = 'QUATERNION'
-        ow_body.rotation_quaternion = Quaternion(ow_data["body"]["transform"]["rotation"]) @ Quaternion((0, 1, 0), radians(90))
-
         # create body pivot
         bpy.ops.object.empty_add()
-        ow_body_pivot = bpy.context.active_object
-        ow_body_pivot.name = ow_data["body"]["name"] + '_Pivot'
-        ow_body_pivot.location = Vector(ow_data["player"]["transform"]["position"]) - Vector(ow_data["body"]["transform"]["position"])
-        ow_body_pivot.rotation_mode = 'QUATERNION'
-        ow_body_pivot.rotation_quaternion = Quaternion(ow_data["player"]["transform"]["rotation"])
+        ow_player_pivot = bpy.context.active_object
+        ow_player_pivot.name = 'OW_PlayerPivot'
+        self.apply_transform_data(ow_player_pivot, ow_data["player"]["transform"])
 
         # create player camera pivot
         bpy.ops.object.empty_add()
         player_camera_pivot = bpy.context.active_object
         player_camera_pivot.name = 'PlayerCamera_Pivot'
-        player_camera_pivot.location = Vector(ow_data["player_camera"]["transform"]["position"]) - Vector(ow_data["body"]["transform"]["position"])
-        player_camera_pivot.rotation_mode = 'QUATERNION'
-        player_camera_pivot.rotation_quaternion = Quaternion(ow_data["player_camera"]["transform"]["rotation"])
+        self.apply_transform_data(player_camera_pivot, ow_data["player_camera"]["transform"])
 
         # create camera
         camera = self.create_camera(current_scene, ow_data)
 
+        # import sector_objects
+        sector_objects = self.load_sector_objects(ow_data)
+
         # move scene to origin
-        self.set_parent([ow_body, camera, player_camera_pivot], ow_body_pivot, keep_transform=True)
-        ow_body_pivot.location = (0, 0, 0)
+        self.set_parent(iter_chain([camera, player_camera_pivot], sector_objects), ow_player_pivot, keep_transform=True)
+        ow_player_pivot.location = (0, 0, 0)
 
         # make X - right, Y - forward, Z - up
         # (like in new General project)
-        ow_body_pivot.rotation_mode = 'XYZ'
-        ow_body_pivot.rotation_euler = Euler((radians(90), 0, radians(90)), 'XYZ')
-
-        # make ow_body not selectable
-        ow_body.hide_select = True
+        ow_player_pivot.rotation_mode = 'XYZ'
+        ow_player_pivot.rotation_euler = Euler((radians(90), 0, radians(90)), 'XYZ')
 
         # scene properties
         current_scene.frame_end = ow_data["frames"]
-        current_scene.render.fps = 60
+        current_scene.render.fps = ow_data["framerate"]
         current_scene.render.film_transparent = True
         bpy.context.view_layer.use_pass_z = True
 
@@ -115,11 +100,47 @@ class OWSceneImporter(Operator, ImportHelper):
         render_settings.resolution_x, render_settings.resolution_y = camera_background.clip.size
 
         camera.name = "OW Camera"
-        camera.location = Vector(ow_data["background_camera"]["transform"]["position"]) - Vector(ow_data["body"]["transform"]["position"])
-        camera.rotation_mode = 'QUATERNION'
-        camera.rotation_quaternion = Quaternion(ow_data["background_camera"]["transform"]["rotation"]) @ Quaternion((0, 1, 0), -radians(90))
+        self.apply_transform_data(camera, ow_data["background_camera"]["transform"])
+        camera.rotation_quaternion @= Quaternion((0, 1, 0), -radians(90))
 
         return camera
+
+    def apply_transform_data(self, object: Object, transform_data: OWTransformData):
+        object.location = Vector(transform_data["position"])
+        object.scale = Vector(transform_data["scale"])
+        object.rotation_mode = 'QUATERNION'
+        object.rotation_quaternion = Quaternion(transform_data["rotation"])
+
+    def load_sector_objects(self, ow_data: OWSceneData) -> list[Object]:
+        loaded_sector_objects: list[Object] = []
+
+        trailing_number_regex = compile_regex("\\s+\(?\d+\)?$")
+
+        for sector_object in ow_data["sector_objects"]:
+            sector_object_name = sector_object["path"].split("/")[-1]
+            sector_object_name = regex_sub(trailing_number_regex, '', sector_object_name)
+
+            obj_file_path = Path(self.ow_meshes_folder).joinpath(sector_object_name + ".obj")
+
+            if (not obj_file_path.exists()):
+                self.report({"INFO"}, "Sector object not found: " + str(obj_file_path))
+                continue
+
+            import_status = bpy.ops.wm.obj_import(filepath=str(obj_file_path))
+            if import_status != {"FINISHED"}:
+                self.report({"INFO"}, "Failed to import sector obj file " + str(obj_file_path))
+                continue
+
+            loaded_sector_object = bpy.data.objects[bpy.context.active_object.name]
+
+            loaded_sector_object.name = sector_object_name
+            loaded_sector_object.hide_render = True
+            self.apply_transform_data(loaded_sector_object, sector_object["transform"])
+            loaded_sector_object.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
+
+            loaded_sector_objects.append(loaded_sector_object)
+
+        return loaded_sector_objects
 
     def set_compositor_nodes(self, scene: Scene, ow_data: OWSceneData):
         scene.use_nodes = True
@@ -249,25 +270,7 @@ class OWSceneImporter(Operator, ImportHelper):
 
         arrange_nodes(node_tree)
 
-    def load_ow_body(self, ow_data: OWSceneData) -> Object | None:
-        ow_body_name = ow_data["body"]["name"]
-
-        ow_body_project_path = os.path.join(self.ow_bodies_folder, ow_body_name + ".blend")
-        ow_body_project_import_status = bpy.ops.wm.link(
-            filepath=os.path.join(ow_body_project_path, "Collection", "Collection"),
-            filename="Collection",
-            directory=os.path.join(ow_body_project_path, "Collection"))
-
-        if ow_body_project_import_status != {"FINISHED"}:
-            return None
-
-        ow_body_link = bpy.context.active_object
-        ow_body_link.name = ow_body_name
-        ow_body_link.hide_render = True
-
-        return ow_body_link
-
-    def set_parent(self, children: list[Object], parent: Object, *, keep_transform = True):
+    def set_parent(self, children: Iterable[Object], parent: Object, *, keep_transform = True):
         for child in children:
             child.select_set(state=True)
 
