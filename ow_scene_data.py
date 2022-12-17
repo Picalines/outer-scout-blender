@@ -1,6 +1,15 @@
 from typing import TypedDict
-import itertools
 import json
+
+
+class RecorderSettingsData(TypedDict):
+    outputDir: str
+    framerate: int
+    width: int
+    height: int
+    hdri_face_size: int
+    hide_player_model: bool
+    hdri_in_feet: bool
 
 
 class TransformData(TypedDict):
@@ -10,7 +19,7 @@ class TransformData(TypedDict):
 
 
 class GameObjectData(TypedDict):
-    path: str
+    name: str
     transform: TransformData
 
 
@@ -26,11 +35,10 @@ class CameraData(TypedDict):
 
 
 class OWSceneData(TypedDict):
-    frames: int
-    framerate: int
+    recorded_frames: int
+    recorder_settings: RecorderSettingsData
     player: PlayerData
     ground_body: GameObjectData
-    sector_objects: list[GameObjectData]
     player_camera: CameraData
     background_camera: CameraData
     depth_camera: CameraData
@@ -54,7 +62,7 @@ def load_ow_scene_data(path: str) -> OWSceneData:
             rotation=unity_quaternion_to_blender(unity_transform["rotation"]),
             scale=unity_transform["scale"])
 
-    for data in itertools.chain(scene_data.values(), scene_data["sector_objects"]):
+    for data in scene_data.values():
         if isinstance(data, dict) and "transform" in data:
             data["transform"] = unity_transform_to_blender(data["transform"])
 

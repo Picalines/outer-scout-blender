@@ -18,11 +18,13 @@ def menu_func_import(self, _):
 
 def register():
     bpy.utils.register_class(addon.OWSceneImporter)
+    bpy.utils.register_class(addon.OWSceneImporterPreferences)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
 def unregister():
     bpy.utils.unregister_class(addon.OWSceneImporter)
+    bpy.utils.unregister_class(addon.OWSceneImporterPreferences)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 
