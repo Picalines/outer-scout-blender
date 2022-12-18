@@ -29,7 +29,9 @@ class NodeBuilder(Generic[TNode]):
         self.inputs: dict[int | str, Any | NodeBuilder] = {}
         for key, value in inputs.items():
             if key.startswith("_"):
-                key = int(key[1:])
+                key = key[1:]
+            if key.isdecimal():
+                key = int(key)
             self.inputs[key] = value
 
     def connect_output(self, output: int | str):
@@ -52,13 +54,15 @@ class NodeBuilder(Generic[TNode]):
                 node_tree.links.new(value.builder.built_node.outputs[value.output], self.built_node.inputs[input_key])
                 continue
 
-            if not isinstance(value, NodeBuilder):
-                self.built_node.inputs[input_key].default_value = value
+            if isinstance(value, NodeBuilder):
+                connected_node: Node = value.build(node_tree)
+                node_tree.links.new(connected_node.outputs[value.output], self.built_node.inputs[input_key])
                 continue
 
-            value: NodeBuilder
-            connected_node: Node = value.build(node_tree)
-            node_tree.links.new(connected_node.outputs[value.output], self.built_node.inputs[input_key])
+            if isinstance(input_key, int) or input_key in self.built_node.inputs.keys():
+                self.built_node.inputs[input_key].default_value = value
+            else:
+                setattr(self.built_node, input_key, value)
 
         return self.built_node
 
