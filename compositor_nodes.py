@@ -3,7 +3,7 @@ from pathlib import Path
 import bpy
 from bpy.types import Scene
 
-from .ow_scene_data import OWSceneData
+from .ow_json_data import OWSceneData
 from .node_utils import NodeBuilder, create_node, arrange_nodes
 
 

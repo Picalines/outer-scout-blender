@@ -1,17 +1,19 @@
 import os
 import subprocess
-from mathutils import Vector, Quaternion
+from mathutils import Quaternion
 from math import radians
 from pathlib import Path
+from glob import glob
 
 import bpy
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator, Object
 
-from .object_utils import create_empty, get_child_by_path
+from .ui_utils import show_message_popup
+from .object_utils import create_empty, get_child_by_path, iter_parents
 from .preferences import OWSceneImporterPreferences
-from .ow_scene_data import OWSceneData, OWMeshesData, load_ow_json_data, apply_transform_data
+from .ow_json_data import OWSceneData, OWMeshesData, load_ow_json_data, apply_transform_data
 
 
 def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferences, ow_data: OWSceneData) -> Object | None:
@@ -38,14 +40,15 @@ def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferen
     ground_body_link.hide_render = True
 
     apply_transform_data(ground_body_link, ow_data['ground_body']['transform'])
-    ground_body_link.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
 
     return ground_body_link
 
 
 def generate_ground_body_file_in_new_instance(owscene_filepath: str):
-    python_expr = f"import sys, bpy; bpy.ops.outer_wilds_recorder.generate_ground_body_background(owscene_filepath=sys.argv[-1])"
+    python_expr = f"import sys, bpy; bpy.ops.outer_wilds_recorder.generate_ground_body_background(filepath=sys.argv[-1])"
     cmd = f'"{bpy.app.binary_path}" -noaudio --background --log-level -1 --python-expr "{python_expr}" -- {owscene_filepath}'
+
+    show_message_popup(bpy.context, 'Generating .blen of ground body. This may take a while...', icon='TIME')
 
     process = subprocess.run(cmd, shell=False)
     return process.returncode
@@ -68,22 +71,34 @@ class OWGroundBodyGenerator(Operator, ImportHelper):
         ground_body_name = ow_data['ground_body']['name']
 
         self.log('INFO', 'loading meshes data json')
-        ow_meshes_data = load_ow_json_data(str(Path(self.filepath).parent.joinpath('ground_body_meshes.json')), OWMeshesData)
+        try:
+            ow_meshes_path = glob(f'{ground_body_name}_meshes_*.json', root_dir=preferences.ow_bodies_folder, recursive=False)[0]
+            ow_meshes_path = str(Path(preferences.ow_bodies_folder).joinpath(ow_meshes_path))
+        except IndexError:
+            self.log('ERROR', f'meshes list for {ground_body_name} not found in {preferences.ow_bodies_folder}')
+            return {'CANCELED'}
+
+        ow_meshes_data = load_ow_json_data(ow_meshes_path, OWMeshesData)
 
         self.log('INFO', 'importing fbx')
-        fbx_import_status = bpy.ops.import_scene.fbx(filepath=str(Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.fbx')))
+        ground_body_fbx_path = str(Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.fbx'))
+        fbx_import_status = bpy.ops.import_scene.fbx(filepath=ground_body_fbx_path)
         if fbx_import_status != {'FINISHED'}:
-            return
+            self.log('ERROR', f'failed to import ground body fbx: {ground_body_fbx_path}')
+            return {'CANCELED'}
 
         extracted_ground_body_obj = bpy.data.objects[ground_body_name]
         extracted_ground_body_obj.name += '_extracted'
 
-        ground_body_obj = create_empty()
-        ground_body_obj.name = ground_body_name
-        ground_body_obj.location = (0, 0, 0)
+        bpy.ops.object.select_all(action='DESELECT')
+        for parent in iter_parents(extracted_ground_body_obj):
+            parent.select_set(state=True)
+        bpy.ops.object.delete()
 
         plain_meshes_count = len(ow_meshes_data['plain_meshes'])
         streamed_meshes_count = len(ow_meshes_data['streamed_meshes'])
+
+        ignored_object_name_parts: list[str] = preferences.ignored_objects.split(',')
 
         for i, plain_mesh_data in enumerate(ow_meshes_data['plain_meshes'], start=1):
             self.log('INFO', f'placing plain mesh [{i}/{plain_meshes_count}] from {plain_mesh_data["game_object_path"]}')
@@ -91,8 +106,8 @@ class OWGroundBodyGenerator(Operator, ImportHelper):
             mesh_path = plain_mesh_data['game_object_path'].split('/')[1:]
 
             skip_object = False
-            for banned_object in ('shocklayer', 'fogsphere', 'atmosphere', 'proxy'):
-                if banned_object in mesh_path[-1].lower():
+            for banned_object in ignored_object_name_parts:
+                if banned_object.lower() in mesh_path[-1].lower():
                     skip_object = True
                     break
 
@@ -105,7 +120,7 @@ class OWGroundBodyGenerator(Operator, ImportHelper):
                 self.log('WARNING', f'missing plain mesh child at {plain_mesh_data["game_object_path"]}')
                 continue
 
-            extracted_child.parent = ground_body_obj
+            extracted_child.parent = None
             apply_transform_data(extracted_child, plain_mesh_data['transform'])
             extracted_child.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
 
@@ -137,11 +152,24 @@ class OWGroundBodyGenerator(Operator, ImportHelper):
             else:
                 loaded_mesh = imported_objs[obj_path].copy()
                 imported_objs[obj_path].users_collection[0].objects.link(loaded_mesh)
-                loaded_mesh.parent = ground_body_obj
 
-            loaded_mesh.parent = ground_body_obj
+            loaded_mesh.parent = None
             apply_transform_data(loaded_mesh, streamed_mesh_data['transform'])
             loaded_mesh.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
+
+        self.log('INFO', 'creating body pivot object')
+        ground_body_obj = create_empty()
+        ground_body_obj.name = ground_body_name
+        apply_transform_data(ground_body_obj, ow_meshes_data['body']['transform'])
+
+        self.log('INFO', 'parenting objects to pivot')
+        bpy.ops.object.select_all(action='SELECT')
+        bpy.context.view_layer.objects.active = ground_body_obj
+        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+
+        self.log('INFO', 'resetting pivot transform')
+        ground_body_obj.location = (0, 0, 0)
+        ground_body_obj.rotation_quaternion = Quaternion()
 
         return {'FINISHED'}
 
@@ -165,9 +193,8 @@ class OWGroundBodyGenerator_Background(Operator, ImportHelper):
 
         bpy.ops.object.select_all(action='SELECT')
         bpy.ops.object.delete()
-        context.scene.collection.children.unlink(bpy.data.collections['Collection'])
 
-        bpy.ops.outer_wilds_recorder.generate_ground_body(owscene_filepath=self.filepath)
+        bpy.ops.outer_wilds_recorder.generate_ground_body(filepath=self.filepath)
 
         bpy.context.view_layer.update()
         bpy.ops.wm.save_as_mainfile(filepath=str(Path(preferences.ow_bodies_folder).joinpath(ow_data['ground_body']['name'] + '.blend')))

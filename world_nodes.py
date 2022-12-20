@@ -5,7 +5,7 @@ from pathlib import Path
 import bpy
 from bpy.types import Scene
 
-from .ow_scene_data import OWSceneData
+from .ow_json_data import OWSceneData
 from .node_utils import NodeBuilder, arrange_nodes
 
 def set_world_nodes(owscene_filepath: str, scene: Scene, ow_data: OWSceneData):

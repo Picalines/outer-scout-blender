@@ -1,17 +1,15 @@
 from math import radians
 
-import bpy
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
 from mathutils import Euler
 
 from .preferences import OWSceneImporterPreferences
-from .ui_utils import show_message_box
 from .object_utils import set_parent, create_empty
 from .ow_camera import create_camera
 from .ow_ground_body import load_ground_body
-from .ow_scene_data import OWSceneData, load_ow_json_data, apply_transform_data, apply_scene_settings
+from .ow_json_data import OWSceneData, load_ow_json_data, apply_transform_data, apply_scene_settings
 from .compositor_nodes import set_compositor_nodes
 from .world_nodes import set_world_nodes
 
@@ -32,7 +30,7 @@ class OWSceneImporter(Operator, ImportHelper):
         preferences: OWSceneImporterPreferences = context.preferences.addons[__package__].preferences
 
         if not (preferences.ow_assets_folder and preferences.ow_bodies_folder):
-            show_message_box(bpy.context, f"{self.bl_idname}'s preferences are empty")
+            self.report({'ERROR'}, f"{self.bl_idname}'s preferences are empty")
             return {'CANCELLED'}
 
         ow_data = load_ow_json_data(self.filepath, OWSceneData)
@@ -52,11 +50,8 @@ class OWSceneImporter(Operator, ImportHelper):
 
         # import ground_body
         ow_ground_body = load_ground_body(self.filepath, preferences, ow_data)
-        if ow_ground_body:
-            pass
-            # ow_player_pivot.users_collection[0].objects.link(ow_ground_body)
-        else:
-            show_message_box(context, f"ground body is not loaded ({ow_data['ground_body']['name']}.blend not found)")
+        if not ow_ground_body:
+            self.report({'ERROR'}, f"Couldn't load {ow_data['ground_body']['name']}.blend from {preferences.ow_bodies_folder}")
 
         # move scene to origin
         set_parent(context, [camera, player_camera_pivot, ow_ground_body], ow_player_pivot, keep_transform=True)

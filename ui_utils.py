@@ -1,6 +1,6 @@
 from bpy.types import Context
 
-def show_message_box(context: Context, message: str, title = 'Message Box', icon = 'INFO'):
+def show_message_popup(context: Context, message: str, *, title = 'Message Box', icon = 'INFO'):
 
     def draw(self, _):
         self.layout.label(text=message)

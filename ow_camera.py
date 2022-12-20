@@ -5,7 +5,7 @@ from pathlib import Path
 import bpy
 from bpy.types import Scene, Camera
 
-from .ow_scene_data import OWSceneData, apply_transform_data
+from .ow_json_data import OWSceneData, apply_transform_data
 
 
 def create_camera(owscene_filepath: str, scene: Scene, ow_data: OWSceneData):

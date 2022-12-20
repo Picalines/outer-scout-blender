@@ -52,6 +52,11 @@ class OWSceneData(TypedDict):
     depth_camera: CameraData
 
 
+class MeshesBodyData(TypedDict):
+    game_object_path: str
+    transform: TransformData
+
+
 class PlainMeshData(TypedDict):
     transform: TransformData
     game_object_path: str
@@ -61,7 +66,9 @@ class StreamedMeshData(TypedDict):
     transform: TransformData
     asset_path: str
 
+
 class OWMeshesData(TypedDict):
+    body: MeshesBodyData
     plain_meshes: list[PlainMeshData]
     streamed_meshes: list[StreamedMeshData]
 
