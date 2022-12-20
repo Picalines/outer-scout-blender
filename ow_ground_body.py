@@ -1,31 +1,176 @@
 import os
-from mathutils import Quaternion
+import subprocess
+from mathutils import Vector, Quaternion
 from math import radians
+from pathlib import Path
 
 import bpy
-from bpy.types import Object
+from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty
+from bpy.types import Operator, Object
 
+from .object_utils import create_empty, get_child_by_path
 from .preferences import OWSceneImporterPreferences
-from .ow_scene_data import OWSceneData, apply_transform_data
+from .ow_scene_data import OWSceneData, OWMeshesData, load_ow_json_data, apply_transform_data
 
 
-def load_ground_body(ow_data: OWSceneData, preferences: OWSceneImporterPreferences) -> Object | None:
-    ow_body_name = ow_data['ground_body']['name']
+def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferences, ow_data: OWSceneData) -> Object | None:
+    ground_body_name = ow_data['ground_body']['name']
 
-    ow_body_project_path = os.path.join(preferences.ow_bodies_folder, ow_body_name + '.blend')
-    ow_body_project_import_status = bpy.ops.wm.link(
-        filepath=os.path.join(ow_body_project_path, 'Collection', 'Collection'),
+    ground_body_project_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.blend')
+
+    if not ground_body_project_path.exists():
+        return_code = generate_ground_body_file_in_new_instance(owscene_filepath)
+        if not (return_code == 0 and ground_body_project_path.exists()):
+            return None
+
+    ground_body_project_path = str(ground_body_project_path)
+    ground_body_project_import_status = bpy.ops.wm.link(
+        filepath=os.path.join(ground_body_project_path, 'Collection', 'Collection'),
         filename='Collection',
-        directory=os.path.join(ow_body_project_path, 'Collection'))
+        directory=os.path.join(ground_body_project_path, 'Collection'))
 
-    if ow_body_project_import_status != {'FINISHED'}:
+    if ground_body_project_import_status != {'FINISHED'}:
         return None
 
-    ow_body_link = bpy.context.active_object
-    ow_body_link.name = ow_body_name
-    ow_body_link.hide_render = True
+    ground_body_link = bpy.context.view_layer.objects.active
+    ground_body_link.name = ground_body_name
+    ground_body_link.hide_render = True
 
-    apply_transform_data(ow_body_link, ow_data['ground_body']['transform'])
-    ow_body_link.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
+    apply_transform_data(ground_body_link, ow_data['ground_body']['transform'])
+    ground_body_link.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
 
-    return ow_body_link
+    return ground_body_link
+
+
+def generate_ground_body_file_in_new_instance(owscene_filepath: str):
+    python_expr = f"import sys, bpy; bpy.ops.outer_wilds_recorder.generate_ground_body_background(owscene_filepath=sys.argv[-1])"
+    cmd = f'"{bpy.app.binary_path}" -noaudio --background --log-level -1 --python-expr "{python_expr}" -- {owscene_filepath}'
+
+    process = subprocess.run(cmd, shell=False)
+    return process.returncode
+
+
+class OWGroundBodyGenerator(Operator, ImportHelper):
+    bl_idname = 'outer_wilds_recorder.generate_ground_body'
+    bl_label = 'Generate .blend from extracted .fbx ground body with higher resolution'
+
+    filter_glob: StringProperty(
+        default='*.owscene',
+        options={'HIDDEN'}
+    )
+
+    def execute(self, context):
+        preferences: OWSceneImporterPreferences = context.preferences.addons[__package__].preferences
+
+        self.log('INFO', 'loading scene data json')
+        ow_data = load_ow_json_data(self.filepath, OWSceneData)
+        ground_body_name = ow_data['ground_body']['name']
+
+        self.log('INFO', 'loading meshes data json')
+        ow_meshes_data = load_ow_json_data(str(Path(self.filepath).parent.joinpath('ground_body_meshes.json')), OWMeshesData)
+
+        self.log('INFO', 'importing fbx')
+        fbx_import_status = bpy.ops.import_scene.fbx(filepath=str(Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.fbx')))
+        if fbx_import_status != {'FINISHED'}:
+            return
+
+        extracted_ground_body_obj = bpy.data.objects[ground_body_name]
+        extracted_ground_body_obj.name += '_extracted'
+
+        ground_body_obj = create_empty()
+        ground_body_obj.name = ground_body_name
+        ground_body_obj.location = (0, 0, 0)
+
+        plain_meshes_count = len(ow_meshes_data['plain_meshes'])
+        streamed_meshes_count = len(ow_meshes_data['streamed_meshes'])
+
+        for i, plain_mesh_data in enumerate(ow_meshes_data['plain_meshes'], start=1):
+            self.log('INFO', f'placing plain mesh [{i}/{plain_meshes_count}] from {plain_mesh_data["game_object_path"]}')
+
+            mesh_path = plain_mesh_data['game_object_path'].split('/')[1:]
+
+            skip_object = False
+            for banned_object in ('shocklayer', 'fogsphere', 'atmosphere', 'proxy'):
+                if banned_object in mesh_path[-1].lower():
+                    skip_object = True
+                    break
+
+            if skip_object:
+                self.log('INFO', f'skipped plain mesh at {plain_mesh_data["game_object_path"]}')
+                continue
+
+            extracted_child = get_child_by_path(extracted_ground_body_obj, mesh_path, mask_duplicates=True)
+            if extracted_child is None:
+                self.log('WARNING', f'missing plain mesh child at {plain_mesh_data["game_object_path"]}')
+                continue
+
+            extracted_child.parent = ground_body_obj
+            apply_transform_data(extracted_child, plain_mesh_data['transform'])
+            extracted_child.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
+
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = extracted_ground_body_obj
+        bpy.ops.object.select_grouped(extend=True, type='CHILDREN_RECURSIVE')
+        bpy.ops.object.delete()
+
+        imported_objs: dict[str, Object] = {}
+
+        for i, streamed_mesh_data in enumerate(ow_meshes_data['streamed_meshes'], start=1):
+            self.log('INFO', f'loading streamed mesh [{i}/{streamed_meshes_count}]')
+
+            obj_path = Path(preferences.ow_assets_folder).joinpath(streamed_mesh_data['asset_path'].removesuffix('.asset') + '.obj')
+            if not obj_path.exists():
+                self.log('WARNING', f'missing streamed mesh obj file at {obj_path}')
+                continue
+
+            obj_path = str(obj_path)
+
+            if obj_path not in imported_objs:
+                obj_import_status = bpy.ops.wm.obj_import(filepath=obj_path)
+                if obj_import_status != {'FINISHED'}:
+                    self.log('ERROR', f'failed to import streamed mesh obj at {obj_path}')
+                    continue
+
+                loaded_mesh = bpy.data.objects[bpy.context.view_layer.objects.active.name]
+                imported_objs[obj_path] = loaded_mesh
+            else:
+                loaded_mesh = imported_objs[obj_path].copy()
+                imported_objs[obj_path].users_collection[0].objects.link(loaded_mesh)
+                loaded_mesh.parent = ground_body_obj
+
+            loaded_mesh.parent = ground_body_obj
+            apply_transform_data(loaded_mesh, streamed_mesh_data['transform'])
+            loaded_mesh.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
+
+        return {'FINISHED'}
+
+    def log(self, type: str, message: str):
+        print(f'[{type}] {message}')
+        self.report({type}, message)
+
+
+class OWGroundBodyGenerator_Background(Operator, ImportHelper):
+    bl_idname = 'outer_wilds_recorder.generate_ground_body_background'
+    bl_label = 'Call outer_wilds_recorder.generate_ground_body in background environment'
+
+    filter_glob: StringProperty(
+        default='*.owscene',
+        options={'HIDDEN'}
+    )
+
+    def execute(self, context):
+        preferences: OWSceneImporterPreferences = context.preferences.addons[__package__].preferences
+        ow_data = load_ow_json_data(self.filepath, OWSceneData)
+
+        bpy.ops.object.select_all(action='SELECT')
+        bpy.ops.object.delete()
+        context.scene.collection.children.unlink(bpy.data.collections['Collection'])
+
+        bpy.ops.outer_wilds_recorder.generate_ground_body(owscene_filepath=self.filepath)
+
+        bpy.context.view_layer.update()
+        bpy.ops.wm.save_as_mainfile(filepath=str(Path(preferences.ow_bodies_folder).joinpath(ow_data['ground_body']['name'] + '.blend')))
+
+        bpy.ops.wm.quit_blender()
+        return {'FINISHED'}

@@ -7,13 +7,13 @@ class OWSceneImporterPreferences(AddonPreferences):
 
     ow_bodies_folder : StringProperty(
         name = "Outer Wilds exported bodies folder",
-        description = "Use AssetStudio to get that",
+        description = "Folder that contains .fbx files of OW bodies (use AssetStudio to get them).\nAddon will create .blend files there which are bodies with higher mesh quality",
         subtype = "DIR_PATH",
     )
 
     ow_assets_folder : StringProperty(
-        name = "Outer Wilds extracted meshes folder",
-        description = "Use AssetStudio to get that",
+        name = "Outer Wilds extracted assets folder",
+        description = "Folder that contains OW assets (use AssetStudio to get them).\n Addon will use it to get higher resolution meshes",
         subtype = "DIR_PATH",
     )
 

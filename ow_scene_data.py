@@ -1,8 +1,13 @@
-from typing import TypedDict
+from typing import TypedDict, TypeVar, Type
 import json
 
 from bpy.types import Context, Object, Scene
 from mathutils import Vector, Quaternion
+
+from .utils import iter_recursive
+
+
+TTypedDict = TypeVar('TTypedDict', bound=TypedDict)
 
 
 class RecorderSettingsData(TypedDict):
@@ -47,29 +52,46 @@ class OWSceneData(TypedDict):
     depth_camera: CameraData
 
 
-def load_ow_scene_data(path: str) -> OWSceneData:
+class PlainMeshData(TypedDict):
+    transform: TransformData
+    game_object_path: str
+
+
+class StreamedMeshData(TypedDict):
+    transform: TransformData
+    asset_path: str
+
+class OWMeshesData(TypedDict):
+    plain_meshes: list[PlainMeshData]
+    streamed_meshes: list[StreamedMeshData]
+
+
+def unity_vector_to_blender(unity_vector: tuple[float, float, float]):
+    x, y, z = unity_vector
+    return (z, y, x)
+
+
+def unity_quaternion_to_blender(unity_quaternion: tuple[float, float, float]):
+    x, y, z, w = unity_quaternion
+    return (-w, z, y, x)
+
+
+def unity_transform_to_blender(unity_transform: TransformData):
+    return TransformData(
+        position=unity_vector_to_blender(unity_transform['position']),
+        rotation=unity_quaternion_to_blender(unity_transform['rotation']),
+        scale=unity_transform['scale'])
+
+
+def load_ow_json_data(path: str, typed_dict_type: Type[TTypedDict]) -> TTypedDict:
     with open(path, 'rb') as file:
-        scene_data: OWSceneData = json.loads(file.read())
+        meshes_data: typed_dict_type = json.loads(file.read())
 
-    def unity_vector_to_blender(unity_vector: tuple[float, float, float]):
-        x, y, z = unity_vector
-        return (z, y, x)
+    for _, value in iter_recursive(meshes_data):
+        if isinstance(value, dict) and 'transform' in value:
+            value['transform'] = unity_transform_to_blender(value['transform'])
 
-    def unity_quaternion_to_blender(unity_quaternion: tuple[float, float, float]):
-        x, y, z, w = unity_quaternion
-        return (-w, z, y, x)
-
-    def unity_transform_to_blender(unity_transform: TransformData):
-        return TransformData(
-            position=unity_vector_to_blender(unity_transform['position']),
-            rotation=unity_quaternion_to_blender(unity_transform['rotation']),
-            scale=unity_transform['scale'])
-
-    for data in scene_data.values():
-        if isinstance(data, dict) and 'transform' in data:
-            data['transform'] = unity_transform_to_blender(data['transform'])
-
-    return scene_data
+    return meshes_data
 
 
 def apply_transform_data(object: Object, transform_data: TransformData):

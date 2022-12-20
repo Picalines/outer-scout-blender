@@ -11,19 +11,25 @@ bl_info = {
 
 import bpy
 from . import addon
+from . import ow_ground_body
 
 def menu_func_import(self, _):
     self.layout.operator(addon.OWSceneImporter.bl_idname, text="Outer Wilds recording (.owscene)")
+    self.layout.operator(ow_ground_body.OWGroundBodyGenerator.bl_idname, text="Outer Wilds gound body (.owscene)")
 
 
 def register():
     bpy.utils.register_class(addon.OWSceneImporter)
+    bpy.utils.register_class(ow_ground_body.OWGroundBodyGenerator)
+    bpy.utils.register_class(ow_ground_body.OWGroundBodyGenerator_Background)
     bpy.utils.register_class(addon.OWSceneImporterPreferences)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
 def unregister():
     bpy.utils.unregister_class(addon.OWSceneImporter)
+    bpy.utils.unregister_class(ow_ground_body.OWGroundBodyGenerator)
+    bpy.utils.unregister_class(ow_ground_body.OWGroundBodyGenerator_Background)
     bpy.utils.unregister_class(addon.OWSceneImporterPreferences)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 

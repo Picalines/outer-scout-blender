@@ -1,5 +1,6 @@
 from math import radians
 
+import bpy
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
@@ -10,27 +11,31 @@ from .ui_utils import show_message_box
 from .object_utils import set_parent, create_empty
 from .ow_camera import create_camera
 from .ow_ground_body import load_ground_body
-from .ow_scene_data import load_ow_scene_data, apply_transform_data, apply_scene_settings
+from .ow_scene_data import OWSceneData, load_ow_json_data, apply_transform_data, apply_scene_settings
 from .compositor_nodes import set_compositor_nodes
 from .world_nodes import set_world_nodes
 
 
 class OWSceneImporter(Operator, ImportHelper):
-    bl_idname = 'outer_wilds_recorder.importer'
+    bl_idname = 'outer_wilds_recorder.import_scene'
     bl_label = 'Import .owscene'
 
     filename_ext = '.owscene'
 
-    filter_glob : StringProperty(
-        default = '*.owscene',
-        options = { 'HIDDEN' },
-        maxlen = 255
+    filter_glob: StringProperty(
+        default='*.owscene',
+        options={'HIDDEN'},
+        maxlen=255
     )
 
     def execute(self, context):
         preferences: OWSceneImporterPreferences = context.preferences.addons[__package__].preferences
 
-        ow_data = load_ow_scene_data(self.filepath)
+        if not (preferences.ow_assets_folder and preferences.ow_bodies_folder):
+            show_message_box(bpy.context, f"{self.bl_idname}'s preferences are empty")
+            return {'CANCELLED'}
+
+        ow_data = load_ow_json_data(self.filepath, OWSceneData)
 
         # create body pivot
         ow_player_pivot = create_empty()
@@ -46,8 +51,11 @@ class OWSceneImporter(Operator, ImportHelper):
         camera = create_camera(self.filepath, context.scene, ow_data)
 
         # import ground_body
-        ow_ground_body = load_ground_body(ow_data, preferences)
-        if not ow_ground_body:
+        ow_ground_body = load_ground_body(self.filepath, preferences, ow_data)
+        if ow_ground_body:
+            pass
+            # ow_player_pivot.users_collection[0].objects.link(ow_ground_body)
+        else:
             show_message_box(context, f"ground body is not loaded ({ow_data['ground_body']['name']}.blend not found)")
 
         # move scene to origin
