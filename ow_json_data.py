@@ -48,7 +48,7 @@ class OWSceneData(TypedDict):
     player: PlayerData
     ground_body: GameObjectData
     player_camera: CameraData
-    background_camera: CameraData
+    free_camera: CameraData
     depth_camera: CameraData
 
 

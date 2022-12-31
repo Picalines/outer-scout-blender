@@ -16,7 +16,7 @@ def create_camera(owscene_filepath: str, scene: Scene, ow_data: OWSceneData):
     camera_data.type = 'PERSP'
     camera_data.lens_unit = 'FOV'
     camera_data.sensor_fit = 'VERTICAL'
-    camera_data.angle = radians(ow_data['background_camera']['fov'])
+    camera_data.angle = radians(ow_data['free_camera']['fov'])
 
     background_video_path = str(Path(owscene_filepath).parent.joinpath('background.mp4'))
 
@@ -30,7 +30,7 @@ def create_camera(owscene_filepath: str, scene: Scene, ow_data: OWSceneData):
     scene.render.resolution_x, scene.render.resolution_y = camera_background.clip.size
 
     camera.name = 'OW Camera'
-    apply_transform_data(camera, ow_data['background_camera']['transform'])
+    apply_transform_data(camera, ow_data['free_camera']['transform'])
     camera.rotation_quaternion @= Quaternion((0, 1, 0), -radians(90))
 
     return camera
