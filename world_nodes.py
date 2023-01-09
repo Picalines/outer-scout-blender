@@ -9,7 +9,7 @@ from .ow_json_data import OWSceneData
 from .node_utils import NodeBuilder, arrange_nodes
 
 def set_world_nodes(owscene_filepath: str, scene: Scene, ow_data: OWSceneData):
-    node_tree = scene.world.node_tree
+    node_tree = (scene.world or bpy.data.worlds.new(f'{scene.name}.World')).node_tree
     node_tree.nodes.clear()
 
     def init_environment_node(node: bpy.types.ShaderNodeTexEnvironment):

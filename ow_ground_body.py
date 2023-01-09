@@ -8,7 +8,7 @@ from glob import glob
 import bpy
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
-from bpy.types import Operator, Object
+from bpy.types import Operator, Object, Scene
 
 from .ui_utils import show_message_popup
 from .object_utils import create_empty, get_child_by_path, iter_parents
@@ -16,7 +16,7 @@ from .preferences import OWSceneImporterPreferences
 from .ow_json_data import OWSceneData, OWMeshesData, load_ow_json_data, apply_transform_data
 
 
-def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferences, ow_data: OWSceneData) -> Object | None:
+def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferences, scene: Scene, ow_data: OWSceneData) -> Object | None:
     ground_body_name = ow_data['ground_body']['name']
 
     ground_body_project_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.blend')
@@ -25,6 +25,8 @@ def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferen
         return_code = generate_ground_body_file_in_new_instance(owscene_filepath)
         if not (return_code == 0 and ground_body_project_path.exists()):
             return None
+
+    had_body_link = (ground_body_name + '.blend') in bpy.data.libraries
 
     ground_body_project_path = str(ground_body_project_path)
     ground_body_project_import_status = bpy.ops.wm.link(
@@ -35,9 +37,18 @@ def load_ground_body(owscene_filepath: str, preferences: OWSceneImporterPreferen
     if ground_body_project_import_status != {'FINISHED'}:
         return None
 
+    if had_body_link:
+        ground_body_link = bpy.data.objects[ground_body_name]
+        ground_body_link: Object = ground_body_link.copy()
+        ground_body_link.parent = None
+        scene.collection.objects.link(ground_body_link)
+        bpy.context.view_layer.objects.active = ground_body_link
+
     ground_body_link = bpy.context.view_layer.objects.active
-    ground_body_link.name = ground_body_name
     ground_body_link.hide_render = True
+
+    if not had_body_link:
+        ground_body_link.name = ground_body_name
 
     apply_transform_data(ground_body_link, ow_data['ground_body']['transform'])
 

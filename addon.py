@@ -49,12 +49,12 @@ class OWSceneImporter(Operator, ImportHelper):
         camera = create_camera(self.filepath, context.scene, ow_data)
 
         # import ground_body
-        ow_ground_body = load_ground_body(self.filepath, preferences, ow_data)
+        ow_ground_body = load_ground_body(self.filepath, preferences, context.scene, ow_data)
         if not ow_ground_body:
             self.report({'ERROR'}, f"Couldn't load {ow_data['ground_body']['name']}.blend from {preferences.ow_bodies_folder}")
 
         # move scene to origin
-        set_parent(context, [camera, player_camera_pivot, ow_ground_body], ow_player_pivot, keep_transform=True)
+        set_parent([camera, player_camera_pivot, ow_ground_body], ow_player_pivot, keep_transform=True)
         ow_player_pivot.location = (0, 0, 0)
 
         # make X - right, Y - forward, Z - up
