@@ -11,18 +11,23 @@ DUPLICATE_OBJECT_NAME_REGEX = re.compile(r'(.*?)\.\d+')
 def set_parent(context: Context, children: Iterable[Object], parent: Object | None, *, keep_transform = True):
     children = filter(lambda obj: obj is not None, children)
 
+    # for child in children:
+    #     child.select_set(state=True)
+
+    # context.view_layer.objects.active = parent
+
+    # if parent is not None:
+    #     bpy.ops.object.parent_set(type='OBJECT', keep_transform=keep_transform)
+    # else:
+    #     bpy.ops.object.parent_clear(type='CLEAR' + ('_KEEP_TRANSFORM' if keep_transform else ''))
+
+    # for child in children:
+    #     child.select_set(state=False)
+
     for child in children:
-        child.select_set(state=True)
-
-    context.view_layer.objects.active = parent
-
-    if parent is not None:
-        bpy.ops.object.parent_set(type='OBJECT', keep_transform=keep_transform)
-    else:
-        bpy.ops.object.parent_clear(type='CLEAR' + ('_KEEP_TRANSFORM' if keep_transform else ''))
-
-    for child in children:
-        child.select_set(state=False)
+        child.parent = parent
+        if parent is not None:
+            child.matrix_parent_inverse = parent.matrix_world.inverted()
 
 
 def create_empty():
