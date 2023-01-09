@@ -59,7 +59,7 @@ def generate_ground_body_file_in_new_instance(owscene_filepath: str):
     python_expr = f"import sys, bpy; bpy.ops.outer_wilds_recorder.generate_ground_body_background(filepath=sys.argv[-1])"
     cmd = f'"{bpy.app.binary_path}" -noaudio --background --log-level -1 --python-expr "{python_expr}" -- {owscene_filepath}'
 
-    show_message_popup(bpy.context, 'Generating .blen of ground body. This may take a while...', icon='TIME')
+    show_message_popup(bpy.context, 'Generating .blend of ground body. This may take a while...', icon='TIME')
 
     process = subprocess.run(cmd, shell=False)
     return process.returncode
