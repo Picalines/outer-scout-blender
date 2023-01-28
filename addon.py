@@ -13,7 +13,6 @@ from .ow_json_data import OWSceneData, load_ow_json_data, apply_transform_data, 
 from .compositor_nodes import set_compositor_nodes
 from .world_nodes import set_world_nodes
 
-
 class OWSceneImporter(Operator, ImportHelper):
     bl_idname = 'outer_wilds_recorder.import_scene'
     bl_label = 'Import .owscene'

@@ -1,0 +1,1 @@
+from .sync_tools import OWRECORDER_PT_sync_tools

@@ -1,37 +1,34 @@
 bl_info = {
-    "name": "outer-wilds-recorder-importer",
+    "name": "outer-wilds-recorder-blender",
     "author": "Picalines",
     "description": "",
-    "blender": (3, 3, 0),
+    "blender": (3, 4, 0),
     "version": (0, 0, 1),
-    "location": "File > Import > OWScene",
+    "location": "View3D > Outer Wilds Recorder > ...",
     "warning": "",
-    "category": "Import-Export",
+    "category": "Compositing",
 }
 
 import bpy
 from . import addon
+from . import panels
 from . import ow_ground_body
-
-def menu_func_import(self, _):
-    self.layout.operator(addon.OWSceneImporter.bl_idname, text="Outer Wilds recording (.owscene)")
-    self.layout.operator(ow_ground_body.OWGroundBodyGenerator.bl_idname, text="Outer Wilds gound body (.owscene)")
 
 
 def register():
     bpy.utils.register_class(addon.OWSceneImporter)
-    bpy.utils.register_class(ow_ground_body.OWGroundBodyGenerator)
-    bpy.utils.register_class(ow_ground_body.OWGroundBodyGenerator_Background)
+    bpy.utils.register_class(ow_ground_body.OWRECORDER_OT_generate_ground_body)
+    bpy.utils.register_class(ow_ground_body.OWRECORDER_OT_generate_ground_body_background)
     bpy.utils.register_class(addon.OWSceneImporterPreferences)
-    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.utils.register_class(panels.OWRECORDER_PT_sync_tools)
 
 
 def unregister():
     bpy.utils.unregister_class(addon.OWSceneImporter)
-    bpy.utils.unregister_class(ow_ground_body.OWGroundBodyGenerator)
-    bpy.utils.unregister_class(ow_ground_body.OWGroundBodyGenerator_Background)
+    bpy.utils.unregister_class(ow_ground_body.OWRECORDER_OT_generate_ground_body)
+    bpy.utils.unregister_class(ow_ground_body.OWRECORDER_OT_generate_ground_body_background)
     bpy.utils.unregister_class(addon.OWSceneImporterPreferences)
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.utils.unregister_class(panels.OWRECORDER_PT_sync_tools)
 
 
 if __name__ == "__main__":

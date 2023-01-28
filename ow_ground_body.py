@@ -65,7 +65,7 @@ def generate_ground_body_file_in_new_instance(owscene_filepath: str):
     return process.returncode
 
 
-class OWGroundBodyGenerator(Operator, ImportHelper):
+class OWRECORDER_OT_generate_ground_body(Operator, ImportHelper):
     bl_idname = 'outer_wilds_recorder.generate_ground_body'
     bl_label = 'Generate .blend from extracted .fbx ground body with higher resolution'
 
@@ -189,7 +189,7 @@ class OWGroundBodyGenerator(Operator, ImportHelper):
         self.report({type}, message)
 
 
-class OWGroundBodyGenerator_Background(Operator, ImportHelper):
+class OWRECORDER_OT_generate_ground_body_background(Operator, ImportHelper):
     bl_idname = 'outer_wilds_recorder.generate_ground_body_background'
     bl_label = 'Call outer_wilds_recorder.generate_ground_body in background environment'
 
