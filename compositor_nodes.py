@@ -4,7 +4,7 @@ import bpy
 from bpy.types import Scene
 
 from .ow_json_data import OWSceneData
-from .node_utils import NodeBuilder, create_node, arrange_nodes
+from .utils import NodeBuilder, create_node, arrange_nodes
 
 
 def set_compositor_nodes(owscene_filepath: str, scene: Scene, ow_data: OWSceneData):

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Any
 
 
-HTTPMethod = Literal['GET', 'POST', 'PATCH', 'DELETE']
+HTTPMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "outer-wilds-recorder-blender",
+    "name": "outer-wilds-scene-recorder-blender",
     "author": "Picalines",
     "description": "",
     "blender": (3, 4, 0),
@@ -10,25 +10,35 @@ bl_info = {
 }
 
 import bpy
-from . import addon
+from . import preferences
 from . import panels
-from . import ow_ground_body
+from . import operators
+
+
+def iter_classes_to_register():
+    yielded_classes = set()
+    yield (preferences_cls := preferences.OWRecorderPreferences)
+    yielded_classes.add(preferences_cls)
+    for module, keys in map(lambda m: (m, dir(m)), (operators, panels)):
+        for key in keys:
+            if not (('_OT_' in key) or ('_PT_' in key)):
+                continue
+            if not isinstance(cls := getattr(module, key), type):
+                continue
+            if cls in yielded_classes:
+                continue
+            yield cls
+            yielded_classes.add(cls)
 
 
 def register():
-    bpy.utils.register_class(addon.OWSceneImporter)
-    bpy.utils.register_class(ow_ground_body.OWRECORDER_OT_generate_ground_body)
-    bpy.utils.register_class(ow_ground_body.OWRECORDER_OT_generate_ground_body_background)
-    bpy.utils.register_class(addon.OWSceneImporterPreferences)
-    bpy.utils.register_class(panels.OWRECORDER_PT_sync_tools)
+    for cls in iter_classes_to_register():
+        bpy.utils.register_class(cls)
 
 
 def unregister():
-    bpy.utils.unregister_class(addon.OWSceneImporter)
-    bpy.utils.unregister_class(ow_ground_body.OWRECORDER_OT_generate_ground_body)
-    bpy.utils.unregister_class(ow_ground_body.OWRECORDER_OT_generate_ground_body_background)
-    bpy.utils.unregister_class(addon.OWSceneImporterPreferences)
-    bpy.utils.unregister_class(panels.OWRECORDER_PT_sync_tools)
+    for cls in iter_classes_to_register():
+        bpy.utils.unregister_class(cls)
 
 
 if __name__ == "__main__":

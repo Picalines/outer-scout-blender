@@ -1,8 +1,9 @@
 import bpy
+from bpy.types import Panel
 
 
-class OWRECORDER_PT_sync_tools(bpy.types.Panel):
-    bl_idname = 'OWRECORDER_PT_sync_tools'
+class OW_RECORDER_PT_sync_tools(Panel):
+    bl_idname = 'OW_RECORDER_PT_sync_tools'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'Outer Wilds Recorder'

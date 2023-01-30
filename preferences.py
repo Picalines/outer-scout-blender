@@ -33,8 +33,11 @@ class OWRecorderPreferences(AddonPreferences):
     )
 
     @staticmethod
-    def from_context(context: Context):
+    def from_context(context: Context) -> 'OWRecorderPreferences':
         return context.preferences.addons[__package__].preferences
+
+    def empty(self) -> bool:
+        return (not self.ow_bodies_folder) or (not self.ow_assets_folder)
 
     def draw(self, _):
         self.layout.prop(self, "api_port")

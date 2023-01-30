@@ -5,8 +5,8 @@ from bpy.props import StringProperty
 from bpy.types import Operator
 from mathutils import Euler
 
-from .preferences import OWSceneImporterPreferences
-from .object_utils import set_parent, create_empty
+from .preferences import OWRecorderPreferences
+from .utils import set_parent, create_empty
 from .ow_camera import create_camera
 from .ow_ground_body import load_ground_body
 from .ow_json_data import OWSceneData, load_ow_json_data, apply_transform_data, apply_scene_settings
@@ -26,7 +26,7 @@ class OWSceneImporter(Operator, ImportHelper):
     )
 
     def execute(self, context):
-        preferences: OWSceneImporterPreferences = context.preferences.addons[__package__].preferences
+        preferences: OWRecorderPreferences = context.preferences.addons[__package__].preferences
 
         if not (preferences.ow_assets_folder and preferences.ow_bodies_folder):
             self.report({'ERROR'}, f"{self.bl_idname}'s preferences are empty")
