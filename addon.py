@@ -8,7 +8,6 @@ from mathutils import Euler
 from .preferences import OWRecorderPreferences
 from .utils import set_parent, create_empty
 from .ow_camera import create_camera
-from .ow_ground_body import load_ground_body
 from .ow_json_data import OWSceneData, load_ow_json_data, apply_transform_data, apply_scene_settings
 from .compositor_nodes import set_compositor_nodes
 from .world_nodes import set_world_nodes

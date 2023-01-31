@@ -6,19 +6,14 @@ import subprocess
 from pathlib import Path
 
 from ..preferences import OWRecorderPreferences
-from ..api import APIClient
-from ..utils import show_message_popup
+from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
 GROUND_BODY_COLLECTION_NAME = 'Outer Wilds ground body'
 
 
-class OW_RECORDER_OT_load_ground_body(Operator):
-    '''
-    Loads current ground body (might take a while for the first time)
-    and links it to current project.
-    It's impossible to load multiple ground bodies!
-    '''
+class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
+    '''Loads current ground body (might take a while for the first time) and links it to current project.'''
 
     bl_idname = 'ow_recorder.load_ground_body'
     bl_label = 'Load ground body'
@@ -33,9 +28,7 @@ class OW_RECORDER_OT_load_ground_body(Operator):
             self.report({'ERROR'}, 'plugin preferences are empty')
             return {'CANCELLED'}
 
-        api_client = APIClient(preferences)
-
-        ground_body_name = api_client.get_ground_body_name()
+        ground_body_name = self.get_ground_body_name(preferences)
         if ground_body_name is None:
             self.report({'ERROR'}, 'could not get current ground body name')
             return {'CANCELLED'}
@@ -43,7 +36,7 @@ class OW_RECORDER_OT_load_ground_body(Operator):
         ground_body_project_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.blend')
 
         if not ground_body_project_path.exists():
-            return_code = self._generate_ground_body_file_in_new_instance(context)
+            return_code = self._generate_ground_body_file_in_new_instance(ground_body_name)
             if not (return_code == 0 and ground_body_project_path.exists()):
                 self.report({'ERROR'}, 'could not generate ground body .blend file')
                 return {'CANCELLED'}
@@ -82,11 +75,9 @@ class OW_RECORDER_OT_load_ground_body(Operator):
 
         return {'FINISHED'}
 
-    def _generate_ground_body_file_in_new_instance(self, context: Context) -> int:
-        python_expr = f"import sys, bpy; bpy.ops.ow_recorder.generate_ground_body_background()"
+    def _generate_ground_body_file_in_new_instance(self, ground_body_name: str) -> int:
+        python_expr = f"import sys, bpy; bpy.ops.ow_recorder.generate_ground_body_background(ground_body='{ground_body_name}')"
         cmd = f'"{bpy.app.binary_path}" -noaudio --background --log-level -1 --python-expr "{python_expr}"'
 
-        show_message_popup(context, 'Generating .blend of ground body. This may take a while...', icon='TIME')
-
-        process = subprocess.run(cmd, shell=False)
+        process = subprocess.run(cmd, shell=False, creationflags=subprocess.CREATE_NEW_CONSOLE)
         return process.returncode

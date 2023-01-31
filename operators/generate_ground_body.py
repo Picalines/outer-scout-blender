@@ -10,9 +10,10 @@ from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, GroundBodyMeshInfo
 from ..utils import iter_parents, get_child_by_path, create_empty
+from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
-class OW_RECORDER_OT_generate_ground_body(Operator):
+class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
     bl_idname = 'ow_recorder.generate_ground_body'
     bl_label = 'Generate .blend from extracted .fbx ground body with higher resolution'
 
@@ -24,16 +25,22 @@ class OW_RECORDER_OT_generate_ground_body(Operator):
 
         api_client = APIClient(preferences)
 
-        self._log('INFO', 'fetching ground body name')
-        ground_body_name = api_client.get_ground_body_name()
+        ground_body_name = self.get_ground_body_name(api_client)
         if ground_body_name is None:
             self._log('ERROR', 'failed to get ground body name')
             return {'CANCELLED'}
 
+        self._log('INFO', f'generating {ground_body_name} object...')
+
         ow_meshes_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '_meshes.json')
         if not ow_meshes_path.exists():
+            current_ground_body_name = api_client.get_ground_body_name()
+            if current_ground_body_name != ground_body_name:
+                self._log('ERROR', f'unable to create mesh list file. Go to {ground_body_name} in game and call operator again')
+                return {'CANCELLED'}
+
             self._log('INFO', 'creating mesh list file')
-            success = api_client.generate_ground_body_mesh_list(str(ow_meshes_path))
+            success = api_client.generate_current_ground_body_mesh_list(str(ow_meshes_path))
             if not success:
                 self._log('ERROR', 'could not generate mesh list')
                 return {'CANCELLED'}
@@ -46,8 +53,8 @@ class OW_RECORDER_OT_generate_ground_body(Operator):
         with open(ow_meshes_path, 'rb') as ow_meshes_json_file:
             ow_meshes_data: GroundBodyMeshInfo = json.loads(ow_meshes_json_file.read())
 
-        self._log('INFO', 'importing fbx')
         ground_body_fbx_path = str(Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.fbx'))
+        self._log('INFO', f'importing {ground_body_fbx_path}')
         fbx_import_status = bpy.ops.import_scene.fbx(filepath=ground_body_fbx_path)
         if fbx_import_status != {'FINISHED'}:
             self._log('ERROR', f'failed to import ground body fbx: {ground_body_fbx_path}')
@@ -152,4 +159,4 @@ class OW_RECORDER_OT_generate_ground_body(Operator):
 
     def _log(self, type: str, message: str):
         print(f'[{type}] {message}')
-        self.report({type}, message)
+        # self.report({type}, message)

@@ -4,9 +4,10 @@ from bpy.types import Operator
 from pathlib import Path
 
 from ..preferences import OWRecorderPreferences
+from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
-class OW_RECORDER_OT_generate_ground_body_background(Operator):
+class OW_RECORDER_OT_generate_ground_body_background(Operator, GroundBodySelectionHelper):
     bl_idname = 'ow_recorder.generate_ground_body_background'
     bl_label = 'Call ow_recorder.generate_ground_body in background environment'
 
@@ -18,8 +19,12 @@ class OW_RECORDER_OT_generate_ground_body_background(Operator):
         for c in context.scene.collection.children:
             context.scene.collection.children.unlink(c)
 
-        result = bpy.ops.ow_recorder.generate_ground_body()
+        try:
+            result = bpy.ops.ow_recorder.generate_ground_body(ground_body=self.ground_body)
+        except RuntimeError:
+            result = {'ERROR'}
         if result != {'FINISHED'}:
+            input('Press enter to exit...')
             return {'CANCELLED'}
 
         context.view_layer.update()

@@ -8,7 +8,7 @@ import urllib.request
 import json
 
 
-def send_request(request: Request) -> Response:
+def send_request(request: Request) -> Response | None:
     url = request.url
 
     if not url.startswith('http'):
@@ -51,5 +51,7 @@ def send_request(request: Request) -> Response:
             headers=dict(http_error.headers),
             status=HTTPStatus(http_error.code),
         )
+    except OSError:
+        response = None
 
     return response

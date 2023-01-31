@@ -10,8 +10,9 @@ class OW_RECORDER_PT_ground_body(Panel):
     bl_category = 'Outer Wilds Recorder'
     bl_label = 'Ground Body'
 
+    @classmethod
+    def poll(cls, _) -> bool:
+        return GROUND_BODY_COLLECTION_NAME not in bpy.data.collections
+
     def draw(self, _):
-        ground_body_is_loaded = GROUND_BODY_COLLECTION_NAME in bpy.data.collections
-        self.layout.operator('ow_recorder.load_ground_body',
-            text='Load ground body' if not ground_body_is_loaded else 'Ground body is loaded',
-            emboss=not ground_body_is_loaded)
+        self.layout.operator('ow_recorder.load_ground_body', text='Load ground body', icon='WORLD')
