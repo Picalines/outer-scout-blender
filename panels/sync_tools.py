@@ -10,4 +10,4 @@ class OW_RECORDER_PT_sync_tools(Panel):
     bl_label = 'Synchronize'
 
     def draw(self, context):
-        self.layout.label(text='Hello, world!')
+        self.layout.operator('ow_recorder.synchronize')

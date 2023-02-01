@@ -12,11 +12,22 @@ from .ground_body_selection_helper import GroundBodySelectionHelper
 GROUND_BODY_COLLECTION_NAME = 'Outer Wilds ground body'
 
 
+def get_current_ground_body() -> Object | None:
+    if GROUND_BODY_COLLECTION_NAME not in bpy.data.collections:
+        return None
+    ground_body_collection = bpy.data.collections[GROUND_BODY_COLLECTION_NAME]
+    return ground_body_collection.objects[0] if any(ground_body_collection.objects) else None
+
+
 class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
     '''Loads current ground body (might take a while for the first time) and links it to current project.'''
 
     bl_idname = 'ow_recorder.load_ground_body'
     bl_label = 'Load ground body'
+
+    @classmethod
+    def poll(cls, _) -> bool:
+        return get_current_ground_body() is None
 
     def execute(self, context: Context):
         if GROUND_BODY_COLLECTION_NAME in bpy.data.collections:

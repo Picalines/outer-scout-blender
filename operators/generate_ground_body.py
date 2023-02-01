@@ -47,7 +47,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         if not ow_meshes_path.exists():
             self._log('ERROR', 'BUG: mesh list was not created by API')
-            return {"CANCELLED"}
+            return {'CANCELLED'}
 
         self._log('INFO', 'loading mesh list')
         with open(ow_meshes_path, 'rb') as ow_meshes_json_file:
@@ -98,8 +98,6 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 .unity_to_blender()\
                 .apply_local(extracted_child)
 
-            extracted_child.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
-
         bpy.ops.object.select_all(action='DESELECT')
         context.view_layer.objects.active = extracted_ground_body_obj
         bpy.ops.object.select_grouped(extend=True, type='CHILDREN_RECURSIVE')
@@ -133,7 +131,6 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
             TransformModel.from_json(streamed_mesh_info['transform'])\
                 .unity_to_blender()\
                 .apply_local(loaded_mesh)
-            loaded_mesh.rotation_quaternion @= Quaternion((0, 1, 0), radians(90))
 
         self._log('INFO', 'creating body pivot object')
         ground_body_obj = create_empty()
@@ -141,6 +138,8 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         TransformModel.from_json(ow_meshes_data['body_transform'])\
             .unity_to_blender()\
             .apply_local(ground_body_obj)
+
+        ground_body_obj.rotation_quaternion @= Quaternion((0, 1, 0), radians(-90))
 
         self._log('INFO', 'parenting objects to pivot')
         bpy.ops.object.select_all(action='SELECT')

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from mathutils import Vector, Quaternion
+from math import radians
+from mathutils import Vector, Quaternion, Matrix
 import json
 
 from bpy.types import Object
@@ -12,7 +13,7 @@ def unity_vector_to_blender(unity_vector: Vector) -> Vector:
 
 def unity_quaternion_to_blender(unity_quaternion: Quaternion) -> Quaternion:
     x, y, z, w = unity_quaternion
-    return Quaternion((-w, z, y, x))
+    return Quaternion((-w, z, y, x)) @ Quaternion((0, 1, 0), radians(90))
 
 
 def blender_vector_to_unity(blender_vector: Vector) -> Vector:
@@ -21,8 +22,8 @@ def blender_vector_to_unity(blender_vector: Vector) -> Vector:
 
 
 def blender_quaternion_to_unity(blender_quaternion: Quaternion) -> Quaternion:
-    x, y, z, w = blender_quaternion
-    return Quaternion((-w, z, y, x))
+    w, x, y, z = blender_quaternion
+    return Quaternion((z, w, x, y)) @ Quaternion((0, 1, 0), radians(-90))
 
 
 TransformModelJSON = list[list[float]]
@@ -47,6 +48,10 @@ class TransformModel:
         json_array: TransformModelJSON = json.loads(json_str)
         return TransformModel.from_json(json_array)
 
+    @staticmethod
+    def from_matrix(matrix: Matrix) -> 'TransformModel':
+        return TransformModel(*matrix.decompose())
+
     def unity_to_blender(self) -> 'TransformModel':
         return TransformModel(
             position=unity_vector_to_blender(self.position),
@@ -60,6 +65,16 @@ class TransformModel:
             rotation=blender_quaternion_to_unity(self.rotation),
             scale=blender_vector_to_unity(self.scale),
         )
+
+    def to_json(self) -> TransformModelJSON:
+        return [
+            [*self.position],
+            [*self.rotation],
+            [*self.scale],
+        ]
+
+    def to_json_str(self) -> str:
+        return json.dumps(self.to_json())
 
     def apply_local(self, object: Object):
         object.location = self.position
