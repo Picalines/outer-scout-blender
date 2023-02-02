@@ -11,8 +11,10 @@ from .load_ground_body import get_current_ground_body
 
 
 class OW_RECORDER_OT_synchronize(Operator):
+    '''Synchronize choosen items between Blender and Outer Wilds'''
+
     bl_idname = 'ow_recorder.synchronize'
-    bl_label = 'Synchronize choosen items between Blender and Outer Wilds'
+    bl_label = 'Synchronize with Outer Wilds'
 
     sync_direction: EnumProperty(
         name='Direction',
@@ -35,7 +37,7 @@ class OW_RECORDER_OT_synchronize(Operator):
         items=[
             ('free_camera', 'Free camera', ''),
             ('player/body', 'Player body', ''),
-            ('player/camera', 'Player camera', ''),
+            ('player/camera', 'Player camera', '(modifying Player camera is not allowed!)'),
         ]
     )
 
@@ -93,7 +95,7 @@ class OW_RECORDER_OT_synchronize(Operator):
 
     def _sync_blender_to_ow(self, context: Context):
         if self.ow_item == 'player/camera':
-            self.report({'INFO'}, 'changing Player Camera is not allowed')
+            self.report({'INFO'}, 'modifying Player Camera is not allowed')
             return {'CANCELLED'}
 
         api_cilent = APIClient(OWRecorderPreferences.from_context(context))
