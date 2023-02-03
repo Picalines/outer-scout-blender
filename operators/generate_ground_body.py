@@ -88,10 +88,8 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
             sector_collection = bpy.data.collections.new(f'{sector_info["path"]} Sector Collection')
             ground_body_collection.children.link(sector_collection)
 
-            plain_meshes_count = len(sector_info['plain_meshes'])
-            streamed_meshes_count = len(sector_info['streamed_meshes'])
-
-            for plain_mesh_index, plain_mesh_info in enumerate(sector_info['plain_meshes'], start=1):
+            self._log('INFO', f'placing plain meshes for current sector ({len(sector_info["plain_meshes"])} objects)')
+            for plain_mesh_info in sector_info['plain_meshes']:
                 mesh_path = plain_mesh_info['path'].split('/')[1:]
 
                 skip_object = False
@@ -102,8 +100,6 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
                 if skip_object:
                     continue
-
-                self._log('INFO', f'placing plain mesh [{plain_mesh_index}/{plain_meshes_count}] from {plain_mesh_info["path"]}')
 
                 extracted_child = get_child_by_path(extracted_ground_body_object, mesh_path, mask_duplicates=True)
                 if extracted_child is None:
@@ -119,31 +115,33 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                     .unity_to_blender()\
                     .to_matrix()
 
-            for streamed_mesh_index, streamed_mesh_info in enumerate(sector_info['streamed_meshes'], start=1):
-                self._log('INFO', f'loading streamed mesh [{streamed_mesh_index}/{streamed_meshes_count}]')
+            self._log('INFO', f'importing missing .obj for current sector')
+            missing_objs = (streamed_mesh_info['path'] for streamed_mesh_info in sector_info['streamed_meshes']\
+                            if streamed_mesh_info['path'] not in imported_objs)
 
+            for asset_path in missing_objs:
+                try:
+                    obj_path = str(ow_assets_folder.joinpath(asset_path.removesuffix('.asset') + '.obj'))
+                    bpy.ops.wm.obj_import(filepath=obj_path)
+                except:
+                    self._log('WARNING', f'failed to import .obj file at {obj_path}')
+                    continue
+
+                imported_obj_mesh = bpy.data.objects[context.view_layer.objects.active.name]
+                imported_objs[asset_path] = imported_obj_mesh
+
+            self._log('INFO', f'placing streamed meshes for current sector ({len(sector_info["streamed_meshes"])} objects)')
+            for streamed_mesh_info in sector_info['streamed_meshes']:
                 asset_path = streamed_mesh_info['path']
-
                 if asset_path not in imported_objs:
-                    obj_path = ow_assets_folder.joinpath(streamed_mesh_info['path'].removesuffix('.asset') + '.obj')
+                    continue
 
-                    if not obj_path.exists():
-                        self._log('WARNING', f'missing streamed mesh .obj file at {obj_path}')
-                        continue
+                imported_obj_mesh = imported_objs[asset_path]
+                if imported_obj_mesh.type == 'EMPTY':
+                    continue
 
-                    obj_import_status = bpy.ops.wm.obj_import(filepath=str(obj_path))
-
-                    if obj_import_status != {'FINISHED'}:
-                        self._log('ERROR', f'failed to import streamed mesh .obj at {obj_path}')
-                        continue
-
-                    loaded_mesh = bpy.data.objects[context.view_layer.objects.active.name]
-                    context.scene.collection.objects.unlink(loaded_mesh)
-                    sector_collection.objects.link(loaded_mesh)
-                    imported_objs[asset_path] = loaded_mesh
-                else:
-                    loaded_mesh = imported_objs[asset_path].copy()
-                    sector_collection.objects.link(loaded_mesh)
+                loaded_mesh = imported_obj_mesh.copy()
+                sector_collection.objects.link(loaded_mesh)
 
                 loaded_mesh.parent = None
                 loaded_mesh.matrix_parent_inverse = Matrix.Identity(4)
@@ -156,14 +154,9 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 if object.type == 'EMPTY':
                     bpy.data.objects.remove(object, do_unlink=True)
 
-        self._log('INFO', 'deleting objects from fbx')
-        for child in extracted_ground_body_object.children_recursive:
-            bpy.data.objects.remove(child, do_unlink=True)
-        bpy.data.objects.remove(extracted_ground_body_object, do_unlink=True)
-
-        self._log('INFO', 'clearing scene collection')
+        self._log('INFO', f'clearing scene collection ({len(context.scene.collection.objects)} objects)')
         for object in context.scene.collection.objects:
-            context.scene.collection.objects.unlink(object)
+            bpy.data.objects.remove(object, do_unlink=True)
 
         self._log('INFO', 'finished')
         return {'FINISHED'}
