@@ -76,6 +76,9 @@ class TransformModel:
     def to_json_str(self) -> str:
         return json.dumps(self.to_json())
 
+    def to_matrix(self) -> Matrix:
+        return Matrix.LocRotScale(self.position, self.rotation, self.scale)
+
     def apply_local(self, object: Object):
         object.location = self.position
         object.scale = self.scale
