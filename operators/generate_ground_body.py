@@ -23,6 +23,8 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
             self._log('ERROR', 'plugin preferences are empty')
             return {'CANCELLED'}
 
+        ow_assets_folder, ow_bodies_folder = map(Path, (preferences.ow_assets_folder, preferences.ow_bodies_folder))
+
         api_client = APIClient(preferences)
 
         ground_body_name = self.get_ground_body_name(api_client)
@@ -32,7 +34,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         self._log('INFO', f'generating {ground_body_name} object...')
 
-        mesh_list_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '_meshes.json')
+        mesh_list_path = ow_bodies_folder.joinpath(ground_body_name + '_meshes.json')
         if not mesh_list_path.exists():
             current_ground_body_name = api_client.get_ground_body_name()
             if current_ground_body_name != ground_body_name:
@@ -53,7 +55,26 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         with open(mesh_list_path, 'rb') as ow_meshes_json_file:
             ground_body_meshes_info: GroundBodyMeshInfo = json.loads(ow_meshes_json_file.read())
 
-        ground_body_fbx_path = str(Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.fbx'))
+        imported_ow_objects: dict[str, Object | None] = {
+            streamed_mesh['path']: None for sector in ground_body_meshes_info['sectors'] for streamed_mesh in sector['streamed_meshes']
+        }
+
+        self._log('INFO', f'importing {len(imported_ow_objects)} .obj files of streamed assets')
+        for asset_path in imported_ow_objects:
+            try:
+                obj_path = str(ow_assets_folder.joinpath(asset_path.removesuffix('.asset') + '.obj'))
+                bpy.ops.wm.obj_import(filepath=obj_path)
+            except:
+                self._log('WARNING', f'failed to import .obj file at {obj_path}')
+                continue
+
+            imported_obj_mesh = bpy.data.objects[context.view_layer.objects.active.name]
+            if imported_obj_mesh.type != 'EMPTY':
+                imported_ow_objects[asset_path] = imported_obj_mesh
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        ground_body_fbx_path = str(ow_bodies_folder.joinpath(ground_body_name + '.fbx'))
         self._log('INFO', f'importing {ground_body_fbx_path}')
         if bpy.ops.import_scene.fbx(filepath=ground_body_fbx_path) != {'FINISHED'}:
             self._log('ERROR', f'failed to import ground body fbx: {ground_body_fbx_path}')
@@ -67,6 +88,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
             bpy.data.objects.remove(parent, do_unlink=True)
 
         self._log('INFO', 'loading sectors')
+
         ignored_object_name_parts: list[str] = preferences.ignored_objects.split(',')
 
         ground_body_inverted_matrix = Matrix.Rotation(radians(90), 4, (1, 0, 0)) @ TransformModel.from_json(ground_body_meshes_info['body_transform'])\
@@ -76,19 +98,26 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         sectors_count = len(ground_body_meshes_info['sectors'])
 
-        ow_assets_folder = Path(preferences.ow_assets_folder)
-        imported_objs: dict[str, Object] = {}
-
         ground_body_collection = bpy.data.collections.new(f'{ground_body_name} Collection')
         context.scene.collection.children.link(ground_body_collection)
 
-        for sector_index, sector_info in enumerate(ground_body_meshes_info['sectors'], start=1):
-            self._log('INFO', f"--- SECTOR '{sector_info['path']}' [{sector_index}/{sectors_count}] ---")
+        sector_indices_text = bpy.data.texts.new(f'{ground_body_name} sectors')
+        sector_indices_text.use_fake_user = True
 
-            sector_collection = bpy.data.collections.new(f'{sector_info["path"]} Sector Collection')
+        sector_indices_text.write('{\n')
+
+        for sector_index, sector_info in enumerate(ground_body_meshes_info['sectors']):
+            self._log('INFO', f"* sector '{sector_info['path']}' [{sector_index + 1}/{sectors_count}]")
+
+            sector_indices_text.write(f'    "{sector_info["path"]}": {sector_index}')
+            if (sector_index + 1) < sectors_count:
+                sector_indices_text.write(',')
+            sector_indices_text.write('\n')
+
+            sector_collection = bpy.data.collections.new(f'{ground_body_name} Sector #{sector_index} Collection')
             ground_body_collection.children.link(sector_collection)
 
-            self._log('INFO', f'placing plain meshes for current sector ({len(sector_info["plain_meshes"])} objects)')
+            self._log('INFO', f'placing plain meshes ({len(sector_info["plain_meshes"])} objects)')
             for plain_mesh_info in sector_info['plain_meshes']:
                 mesh_path = plain_mesh_info['path'].split('/')[1:]
 
@@ -115,29 +144,14 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                     .unity_to_blender()\
                     .to_matrix()
 
-            self._log('INFO', f'importing missing .obj for current sector')
-            missing_objs = (streamed_mesh_info['path'] for streamed_mesh_info in sector_info['streamed_meshes']\
-                            if streamed_mesh_info['path'] not in imported_objs)
-
-            for asset_path in missing_objs:
-                try:
-                    obj_path = str(ow_assets_folder.joinpath(asset_path.removesuffix('.asset') + '.obj'))
-                    bpy.ops.wm.obj_import(filepath=obj_path)
-                except:
-                    self._log('WARNING', f'failed to import .obj file at {obj_path}')
-                    continue
-
-                imported_obj_mesh = bpy.data.objects[context.view_layer.objects.active.name]
-                imported_objs[asset_path] = imported_obj_mesh
-
-            self._log('INFO', f'placing streamed meshes for current sector ({len(sector_info["streamed_meshes"])} objects)')
+            self._log('INFO', f'placing streamed meshes ({len(sector_info["streamed_meshes"])} objects)')
             for streamed_mesh_info in sector_info['streamed_meshes']:
                 asset_path = streamed_mesh_info['path']
-                if asset_path not in imported_objs:
+                if asset_path not in imported_ow_objects:
                     continue
 
-                imported_obj_mesh = imported_objs[asset_path]
-                if imported_obj_mesh.type == 'EMPTY':
+                imported_obj_mesh = imported_ow_objects[asset_path]
+                if not imported_obj_mesh:
                     continue
 
                 loaded_mesh = imported_obj_mesh.copy()
@@ -149,10 +163,12 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                     .unity_to_blender()\
                     .to_matrix()
 
-            self._log('INFO', 'deleting empties from current sector')
+            self._log('INFO', 'deleting empties')
             for object in sector_collection.objects:
                 if object.type == 'EMPTY':
                     bpy.data.objects.remove(object, do_unlink=True)
+
+        sector_indices_text.write('}')
 
         self._log('INFO', f'clearing scene collection ({len(context.scene.collection.objects)} objects)')
         for object in context.scene.collection.objects:
