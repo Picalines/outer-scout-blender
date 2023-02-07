@@ -18,6 +18,13 @@ class APIClient:
         ))
         return response.body if response.is_success() else None
 
+    def get_current_sector_path(self) -> str | None:
+        response = self._get_response(Request(
+            method='GET',
+            url='ground_body/sectors/current/path',
+        ))
+        return response.body if response.is_success() else None
+
     def generate_current_ground_body_mesh_list(self, output_file_path: str) -> bool:
         response = self._get_response(Request(
             method='POST',
