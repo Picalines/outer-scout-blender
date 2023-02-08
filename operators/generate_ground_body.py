@@ -91,7 +91,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         ignored_object_name_parts: list[str] = preferences.ignored_objects.split(',')
 
-        ground_body_inverted_matrix = Matrix.Rotation(radians(90), 4, (1, 0, 0)) @ TransformModel.from_json(ground_body_meshes_info['body_transform'])\
+        ground_body_inverted_matrix = Matrix.Rotation(radians(90), 4, (0, 1, 0)) @ TransformModel.from_json(ground_body_meshes_info['body_transform'])\
             .unity_to_blender()\
             .to_matrix()\
             .inverted()
