@@ -1,5 +1,7 @@
 from bpy.types import Panel
 
+from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body, get_current_ground_body
+
 
 class OW_RECORDER_PT_ground_body(Panel):
     bl_idname = 'OW_RECORDER_PT_ground_body'
@@ -9,4 +11,13 @@ class OW_RECORDER_PT_ground_body(Panel):
     bl_label = 'Ground Body'
 
     def draw(self, _):
-        self.layout.operator('ow_recorder.load_ground_body', text='Load ground body', icon='WORLD')
+        current_ground_body = get_current_ground_body()
+        has_ground_body = current_ground_body is not None
+
+        self.layout.operator(
+            operator=OW_RECORDER_OT_load_ground_body.bl_idname,
+            icon='WORLD',
+            text=('Load ground body'
+                  if not has_ground_body
+                  else 'Add current sector'),
+        )

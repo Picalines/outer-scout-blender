@@ -45,6 +45,9 @@ class OW_RECORDER_OT_synchronize(Operator):
     def poll(cls, _) -> bool:
         return get_current_ground_body() is not None
 
+    def invoke(self, context: Context, _):
+        return context.window_manager.invoke_props_dialog(self)
+
     def execute(self, context: Context):
         if self.sync_direction == 'OW_TO_BLENDER':
             return self._sync_ow_to_blender(context)

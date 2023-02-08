@@ -7,11 +7,10 @@ from ..api import APIClient
 
 class GroundBodySelectionHelper:
     ground_body: EnumProperty(
-        name="Ground Body",
+        name='Ground Body',
         items=[
             ('CURRENT', 'Current', 'Make request to SceneRecorder mod API'),
             ('Ship_Body', 'Player Ship', ''),
-            ('Sun_Body', 'Sun', ''),
             ('SunStation_Pivot', 'Sun > Station', ''),
             ('CaveTwin_Body', 'Hourglass > Ember Twin', ''),
             ('TowerTwin_Body', 'Hourglass > Tower Twin', ''),
@@ -43,8 +42,6 @@ class GroundBodySelectionHelper:
             ('Satellite_Body', 'Satellite', ''),
             ('RingWorld_Body', 'Ring World', ''),
             ('DreamWorld_Body', 'Dream World', ''),
-            # ('StaticRing_Body', 'Static Ring', ''),
-            # ('Probe_Body', 'Probe', ''),
         ],
     )
 
@@ -60,6 +57,3 @@ class GroundBodySelectionHelper:
             context = APIClient(context)
 
         return context.get_ground_body_name()
-
-    def invoke(self, context: Context, _):
-        return context.window_manager.invoke_props_dialog(self)

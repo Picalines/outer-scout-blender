@@ -37,6 +37,26 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         ],
     )
 
+    def invoke(self, context: Context, _):
+        current_ground_body = get_current_ground_body()
+
+        if current_ground_body is not None:
+            self.ground_body = current_ground_body.name
+
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, _: Context):
+        current_ground_body = get_current_ground_body()
+
+        row = self.layout.row(align=True)
+        row.enabled = current_ground_body is None
+        row.label(text='Ground Body')
+        row.prop(self, 'ground_body', text='')
+
+        row = self.layout.row(align=True)
+        row.label(text='Sector Mode')
+        row.prop(self, 'sector_loading_mode', text='')
+
     def execute(self, context: Context):
         preferences = OWRecorderPreferences.from_context(context)
         if preferences.empty():
@@ -48,6 +68,11 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         ground_body_name = self.get_ground_body_name(api_client)
         if ground_body_name is None:
             self.report({'ERROR'}, 'could not get current ground body name')
+            return {'CANCELLED'}
+
+        current_loaded_ground_body = get_current_ground_body()
+        if current_loaded_ground_body is not None and current_loaded_ground_body.name != ground_body_name:
+            self.report({'ERROR'}, 'multiple ground bodies in one project is not supported')
             return {'CANCELLED'}
 
         ground_body_project_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + '.blend')
