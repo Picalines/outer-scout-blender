@@ -29,14 +29,6 @@ class OW_RECORDER_OT_generate_ground_body_background(Operator, GroundBodySelecti
 
         context.view_layer.update()
 
-        # ground_body_collection = bpy.data.collections.new(f'{ground_body_object.name} Collection')
-        # context.scene.collection.children.link(ground_body_collection)
-
-        # ground_body_collection.objects.link(ground_body_object)
-        # for child in ground_body_object.children_recursive:
-        #     ground_body_collection.objects.link(child)
-        #     context.scene.collection.objects.unlink(child)
-
         bpy.ops.wm.save_as_mainfile(filepath=str(Path(preferences.ow_bodies_folder).joinpath(self.ground_body + '.blend')))
 
         bpy.ops.wm.quit_blender()
