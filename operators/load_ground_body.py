@@ -31,8 +31,8 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
     sector_loading_mode: EnumProperty(
         name='Sector Mode',
         items=[
-            ('CURRENT_AND_PARENTS', 'Current And Parents', ''),
-            ('CURRENT', 'Only Current', ''),
+            ('CURRENT_AND_PARENTS', 'Current and parents', ''),
+            ('CURRENT', 'Only current', ''),
             ('ALL', 'All', '(potential high RAM usage)'),
         ],
     )
