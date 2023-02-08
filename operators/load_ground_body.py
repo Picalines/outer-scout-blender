@@ -95,15 +95,6 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
                 self.report({'ERROR'}, f'could not link {sector_collection_name}')
                 return {'CANCELLED'}
 
-        # sector_link = context.view_layer.objects.active
-        # sector_link.hide_render = True
-
-        # ground_body_collection = bpy.data.collections.new(GROUND_BODY_COLLECTION_NAME)
-        # context.scene.collection.children.link(ground_body_collection)
-        # ground_body_collection.objects.link(sector_link)
-        # context.scene.collection.objects.unlink(sector_link)
-        # ground_body_collection.hide_render = True
-
         if GROUND_BODY_COLLECTION_NAME not in bpy.data.collections:
             ground_body_collection = bpy.data.collections.new(GROUND_BODY_COLLECTION_NAME)
             context.scene.collection.children.link(ground_body_collection)
