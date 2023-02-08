@@ -1,15 +1,79 @@
-from typing import Literal
+from typing import Literal, Any
 
 from ..preferences import OWRecorderPreferences
-from .models import TransformModel, CameraInfo
+from .models import TransformModel, CameraInfo, RecorderSettings
 from .http import send_request, Request, Response
 
 from dataclasses import replace
 
 
+AnimationName = Literal['free_camera/transform', 'hdri_pivot/transform']
+
+
 class APIClient:
     def __init__(self, preferences: OWRecorderPreferences):
         self.base_url = f'http://localhost:{preferences.api_port}/'
+
+    def get_is_able_to_record(self) -> bool:
+        response = self._get_response(Request(
+            method='GET',
+            url='recorder/is_able_to_record',
+        ))
+        return response.is_success() and bool(response.json())
+
+    def get_is_recording(self) -> bool:
+        response = self._get_response(Request(
+            method='GET',
+            url='recorder/enabled',
+        ))
+        return response.is_success() and bool(response.json())
+
+    def set_is_recording(self, should_record: bool) -> bool:
+        response = self._get_response(Request(
+            method='PUT',
+            url='recorder/enabled',
+            data=should_record,
+        ))
+        return response.is_success()
+
+    def set_recorder_settings(self, recorder_settings: RecorderSettings) -> bool:
+        response = self._get_response(Request(
+            method='PUT',
+            url='recorder/settings',
+            data=recorder_settings,
+        ))
+        return response.is_success()
+
+    def get_frames_recorded(self) -> int | None:
+        response = self._get_response(Request(
+            method='GET',
+            url='recorder/frames_recorded',
+        ))
+        return int(response.body) if response.is_success() else None
+
+    def set_animation_frame_count(self, animation: AnimationName, new_count: int) -> bool:
+        response = self._get_response(Request(
+            method='PUT',
+            url=f'animation/{animation}/frame_count',
+            data=new_count,
+        ))
+        return response.is_success()
+
+    def set_animation_value_at_frame(self, animation: AnimationName, frame_index: int, value_json: Any) -> bool:
+        response = self._get_response(Request(
+            method='PUT',
+            url=f'animation/{animation}/value_at_frame/{frame_index}',
+            data=value_json,
+        ))
+        return response.is_success()
+
+    def set_animation_values_from_frame(self, animation: AnimationName, start_frame_index: int, values: list[Any]) -> bool:
+        response = self._get_response(Request(
+            method='PUT',
+            url=f'animation/{animation}/values_from_frame/{start_frame_index}',
+            data=values,
+        ))
+        return response.is_success()
 
     def get_ground_body_name(self) -> str | None:
         response = self._get_response(Request(

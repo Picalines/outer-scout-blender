@@ -1,8 +1,8 @@
 from typing import TypedDict
 
 
-class SceneSettings(TypedDict):
-    ground_body_name: str
+class RecorderSettings(TypedDict):
+    output_directory: str
     frame_count: int
     frame_rate: float
     resolution_x: int
