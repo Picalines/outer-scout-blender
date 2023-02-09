@@ -20,8 +20,6 @@ class OW_RECORDER_PT_render(Panel):
 
         self.layout.prop(render_props, 'hide_player_model')
         self.layout.prop(render_props, 'hdri_face_size')
-        self.layout.prop(render_props, 'animation_chunk_size')
-        self.layout.prop(render_props, 'render_timer_delay')
 
         if not render_props.is_rendering:
             self.layout.operator(
@@ -37,3 +35,21 @@ class OW_RECORDER_PT_render(Panel):
                 text=render_props.render_stage_description,
                 slider=True,
             )
+
+
+@bpy_register
+class OW_RECORDER_PT_render_editor_settings(Panel):
+    bl_idname = 'OW_RECORDER_PT_render_editor_settings'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Outer Wilds Recorder'
+    bl_parent_id = 'OW_RECORDER_PT_render'
+    bl_label = 'Editor settings'
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        render_props = OWRecorderRenderProperties.from_context(context)
+        self.layout.enabled = not render_props.is_rendering
+
+        self.layout.prop(render_props, 'animation_chunk_size')
+        self.layout.prop(render_props, 'render_timer_delay')
