@@ -136,11 +136,14 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             ground_body_collection = bpy.data.collections[GROUND_BODY_COLLECTION_NAME]
             ground_body_sectors_parent = ground_body_collection.objects[0]
 
+        ground_body_hidden = ground_body_sectors_parent.hide_get()
+
         for loaded_sector_collection_name in loaded_sector_collections_names:
             sector_collection_instance = bpy.data.objects[loaded_sector_collection_name]
             sector_collection_instance.hide_render = True
             sector_collection_instance.hide_select = True
             sector_collection_instance.parent = ground_body_sectors_parent
+            sector_collection_instance.hide_set(state=ground_body_hidden)
 
             ground_body_collection.objects.link(sector_collection_instance)
             context.scene.collection.objects.unlink(sector_collection_instance)
