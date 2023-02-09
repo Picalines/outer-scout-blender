@@ -20,6 +20,8 @@ class OW_RECORDER_PT_render(Panel):
 
         self.layout.prop(render_props, 'hide_player_model')
         self.layout.prop(render_props, 'hdri_face_size')
+        self.layout.prop(render_props, 'animation_chunk_size')
+        self.layout.prop(render_props, 'render_timer_delay')
 
         if not render_props.is_rendering:
             self.layout.operator(
@@ -31,7 +33,7 @@ class OW_RECORDER_PT_render(Panel):
             row.enabled = False
             row.prop(
                 data=render_props,
-                property='render_progress',
-                text='Rendering...',
+                property='render_stage_progress',
+                text=render_props.render_stage_description,
                 slider=True,
             )
