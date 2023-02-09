@@ -38,7 +38,7 @@ class OW_RECORDER_OT_render(Operator):
 
         self._render_props = OWRecorderRenderProperties.from_context(context)
 
-        self._frame_count = context.scene.frame_end - context.scene.frame_start
+        self._frame_count = context.scene.frame_end - context.scene.frame_start + 1
 
         recorder_settings: RecorderSettings = {
             'output_directory': bpy_abspath('//Outer Wilds/footage/'),
@@ -104,7 +104,7 @@ class OW_RECORDER_OT_render(Operator):
                 .to_json())
 
             self._frame_offset += 1
-            if self._frame_offset > self._frame_count:
+            if self._frame_offset >= self._frame_count:
                 break
 
         for animation_name, transforms in animation_transforms.items():
