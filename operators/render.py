@@ -1,5 +1,6 @@
 from typing import Literal
 
+import bpy
 from bpy.types import Operator, Context, Event, Object
 from bpy.path import abspath as bpy_abspath
 
@@ -20,6 +21,7 @@ class OW_RECORDER_OT_render(Operator):
 
     _timer = None
     _api_client: APIClient = None
+    _was_on_frame: int = 0
     _frame_count: int = 0
     _frame_offset: int = 0
     _render_props: OWRecorderRenderProperties = None
@@ -36,9 +38,11 @@ class OW_RECORDER_OT_render(Operator):
             self.report({'ERROR'}, 'already recording')
             return {'CANCELLED'}
 
+        self._was_on_frame = context.scene.frame_current
+
         self._render_props = OWRecorderRenderProperties.from_context(context)
 
-        self._frame_count = context.scene.frame_end - context.scene.frame_start + 1
+        self._frame_count = context.scene.frame_end - context.scene.frame_start + 1 + self._render_props.render_end_margin
 
         recorder_settings: RecorderSettings = {
             'output_directory': bpy_abspath('//Outer Wilds/footage/'),
@@ -119,6 +123,7 @@ class OW_RECORDER_OT_render(Operator):
                 return {'CANCELLED'}
 
             self._stage = 'RENDERING'
+            context.scene.frame_set(frame=self._was_on_frame)
 
         return {'RUNNING_MODAL'}
 
@@ -135,6 +140,8 @@ class OW_RECORDER_OT_render(Operator):
 
         if frames_recorded < self._frame_count:
             return {'RUNNING_MODAL'}
+
+        bpy.ops.ow_recorder.load_camera_background()
 
         self.remove_timer(context)
         self.report({'INFO'}, 'Outer Wilds render finished')
