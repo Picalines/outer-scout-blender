@@ -7,6 +7,7 @@ import bpy
 from bpy.types import Operator, Object, Context
 from bpy.props import EnumProperty
 
+from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from .ground_body_selection_helper import GroundBodySelectionHelper
@@ -22,6 +23,7 @@ def get_current_ground_body() -> Object | None:
     return ground_body_collection.objects[0] if any(ground_body_collection.objects) else None
 
 
+@bpy_register
 class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
     '''Loads current ground body (might take a while for the first time) and links it to current project.'''
 

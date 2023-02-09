@@ -1,8 +1,10 @@
 from bpy.types import Panel
 
+from ..bpy_register import bpy_register
 from ..operators.synchronize import OW_RECORDER_OT_synchronize
 
 
+@bpy_register
 class OW_RECORDER_PT_sync_tools(Panel):
     bl_idname = 'OW_RECORDER_PT_sync_tools'
     bl_space_type = 'VIEW_3D'

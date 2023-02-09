@@ -3,10 +3,12 @@ from bpy.types import Operator
 
 from pathlib import Path
 
+from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
+@bpy_register
 class OW_RECORDER_OT_generate_ground_body_background(Operator, GroundBodySelectionHelper):
     bl_idname = 'ow_recorder.generate_ground_body_background'
     bl_label = 'Call ow_recorder.generate_ground_body in background environment'

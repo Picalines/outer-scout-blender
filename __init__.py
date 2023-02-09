@@ -10,34 +10,25 @@ bl_info = {
 }
 
 import bpy
-from . import preferences
-from . import panels
-from . import operators
+from .bpy_register import CLASSES_TO_REGISTER, PROPERTIES_TO_REGISTER
 
-
-def iter_classes_to_register():
-    yielded_classes = set()
-    yield (preferences_cls := preferences.OWRecorderPreferences)
-    yielded_classes.add(preferences_cls)
-    for module, keys in map(lambda m: (m, dir(m)), (operators, panels)):
-        for key in keys:
-            if not (('_OT_' in key) or ('_PT_' in key)):
-                continue
-            if not isinstance(cls := getattr(module, key), type):
-                continue
-            if cls in yielded_classes:
-                continue
-            yield cls
-            yielded_classes.add(cls)
+from . import preferences as _
+from . import properties as _
+from . import panels as _
+from . import operators as _
 
 
 def register():
-    for cls in iter_classes_to_register():
+    for cls in CLASSES_TO_REGISTER:
         bpy.utils.register_class(cls)
+
+        if cls in PROPERTIES_TO_REGISTER:
+            registered_property = PROPERTIES_TO_REGISTER[cls]
+            setattr(registered_property.id_type, registered_property.property_name, registered_property.property_type(type=cls))
 
 
 def unregister():
-    for cls in iter_classes_to_register():
+    for cls in CLASSES_TO_REGISTER:
         bpy.utils.unregister_class(cls)
 
 

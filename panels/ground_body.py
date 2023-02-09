@@ -1,8 +1,10 @@
 from bpy.types import Panel
 
+from ..bpy_register import bpy_register
 from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body, get_current_ground_body
 
 
+@bpy_register
 class OW_RECORDER_PT_ground_body(Panel):
     bl_idname = 'OW_RECORDER_PT_ground_body'
     bl_space_type = 'VIEW_3D'

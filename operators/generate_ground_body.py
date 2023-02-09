@@ -6,6 +6,7 @@ from math import radians
 from pathlib import Path
 import json
 
+from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, GroundBodyMeshInfo
@@ -13,6 +14,7 @@ from ..utils import iter_parents, get_child_by_path
 from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
+@bpy_register
 class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
     bl_idname = 'ow_recorder.generate_ground_body'
     bl_label = 'Generate .blend from extracted .fbx ground body with higher resolution'

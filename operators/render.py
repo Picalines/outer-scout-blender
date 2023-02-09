@@ -1,13 +1,15 @@
 from bpy.types import Operator, Context, Event, Object
-from bpy.props import BoolProperty, IntProperty
 from bpy.path import abspath as bpy_abspath
 
+from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
+from ..properties import OWRecorderRenderProperties
 from ..api.models import RecorderSettings, TransformModel
 from ..api import APIClient
 from ..operators.load_ground_body import get_current_ground_body
 
 
+@bpy_register
 class OW_RECORDER_OT_render(Operator):
     '''Render footage in Outer Wilds and import it to current project'''
 
@@ -17,17 +19,7 @@ class OW_RECORDER_OT_render(Operator):
     _timer = None
     _api_client: APIClient = None
     _frame_count: int = 0
-
-    hide_player_model: BoolProperty(
-        name='Hide player model',
-        default=True,
-    )
-
-    hdri_face_size: IntProperty(
-        name='HDRI face size',
-        default=512,
-        min=10,
-    )
+    _render_props: OWRecorderRenderProperties = None
 
     @classmethod
     def poll(cls, _) -> bool:
@@ -40,6 +32,8 @@ class OW_RECORDER_OT_render(Operator):
             self.report({'ERROR'}, 'already recording')
             return {'CANCELLED'}
 
+        self._render_props = OWRecorderRenderProperties.from_context(context)
+
         self._frame_count = context.scene.frame_end - context.scene.frame_start
 
         recorder_settings: RecorderSettings = {
@@ -48,8 +42,8 @@ class OW_RECORDER_OT_render(Operator):
             'frame_rate': context.scene.render.fps,
             'resolution_x': context.scene.render.resolution_x,
             'resolution_y': context.scene.render.resolution_y,
-            'hdri_face_size': self.hdri_face_size,
-            'hide_player_model': self.hide_player_model,
+            'hdri_face_size': self._render_props.hdri_face_size,
+            'hide_player_model': self._render_props.hide_player_model,
         }
 
         if not self._api_client.set_recorder_settings(recorder_settings):
@@ -68,6 +62,9 @@ class OW_RECORDER_OT_render(Operator):
 
         self._timer = context.window_manager.event_timer_add(1, window=context.window)
         context.window_manager.modal_handler_add(self)
+
+        self._render_props.render_progress = 0
+        self._render_props.is_rendering = True
 
         return {'RUNNING_MODAL'}
 
@@ -104,6 +101,9 @@ class OW_RECORDER_OT_render(Operator):
             self.report({'ERROR'}, 'failed to receive recorded frames count')
             return {'CANCELLED'}
 
+        self._render_props.render_progress = frames_recorded / self._frame_count
+        context.area.tag_redraw()
+
         if frames_recorded < self._frame_count:
             return {'PASS_THROUGH'}
 
@@ -112,6 +112,7 @@ class OW_RECORDER_OT_render(Operator):
 
     def remove_timer(self, context: Context):
         context.window_manager.event_timer_remove(self._timer)
+        self._render_props.is_rendering = False
 
     def _get_transform_local_to(self, parent: Object, child: Object) -> TransformModel:
         local_matrix = parent.matrix_world.inverted() @ child.matrix_world

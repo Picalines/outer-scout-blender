@@ -4,12 +4,14 @@ from bpy.props import EnumProperty
 from math import radians
 from mathutils import Quaternion, Matrix
 
+from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
 from .load_ground_body import get_current_ground_body
 
 
+@bpy_register
 class OW_RECORDER_OT_synchronize(Operator):
     '''Synchronize choosen items between Blender and Outer Wilds'''
 
