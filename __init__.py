@@ -19,8 +19,13 @@ from . import operators as _
 
 
 def register():
+    registered_classes: set[type] = set()
     for cls in CLASSES_TO_REGISTER:
+        if cls in registered_classes:
+            continue
+
         bpy.utils.register_class(cls)
+        registered_classes.add(cls)
 
         if cls in PROPERTIES_TO_REGISTER:
             registered_property = PROPERTIES_TO_REGISTER[cls]

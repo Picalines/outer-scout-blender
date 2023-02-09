@@ -14,20 +14,20 @@ class RegisteredProperty:
     property_type: type
 
 
-CLASSES_TO_REGISTER: set[type] = set()
+CLASSES_TO_REGISTER: list[type] = []
 
 
 PROPERTIES_TO_REGISTER: dict[type, RegisteredProperty] = {}
 
 
 def bpy_register(cls: TType) -> TType:
-    CLASSES_TO_REGISTER.add(cls)
+    CLASSES_TO_REGISTER.append(cls)
     return cls
 
 
 def bpy_register_property(id_type: type, property_name: str, property_type: type = PointerProperty):
     def decorator(cls: TType) -> TType:
-        CLASSES_TO_REGISTER.add(cls)
+        CLASSES_TO_REGISTER.append(cls)
         PROPERTIES_TO_REGISTER[cls] = RegisteredProperty(id_type, property_name, property_type)
         return cls
 
