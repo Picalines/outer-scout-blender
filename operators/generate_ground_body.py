@@ -34,10 +34,15 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
             self._log('ERROR', 'failed to get ground body name')
             return {'CANCELLED'}
 
+        ground_body_fbx_path = ow_bodies_folder.joinpath(ground_body_name + '.fbx')
+        if not ground_body_fbx_path.is_file():
+            self._log({'ERROR'}, f'{ground_body_fbx_path} not found')
+            return {'CANCELLED'}
+
         self._log('INFO', f'generating {ground_body_name} object...')
 
         mesh_list_path = ow_bodies_folder.joinpath(ground_body_name + '_meshes.json')
-        if not mesh_list_path.exists():
+        if not mesh_list_path.is_file():
             current_ground_body_name = api_client.get_ground_body_name()
             if current_ground_body_name != ground_body_name:
                 self._log('ERROR', f'unable to create mesh list file. Go to {ground_body_name} in game and call operator again')
@@ -49,7 +54,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 self._log('ERROR', 'could not generate mesh list')
                 return {'CANCELLED'}
 
-        if not mesh_list_path.exists():
+        if not mesh_list_path.is_file():
             self._log('ERROR', 'BUG: mesh list was not created by API')
             return {'CANCELLED'}
 
@@ -76,7 +81,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         bpy.ops.object.select_all(action='DESELECT')
 
-        ground_body_fbx_path = str(ow_bodies_folder.joinpath(ground_body_name + '.fbx'))
+        ground_body_fbx_path = str(ground_body_fbx_path)
         self._log('INFO', f'importing {ground_body_fbx_path}')
         if bpy.ops.import_scene.fbx(filepath=ground_body_fbx_path) != {'FINISHED'}:
             self._log('ERROR', f'failed to import ground body fbx: {ground_body_fbx_path}')
