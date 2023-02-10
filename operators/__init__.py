@@ -6,3 +6,4 @@ from .render import OW_RECORDER_OT_render as OW_RECORDER_OT_render
 from .synchronize import OW_RECORDER_OT_synchronize as OW_RECORDER_OT_synchronize
 from .set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible as OW_RECORDER_OT_set_ground_body_visible
 from .move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin as OW_RECORDER_OT_move_ground_to_origin
+from .create_ow_pivots import OW_RECORDER_OT_create_ow_pivots as OW_RECORDER_OT_create_ow_pivots
