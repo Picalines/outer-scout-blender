@@ -143,6 +143,9 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             sector_collection_instance.hide_render = True
             sector_collection_instance.hide_select = True
             sector_collection_instance.parent = ground_body_sectors_parent
+            sector_collection_instance.location = (0, 0, 0)
+            sector_collection_instance.rotation_euler = (0, 0, 0)
+            sector_collection_instance.scale = (1, 1, 1)
             sector_collection_instance.hide_set(state=ground_body_hidden)
 
             ground_body_collection.objects.link(sector_collection_instance)
