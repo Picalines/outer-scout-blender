@@ -5,3 +5,4 @@ from .load_ground_body import OW_RECORDER_OT_load_ground_body as OW_RECORDER_OT_
 from .render import OW_RECORDER_OT_render as OW_RECORDER_OT_render
 from .synchronize import OW_RECORDER_OT_synchronize as OW_RECORDER_OT_synchronize
 from .set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible as OW_RECORDER_OT_set_ground_body_visible
+from .move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin as OW_RECORDER_OT_move_ground_to_origin

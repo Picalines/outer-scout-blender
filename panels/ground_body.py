@@ -3,6 +3,7 @@ from bpy.types import Panel
 from ..bpy_register import bpy_register
 from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body, get_current_ground_body
 from ..operators.set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible
+from ..operators.move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin
 
 
 @bpy_register
@@ -23,6 +24,11 @@ class OW_RECORDER_PT_ground_body(Panel):
             text=('Load ground body'
                   if not has_ground_body
                   else 'Add current sector'),
+        )
+
+        self.layout.operator(
+            operator=OW_RECORDER_OT_move_ground_to_origin.bl_idname,
+            icon='OBJECT_ORIGIN',
         )
 
         ground_body_visible = has_ground_body and not current_ground_body.hide_get()

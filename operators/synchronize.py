@@ -87,6 +87,8 @@ class OW_RECORDER_OT_synchronize(Operator):
         blender_item.rotation_quaternion = new_rotation
         if self.blender_item != 'CURSOR':
             blender_item.scale = new_scale
+        else:
+            blender_item.matrix @= Matrix.Rotation(radians(-90), 4, (1, 0, 0))
 
         if self.blender_item == 'CAMERA' and ('camera' in self.ow_item):
             camera_info = api_cilent.get_camera_info(self.ow_item)
