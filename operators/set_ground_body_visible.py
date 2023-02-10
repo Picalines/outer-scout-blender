@@ -2,7 +2,7 @@ from bpy.types import Operator
 from bpy.props import BoolProperty
 
 from ..bpy_register import bpy_register
-from ..operators.load_ground_body import get_current_ground_body
+from ..ow_objects import get_current_ground_body
 
 
 @bpy_register

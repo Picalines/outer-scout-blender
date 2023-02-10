@@ -5,11 +5,11 @@ from bpy.types import Operator, Context, Event, Object
 from bpy.path import abspath as bpy_abspath
 
 from ..bpy_register import bpy_register
+from ..ow_objects import get_current_ground_body
 from ..preferences import OWRecorderPreferences
 from ..properties import OWRecorderRenderProperties
 from ..api.models import RecorderSettings, TransformModel, TransformModelJSON
 from ..api import APIClient
-from ..operators.load_ground_body import get_current_ground_body
 
 
 @bpy_register
@@ -28,8 +28,8 @@ class OW_RECORDER_OT_render(Operator):
     _stage: Literal['SENDING_ANIMATION', 'RENDERING'] = ''
 
     @classmethod
-    def poll(cls, _) -> bool:
-        return get_current_ground_body() is not None
+    def poll(cls, context) -> bool:
+        return all((context.scene.camera, get_current_ground_body()))
 
     def invoke(self, context: Context, _):
         self._api_client = APIClient(OWRecorderPreferences.from_context(context))

@@ -4,23 +4,14 @@ from pathlib import Path
 from typing import Iterable
 
 import bpy
-from bpy.types import Operator, Object, Context
+from bpy.types import Operator, Context
 from bpy.props import EnumProperty
 
 from ..bpy_register import bpy_register
+from ..ow_objects import get_current_ground_body, GROUND_BODY_COLLECTION_NAME
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from .ground_body_selection_helper import GroundBodySelectionHelper
-
-
-GROUND_BODY_COLLECTION_NAME = 'Outer Wilds ground body'
-
-
-def get_current_ground_body() -> Object | None:
-    if GROUND_BODY_COLLECTION_NAME not in bpy.data.collections:
-        return None
-    ground_body_collection = bpy.data.collections[GROUND_BODY_COLLECTION_NAME]
-    return ground_body_collection.objects[0] if any(ground_body_collection.objects) else None
 
 
 @bpy_register
