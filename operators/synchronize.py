@@ -5,7 +5,7 @@ from math import radians
 from mathutils import Quaternion, Matrix
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body
+from ..ow_objects import get_current_ground_body, get_current_player_body_pivot, get_current_hdri_pivot, poll_ow_objects
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
@@ -31,6 +31,8 @@ class OW_RECORDER_OT_synchronize(Operator):
         items=[
             ('CURSOR', 'Cursor', ''),
             ('CAMERA', 'Camera', ''),
+            ('PLAYER_BODY_PIVOT', 'Player body pivot', ''),
+            ('HDRI_PIVOT', 'HDRI pivot', ''),
         ],
     )
 
@@ -45,7 +47,7 @@ class OW_RECORDER_OT_synchronize(Operator):
 
     @classmethod
     def poll(cls, context) -> bool:
-        return all((context.scene.camera, get_current_ground_body()))
+        return context.scene.camera is not None and poll_ow_objects()
 
     def invoke(self, context: Context, _):
         return context.window_manager.invoke_props_dialog(self)
@@ -134,6 +136,12 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {'FINISHED'}
 
     def _get_blender_item(self, context: Context) -> Object | View3DCursor:
+        if self.blender_item.endswith('_PIVOT'):
+            return {
+                'PLAYER_BODY_PIVOT': get_current_player_body_pivot,
+                'HDRI_PIVOT': get_current_hdri_pivot,
+            }[self.blender_item]()
+
         return getattr(context.scene, self.blender_item.lower())
 
     def invoke(self, context: Context, _):

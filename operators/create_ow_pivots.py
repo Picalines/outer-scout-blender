@@ -29,7 +29,7 @@ class OW_RECORDER_OT_create_ow_pivots(Operator):
         # player body pivot
         if (player_body_pivot := get_current_player_body_pivot()) is None:
             player_body_pivot = bpy.data.objects.new(PLAYER_BODY_PIVOT_NAME, None)
-            player_body_pivot.empty_display_type = 'ARROWS'
+            player_body_pivot.empty_display_type = 'PLAIN_AXES'
 
         if pivots_collection not in player_body_pivot.users_collection:
             pivots_collection.objects.link(player_body_pivot)
@@ -37,7 +37,7 @@ class OW_RECORDER_OT_create_ow_pivots(Operator):
         # hdri pivot
         if (hdri_pivot := get_current_hdri_pivot()) is None:
             hdri_pivot = bpy.data.objects.new(HDRI_PIVOT_NAME, None)
-            hdri_pivot.empty_display_type = 'ARROWS'
+            hdri_pivot.empty_display_type = 'PLAIN_AXES'
 
         if pivots_collection not in hdri_pivot.users_collection:
             pivots_collection.objects.link(hdri_pivot)
