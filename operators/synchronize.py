@@ -44,8 +44,8 @@ class OW_RECORDER_OT_synchronize(Operator):
     )
 
     @classmethod
-    def poll(cls, _) -> bool:
-        return get_current_ground_body() is not None
+    def poll(cls, context) -> bool:
+        return all((context.scene.camera, get_current_ground_body()))
 
     def invoke(self, context: Context, _):
         return context.window_manager.invoke_props_dialog(self)
