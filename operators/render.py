@@ -1,5 +1,4 @@
 from typing import Literal
-from math import degrees
 
 import bpy
 from bpy.types import Operator, Context, Event, Object
@@ -8,7 +7,7 @@ from bpy.path import abspath as bpy_abspath
 from ..bpy_register import bpy_register
 from ..ow_objects import get_current_ground_body, get_current_hdri_pivot
 from ..preferences import OWRecorderPreferences
-from ..properties import OWRecorderRenderProperties
+from ..properties import OWRecorderRenderProperties, OWRecorderSceneProperties
 from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
 from ..api import APIClient
 
@@ -26,6 +25,7 @@ class OW_RECORDER_OT_render(Operator):
     _frame_count: int = 0
     _frame_offset: int = 0
     _render_props: OWRecorderRenderProperties = None
+    _scene_props: OWRecorderSceneProperties = None
     _stage: Literal['SENDING_ANIMATION', 'RENDERING'] = ''
 
     @classmethod
@@ -42,6 +42,7 @@ class OW_RECORDER_OT_render(Operator):
         self._was_on_frame = context.scene.frame_current
 
         self._render_props = OWRecorderRenderProperties.from_context(context)
+        self._scene_props = OWRecorderSceneProperties.from_context(context)
 
         self._frame_count = context.scene.frame_end - context.scene.frame_start + 1 + self._render_props.render_end_margin
 
@@ -95,7 +96,7 @@ class OW_RECORDER_OT_render(Operator):
         camera = context.scene.camera
 
         animation_values: dict[str, list] = {
-            name: [] for name in ('free_camera/transform', 'free_camera/camera_info', 'hdri_pivot/transform')
+            name: [] for name in ('free_camera/transform', 'free_camera/camera_info', 'hdri_pivot/transform', 'time/scale')
         }
 
         animation_name_to_object = {
@@ -114,6 +115,8 @@ class OW_RECORDER_OT_render(Operator):
                     .to_json())
 
             animation_values['free_camera/camera_info'].append(camera_info_from_blender(camera.data))
+
+            animation_values['time/scale'].append(self._scene_props.time_scale)
 
             self._frame_offset += 1
             if self._frame_offset >= self._frame_count:

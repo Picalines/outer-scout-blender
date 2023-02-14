@@ -1,1 +1,2 @@
 from .render_props import OWRecorderRenderProperties as OWRecorderRenderProperties
+from .scene_props import OWRecorderSceneProperties as OWRecorderSceneProperties
