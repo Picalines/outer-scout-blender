@@ -9,7 +9,7 @@ from ..bpy_register import bpy_register
 from ..ow_objects import get_current_ground_body, get_current_hdri_pivot
 from ..preferences import OWRecorderPreferences
 from ..properties import OWRecorderRenderProperties
-from ..api.models import RecorderSettings, TransformModel
+from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
 from ..api import APIClient
 
 
@@ -95,7 +95,7 @@ class OW_RECORDER_OT_render(Operator):
         camera = context.scene.camera
 
         animation_values: dict[str, list] = {
-            name: [] for name in ('free_camera/transform', 'free_camera/fov', 'hdri_pivot/transform')
+            name: [] for name in ('free_camera/transform', 'free_camera/camera_info', 'hdri_pivot/transform')
         }
 
         animation_name_to_object = {
@@ -113,14 +113,14 @@ class OW_RECORDER_OT_render(Operator):
                     .blender_to_unity()
                     .to_json())
 
-            animation_values['free_camera/fov'].append(degrees(camera.data.angle))
+            animation_values['free_camera/camera_info'].append(camera_info_from_blender(camera.data))
 
             self._frame_offset += 1
             if self._frame_offset >= self._frame_count:
                 break
 
-        for animation_name, transforms in animation_values.items():
-            success = self._api_client.set_animation_values_from_frame(animation_name, chunk_start_frame, transforms)
+        for animation_name, frame_values in animation_values.items():
+            success = self._api_client.set_animation_values_from_frame(animation_name, chunk_start_frame, frame_values)
             if not success:
                 self.report({'WARNING'}, f'failed to send animation {animation_name} data at frame {chunk_start_frame}')
 
