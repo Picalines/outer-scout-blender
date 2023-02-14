@@ -6,7 +6,7 @@ from bpy.types import Operator, Context, Object, View3DCursor
 from bpy.props import EnumProperty
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body, get_current_hdri_pivot, poll_ow_objects
+from ..ow_objects import get_current_ground_body, get_current_hdri_pivot
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
