@@ -1,6 +1,7 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
+from ..ow_objects import get_current_hdri_pivot
 from ..operators.synchronize import OW_RECORDER_OT_synchronize
 from ..operators.create_ow_pivots import OW_RECORDER_OT_create_ow_pivots
 
@@ -20,8 +21,9 @@ class OW_RECORDER_PT_tools(Panel):
             text='Sync with Outer Wilds',
         )
 
-        self.layout.operator(
-            operator=OW_RECORDER_OT_create_ow_pivots.bl_idname,
-            icon='OUTLINER_OB_EMPTY',
-            text='Create pivots',
-        )
+        if not get_current_hdri_pivot():
+            self.layout.operator(
+                operator=OW_RECORDER_OT_create_ow_pivots.bl_idname,
+                icon='OUTLINER_OB_EMPTY',
+                text='Create pivots',
+            )
