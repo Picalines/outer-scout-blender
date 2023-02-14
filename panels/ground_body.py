@@ -19,13 +19,15 @@ class OW_RECORDER_PT_ground_body(Panel):
         current_ground_body = get_current_ground_body()
         has_ground_body = current_ground_body is not None
 
-        self.layout.operator(
+        load_ground_body_props = self.layout.operator(
             operator=OW_RECORDER_OT_load_ground_body.bl_idname,
             icon='WORLD',
             text=('Load ground body'
                   if not has_ground_body
                   else 'Add current sector'),
         )
+
+        load_ground_body_props.move_ground_to_origin = not has_ground_body
 
         self.layout.operator(
             operator=OW_RECORDER_OT_move_ground_to_origin.bl_idname,

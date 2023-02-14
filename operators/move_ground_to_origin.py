@@ -9,7 +9,7 @@ from ..ow_objects import get_current_ground_body
 class OW_RECORDER_OT_move_ground_to_origin(Operator):
     '''Moves ground body so that the cursor will be in the world origin'''
 
-    bl_idname = 'ow_recorder.align_ground_body'
+    bl_idname = 'ow_recorder.move_ground_to_origin'
     bl_label = 'Move ground to origin'
 
     @classmethod

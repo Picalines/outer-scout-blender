@@ -5,7 +5,7 @@ from typing import Iterable
 
 import bpy
 from bpy.types import Operator, Context
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, BoolProperty
 
 from ..bpy_register import bpy_register
 from ..ow_objects import get_current_ground_body, GROUND_BODY_COLLECTION_NAME
@@ -30,6 +30,12 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         ],
     )
 
+    move_ground_to_origin: BoolProperty(
+        name='Move to origin on player location',
+        description='Shorthand to move_ground_to_body operator',
+        default=False,
+    )
+
     def invoke(self, context: Context, _):
         current_ground_body = get_current_ground_body()
 
@@ -49,6 +55,10 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         row = self.layout.row(align=True)
         row.label(text='Sector Mode')
         row.prop(self, 'sector_loading_mode', text='')
+
+        row = self.layout.row(align=True)
+        row.label(text='Move to origin on player location')
+        row.prop(self, 'move_ground_to_origin', text='')
 
     def execute(self, context: Context):
         preferences = OWRecorderPreferences.from_context(context)
@@ -141,6 +151,14 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
 
             ground_body_collection.objects.link(sector_collection_instance)
             context.scene.collection.objects.unlink(sector_collection_instance)
+
+        if self.move_ground_to_origin:
+            bpy.ops.ow_recorder.synchronize(
+                sync_direction='OW_TO_BLENDER',
+                blender_item='CURSOR',
+                ow_item='player/body',
+            )
+            bpy.ops.ow_recorder.move_ground_to_origin()
 
         return {'FINISHED'}
 

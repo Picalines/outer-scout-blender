@@ -12,14 +12,6 @@ class OW_RECORDER_OT_create_ow_pivots(Operator):
     bl_idname = 'ow_recorder.create_ow_pivots'
     bl_label = 'Create pivots'
 
-    @classmethod
-    def poll(cls, _) -> bool:
-        return not all((
-            get_pivots_collection(),
-            get_current_player_body_pivot(),
-            get_current_hdri_pivot(),
-        ))
-
     def execute(self, context):
         # pivots collection
         if (pivots_collection := get_pivots_collection()) is None:

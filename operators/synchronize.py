@@ -1,8 +1,9 @@
-from bpy.types import Operator, Context, Object, View3DCursor
-from bpy.props import EnumProperty
-
 from math import radians
 from mathutils import Quaternion, Matrix
+
+import bpy
+from bpy.types import Operator, Context, Object, View3DCursor
+from bpy.props import EnumProperty
 
 from ..bpy_register import bpy_register
 from ..ow_objects import get_current_ground_body, get_current_player_body_pivot, get_current_hdri_pivot, poll_ow_objects
@@ -47,12 +48,14 @@ class OW_RECORDER_OT_synchronize(Operator):
 
     @classmethod
     def poll(cls, context) -> bool:
-        return context.scene.camera is not None and poll_ow_objects()
+        return get_current_ground_body() is not None
 
     def invoke(self, context: Context, _):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context: Context):
+        self._add_blender_items(context)
+    
         if self.sync_direction == 'OW_TO_BLENDER':
             return self._sync_ow_to_blender(context)
         elif self.sync_direction == 'BLENDER_TO_OW':
@@ -144,5 +147,10 @@ class OW_RECORDER_OT_synchronize(Operator):
 
         return getattr(context.scene, self.blender_item.lower())
 
-    def invoke(self, context: Context, _):
-        return context.window_manager.invoke_props_dialog(self)
+    def _add_blender_items(self, context: Context):
+        if self.blender_item == 'CAMERA':
+            if context.scene.camera is None:
+                bpy.ops.object.camera_add(context)
+
+        elif '_PIVOT' in self.blender_item:
+            bpy.ops.ow_recorder.create_ow_pivots(context)
