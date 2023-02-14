@@ -6,7 +6,7 @@ from bpy.types import Operator, Context, Object, View3DCursor
 from bpy.props import EnumProperty
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body, get_current_player_body_pivot, get_current_hdri_pivot, poll_ow_objects
+from ..ow_objects import get_current_ground_body, get_current_hdri_pivot, poll_ow_objects
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
@@ -32,7 +32,6 @@ class OW_RECORDER_OT_synchronize(Operator):
         items=[
             ('CURSOR', 'Cursor', ''),
             ('CAMERA', 'Camera', ''),
-            ('PLAYER_BODY_PIVOT', 'Player body pivot', ''),
             ('HDRI_PIVOT', 'HDRI pivot', ''),
         ],
     )
@@ -47,7 +46,7 @@ class OW_RECORDER_OT_synchronize(Operator):
     )
 
     @classmethod
-    def poll(cls, context) -> bool:
+    def poll(cls, _) -> bool:
         return get_current_ground_body() is not None
 
     def invoke(self, context: Context, _):
@@ -55,7 +54,7 @@ class OW_RECORDER_OT_synchronize(Operator):
 
     def execute(self, context: Context):
         self._add_blender_items(context)
-    
+
         if self.sync_direction == 'OW_TO_BLENDER':
             return self._sync_ow_to_blender(context)
         elif self.sync_direction == 'BLENDER_TO_OW':
@@ -139,11 +138,8 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {'FINISHED'}
 
     def _get_blender_item(self, context: Context) -> Object | View3DCursor:
-        if self.blender_item.endswith('_PIVOT'):
-            return {
-                'PLAYER_BODY_PIVOT': get_current_player_body_pivot,
-                'HDRI_PIVOT': get_current_hdri_pivot,
-            }[self.blender_item]()
+        if self.blender_item == 'HDRI_PIVOT':
+            return get_current_hdri_pivot()
 
         return getattr(context.scene, self.blender_item.lower())
 

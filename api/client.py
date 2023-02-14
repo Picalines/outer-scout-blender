@@ -7,7 +7,7 @@ from .http import send_request, Request, Response
 from dataclasses import replace
 
 
-AnimationName = Literal['free_camera/transform', 'hdri_pivot/transform']
+AnimationName = Literal['free_camera/transform', 'free_camera/fov', 'hdri_pivot/transform']
 
 
 class APIClient:

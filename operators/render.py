@@ -1,14 +1,15 @@
 from typing import Literal
+from math import degrees
 
 import bpy
 from bpy.types import Operator, Context, Event, Object
 from bpy.path import abspath as bpy_abspath
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body
+from ..ow_objects import get_current_ground_body, get_current_hdri_pivot
 from ..preferences import OWRecorderPreferences
 from ..properties import OWRecorderRenderProperties
-from ..api.models import RecorderSettings, TransformModel, TransformModelJSON
+from ..api.models import RecorderSettings, TransformModel
 from ..api import APIClient
 
 
@@ -93,9 +94,13 @@ class OW_RECORDER_OT_render(Operator):
         ground_body = get_current_ground_body()
         camera = context.scene.camera
 
-        # TODO: hdri_pivot & player
-        animation_transforms: dict[str, list[TransformModelJSON]] = {
-            'free_camera/transform': [],
+        animation_values: dict[str, list] = {
+            name: [] for name in ('free_camera/transform', 'free_camera/fov', 'hdri_pivot/transform')
+        }
+
+        animation_name_to_object = {
+            'free_camera/transform': camera,
+            'hdri_pivot/transform': get_current_hdri_pivot(),
         }
 
         chunk_start_frame = self._frame_offset
@@ -103,19 +108,21 @@ class OW_RECORDER_OT_render(Operator):
         for _ in range(self._render_props.animation_chunk_size):
             context.scene.frame_set(frame=frame_start + self._frame_offset)
 
-            animation_transforms['free_camera/transform'].append(self._get_transform_local_to(ground_body, camera)
-                .blender_to_unity()
-                .to_json())
+            for animation_name, object in animation_name_to_object.items():
+                animation_values[animation_name].append(self._get_transform_local_to(ground_body, object)
+                    .blender_to_unity()
+                    .to_json())
+
+            animation_values['free_camera/fov'].append(degrees(camera.data.angle))
 
             self._frame_offset += 1
             if self._frame_offset >= self._frame_count:
                 break
 
-        for animation_name, transforms in animation_transforms.items():
+        for animation_name, transforms in animation_values.items():
             success = self._api_client.set_animation_values_from_frame(animation_name, chunk_start_frame, transforms)
-
             if not success:
-                self.report({'WARNING'}, f'failed to send animation data at frame {chunk_start_frame}')
+                self.report({'WARNING'}, f'failed to send animation {animation_name} data at frame {chunk_start_frame}')
 
         if self._frame_offset >= self._frame_count:
             if not self._api_client.set_is_recording(True):
