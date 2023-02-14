@@ -9,12 +9,14 @@ class OWRecorderRenderProperties(PropertyGroup):
     hide_player_model: BoolProperty(
         name='Hide player model',
         default=True,
+        options=set(),
     )
 
     hdri_face_size: IntProperty(
         name='HDRI face size',
         default=1024,
         min=10,
+        options=set(),
     )
 
     animation_chunk_size: IntProperty(
@@ -22,6 +24,7 @@ class OWRecorderRenderProperties(PropertyGroup):
         description='How much animation data addon will send to Outer Wilds at a time',
         default=50,
         min=1,
+        options=set(),
     )
 
     render_timer_delay: FloatProperty(
@@ -29,6 +32,7 @@ class OWRecorderRenderProperties(PropertyGroup):
         description='Addon will send animation data and check recording progress with this timer delay (in seconds)',
         default=0.1,
         min=0.001,
+        options=set(),
     )
 
     render_end_margin: IntProperty(
@@ -36,18 +40,23 @@ class OWRecorderRenderProperties(PropertyGroup):
         description='Additional number of frames to record',
         default=10,
         min=0,
+        options=set(),
     )
 
     is_rendering: BoolProperty(
-        default=False
+        default=False,
+        options=set(),
     )
 
-    render_stage_description: StringProperty()
+    render_stage_description: StringProperty(
+        options=set(),
+    )
 
     render_stage_progress: FloatProperty(
         default=0,
         min=0,
         max=1,
+        options=set(),
     )
 
     @staticmethod
