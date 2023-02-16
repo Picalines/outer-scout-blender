@@ -3,7 +3,8 @@ from typing import TypedDict
 
 class RecorderSettings(TypedDict):
     output_directory: str
-    frame_count: int
+    start_frame: int
+    end_frame: int
     frame_rate: float
     resolution_x: int
     resolution_y: int

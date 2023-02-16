@@ -63,37 +63,40 @@ class APIClient:
         )
         return int(response.body) if response.is_success() else None
 
-    def set_animation_frame_count(
-        self, animation: AnimationName, new_count: int
+    def set_animation_value_at_frame(
+        self, animation: AnimationName, frame: int, value_json: Any
     ) -> bool:
         response = self._get_response(
             Request(
                 method="PUT",
-                url=f"animation/{animation}/frame_count",
-                data=new_count,
+                url=f"animation/{animation}/value",
+                query_params={"at_frame": frame},
+                data=value_json,
             )
         )
         return response.is_success()
 
-    def set_animation_value_at_frame(
-        self, animation: AnimationName, frame_index: int, value_json: Any
+    def set_animation_value_at_frame_range(
+        self, animation: AnimationName, from_frame: int, to_frame: int, value_json: Any
     ) -> bool:
         response = self._get_response(
             Request(
                 method="PUT",
-                url=f"animation/{animation}/value_at_frame/{frame_index}",
+                url=f"animation/{animation}/value",
+                query_params={"from_frame": from_frame, "to_frame": to_frame},
                 data=value_json,
             )
         )
         return response.is_success()
 
     def set_animation_values_from_frame(
-        self, animation: AnimationName, start_frame_index: int, values: list[Any]
+        self, animation: AnimationName, from_frame: int, values: list[Any]
     ) -> bool:
         response = self._get_response(
             Request(
                 method="PUT",
-                url=f"animation/{animation}/values_from_frame/{start_frame_index}",
+                url=f"animation/{animation}/values",
+                query_params={"from_frame": from_frame},
                 data=values,
             )
         )

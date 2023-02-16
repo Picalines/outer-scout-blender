@@ -34,7 +34,7 @@ class OW_RECORDER_OT_load_camera_background(Operator):
 
         background_movie_clip = bpy.data.movieclips.load(background_video_path)
         background_movie_clip.name = BACKGROUND_MOVIE_CLIP_NAME
-        background_movie_clip.frame_start = context.scene.frame_start - 1
+        background_movie_clip.frame_start = context.scene.frame_start
 
         camera_data: Camera = context.scene.camera.data
 
