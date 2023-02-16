@@ -36,7 +36,7 @@ class TransformModel:
     scale: Vector
 
     @staticmethod
-    def from_json(json: TransformModelJSON) -> 'TransformModel':
+    def from_json(json: TransformModelJSON) -> "TransformModel":
         return TransformModel(
             position=Vector(json[0]),
             rotation=Quaternion(json[1]),
@@ -44,22 +44,22 @@ class TransformModel:
         )
 
     @staticmethod
-    def from_json_str(json_str: str) -> 'TransformModel':
+    def from_json_str(json_str: str) -> "TransformModel":
         json_array: TransformModelJSON = json.loads(json_str)
         return TransformModel.from_json(json_array)
 
     @staticmethod
-    def from_matrix(matrix: Matrix) -> 'TransformModel':
+    def from_matrix(matrix: Matrix) -> "TransformModel":
         return TransformModel(*matrix.decompose())
 
-    def unity_to_blender(self) -> 'TransformModel':
+    def unity_to_blender(self) -> "TransformModel":
         return TransformModel(
             position=unity_vector_to_blender(self.position),
             rotation=unity_quaternion_to_blender(self.rotation),
             scale=unity_vector_to_blender(self.scale),
         )
 
-    def blender_to_unity(self) -> 'TransformModel':
+    def blender_to_unity(self) -> "TransformModel":
         return TransformModel(
             position=blender_vector_to_unity(self.position),
             rotation=blender_quaternion_to_unity(self.rotation),
@@ -82,5 +82,5 @@ class TransformModel:
     def apply_local(self, object: Object):
         object.location = self.position
         object.scale = self.scale
-        object.rotation_mode = 'QUATERNION'
+        object.rotation_mode = "QUATERNION"
         object.rotation_quaternion = self.rotation

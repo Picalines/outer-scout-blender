@@ -22,11 +22,11 @@ def camera_info_from_blender(camera: Camera):
 
 
 def apply_camera_info(camera: Camera, info: CameraInfo):
-    camera.type = 'PERSP'
-    camera.lens_unit = 'MILLIMETERS'
+    camera.type = "PERSP"
+    camera.lens_unit = "MILLIMETERS"
 
-    camera.lens = info['focal_length']
-    camera.shift_x, camera.shift_y = info['lens_shift']
-    camera.sensor_width, camera.sensor_height = info['sensor_size']
-    camera.clip_start = info['near_clip_plane']
-    camera.clip_end = info['far_clip_plane']
+    camera.lens = info["focal_length"]
+    camera.shift_x, camera.shift_y = info["lens_shift"]
+    camera.sensor_width, camera.sensor_height = info["sensor_size"]
+    camera.clip_start = info["near_clip_plane"]
+    camera.clip_end = info["far_clip_plane"]

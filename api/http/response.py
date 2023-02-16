@@ -4,7 +4,7 @@ from http import HTTPStatus
 import json
 
 
-TTypedDict = TypeVar('TTypedDict', bound=TypedDict)
+TTypedDict = TypeVar("TTypedDict", bound=TypedDict)
 
 
 @dataclass(frozen=True)

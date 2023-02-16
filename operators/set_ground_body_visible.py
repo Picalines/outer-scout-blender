@@ -7,13 +7,13 @@ from ..ow_objects import get_current_ground_body
 
 @bpy_register
 class OW_RECORDER_OT_set_ground_body_visible(Operator):
-    '''Sets ground body viewport visibility'''
+    """Sets ground body viewport visibility"""
 
-    bl_idname = 'ow_recorder.set_ground_body_visible'
-    bl_label = 'Toggle ground body'
+    bl_idname = "ow_recorder.set_ground_body_visible"
+    bl_label = "Toggle ground body"
 
     visible: BoolProperty(
-        name='Visible',
+        name="Visible",
         default=True,
     )
 
@@ -30,4 +30,4 @@ class OW_RECORDER_OT_set_ground_body_visible(Operator):
         for child in ground_body.children:
             child.hide_set(state=hide)
 
-        return {'FINISHED'}
+        return {"FINISHED"}

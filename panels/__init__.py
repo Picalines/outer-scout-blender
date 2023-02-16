@@ -1,4 +1,4 @@
-from .tools import OW_RECORDER_PT_tools as OW_RECORDER_PT_tools
-from .render import OW_RECORDER_PT_render as OW_RECORDER_PT_render
-from .ground_body import OW_RECORDER_PT_ground_body as OW_RECORDER_PT_ground_body
-from .scene_props import OW_RECORDER_PT_scene_props as OW_RECORDER_PT_scene_props
+from .tools import *
+from .render import *
+from .ground_body import *
+from .scene_props import *

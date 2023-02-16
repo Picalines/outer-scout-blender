@@ -29,7 +29,11 @@ def register():
 
         if cls in PROPERTIES_TO_REGISTER:
             registered_property = PROPERTIES_TO_REGISTER[cls]
-            setattr(registered_property.id_type, registered_property.property_name, registered_property.property_type(type=cls))
+            setattr(
+                registered_property.id_type,
+                registered_property.property_name,
+                registered_property.property_type(type=cls),
+            )
 
 
 def unregister():

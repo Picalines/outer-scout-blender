@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar, Type, Callable, Any
 from bpy.types import NodeTree, Node, NodeSocket, NodeLink
 
-TNode = TypeVar('TNode', bound=Node)
+TNode = TypeVar("TNode", bound=Node)
 
 
 def create_node(node_tree: NodeTree, node_type: Type[TNode]) -> TNode:
@@ -9,16 +9,19 @@ def create_node(node_tree: NodeTree, node_type: Type[TNode]) -> TNode:
 
 
 class NodeBuilderOutputConnection:
-    def __init__(self, builder: 'NodeBuilder', output: int | str) -> None:
+    def __init__(self, builder: "NodeBuilder", output: int | str) -> None:
         self.builder = builder
         self.output = output
 
 
 class NodeBuilder(Generic[TNode]):
-    def __init__(self, node_type: Type[TNode], *,
+    def __init__(
+        self,
+        node_type: Type[TNode],
+        *,
         output: int | str = 0,
         init: Callable[[TNode], None] | None = None,
-        **inputs: Any | 'NodeBuilder'
+        **inputs: Any | "NodeBuilder"
     ):
         super().__init__()
         self.node_type = node_type
@@ -51,12 +54,18 @@ class NodeBuilder(Generic[TNode]):
                 if value.builder.built_node is None:
                     raise ValueError()
 
-                node_tree.links.new(value.builder.built_node.outputs[value.output], self.built_node.inputs[input_key])
+                node_tree.links.new(
+                    value.builder.built_node.outputs[value.output],
+                    self.built_node.inputs[input_key],
+                )
                 continue
 
             if isinstance(value, NodeBuilder):
                 connected_node: Node = value.build(node_tree)
-                node_tree.links.new(connected_node.outputs[value.output], self.built_node.inputs[input_key])
+                node_tree.links.new(
+                    connected_node.outputs[value.output],
+                    self.built_node.inputs[input_key],
+                )
                 continue
 
             if isinstance(input_key, int) or input_key in self.built_node.inputs.keys():
@@ -68,7 +77,9 @@ class NodeBuilder(Generic[TNode]):
 
 
 def arrange_nodes(node_tree: NodeTree):
-    def iterate_nodes(node: Node, visited: set[Node] = set(), level_y: int = 0, level_x: int = 0):
+    def iterate_nodes(
+        node: Node, visited: set[Node] = set(), level_y: int = 0, level_x: int = 0
+    ):
         yield (node, level_y, level_x)
         visited.add(node)
 
@@ -77,19 +88,22 @@ def arrange_nodes(node_tree: NodeTree):
         socket: NodeSocket
         y_offset = 0
         for socket in linked_inputs:
-
             link: NodeLink
             for link in socket.links:
                 next_node = link.from_node if link.from_node != node else link.to_node
 
                 if next_node not in visited:
-                    yield from iterate_nodes(next_node, visited, level_y + y_offset, level_x + 1)
+                    yield from iterate_nodes(
+                        next_node, visited, level_y + y_offset, level_x + 1
+                    )
                     y_offset += 1
 
     margin_x = 50
     margin_y = 300
 
-    output_nodes = list(node for node in node_tree.nodes if any(node.inputs) and not any(node.outputs))
+    output_nodes = list(
+        node for node in node_tree.nodes if any(node.inputs) and not any(node.outputs)
+    )
     primary_output_node = output_nodes[0]
 
     location_y = 0
@@ -103,5 +117,7 @@ def arrange_nodes(node_tree: NodeTree):
     max_node_height = max(node.height for node, _, _ in nodes)
 
     for node, level_y, level_x in nodes:
-        node.location = (-level_x * (max_node_width + margin_x), -level_y * (max_node_height + margin_y))
-
+        node.location = (
+            -level_x * (max_node_width + margin_x),
+            -level_y * (max_node_height + margin_y),
+        )
