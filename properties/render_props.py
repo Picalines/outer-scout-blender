@@ -35,14 +35,6 @@ class OWRecorderRenderProperties(PropertyGroup):
         options=set(),
     )
 
-    render_end_margin: IntProperty(
-        name="End margin",
-        description="Additional number of frames to record",
-        default=10,
-        min=0,
-        options=set(),
-    )
-
     is_rendering: BoolProperty(
         default=False,
         options=set(),

@@ -53,4 +53,3 @@ class OW_RECORDER_PT_render_editor_settings(Panel):
 
         self.layout.prop(render_props, "animation_chunk_size")
         self.layout.prop(render_props, "render_timer_delay")
-        self.layout.prop(render_props, "render_end_margin")

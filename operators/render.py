@@ -45,17 +45,12 @@ class OW_RECORDER_OT_render(Operator):
         self._render_props = OWRecorderRenderProperties.from_context(context)
         self._scene_props = OWRecorderSceneProperties.from_context(context)
 
-        self._frame_count = (
-            scene.frame_end
-            - scene.frame_start
-            + 1
-            + self._render_props.render_end_margin
-        )
+        self._frame_count = scene.frame_end - scene.frame_start + 1
 
         recorder_settings: RecorderSettings = {
             "output_directory": bpy_abspath("//Outer Wilds/footage/"),
             "start_frame": scene.frame_start,
-            "end_frame": scene.frame_end + self._render_props.render_end_margin,
+            "end_frame": scene.frame_end,
             "frame_rate": scene.render.fps,
             "resolution_x": scene.render.resolution_x,
             "resolution_y": scene.render.resolution_y,
@@ -109,9 +104,10 @@ class OW_RECORDER_OT_render(Operator):
 
         self._render_props.render_stage_description = "Sending animation"
 
-        frame_end = scene.frame_end + self._render_props.render_end_margin
+        frame_start = scene.frame_start
+        frame_end = scene.frame_end
 
-        frame_number = scene.frame_current - scene.frame_start + 1
+        frame_number = scene.frame_current - frame_start + 1
         self._render_props.render_stage_progress = frame_number / self._frame_count
 
         ground_body = get_current_ground_body()
@@ -135,8 +131,8 @@ class OW_RECORDER_OT_render(Operator):
         chunk_start_frame = scene.frame_current
         at_end = False
 
-        for _ in range(self._render_props.animation_chunk_size):
-            scene.frame_set(frame=scene.frame_current + 1)
+        for chunk_frame_offset in range(self._render_props.animation_chunk_size):
+            scene.frame_set(frame=chunk_start_frame + chunk_frame_offset)
 
             for animation_name, object in animation_name_to_object.items():
                 animation_values[animation_name].append(
