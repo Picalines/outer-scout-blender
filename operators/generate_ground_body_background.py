@@ -12,8 +12,10 @@ from .ground_body_selection_helper import GroundBodySelectionHelper
 class OW_RECORDER_OT_generate_ground_body_background(
     Operator, GroundBodySelectionHelper
 ):
+    """Call ow_recorder.generate_ground_body in background environment"""
+
     bl_idname = "ow_recorder.generate_ground_body_background"
-    bl_label = "Call ow_recorder.generate_ground_body in background environment"
+    bl_label = "Generate ground body (background)"
 
     def execute(self, context):
         preferences = OWRecorderPreferences.from_context(context)

@@ -16,8 +16,10 @@ from .ground_body_selection_helper import GroundBodySelectionHelper
 
 @bpy_register
 class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
+    """Generate .blend from extracted .fbx ground body with higher resolution"""
+
     bl_idname = "ow_recorder.generate_ground_body"
-    bl_label = "Generate .blend from extracted .fbx ground body with higher resolution"
+    bl_label = "Generate ground body"
 
     def execute(self, context):
         preferences = OWRecorderPreferences.from_context(context)
