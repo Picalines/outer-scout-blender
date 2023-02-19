@@ -15,4 +15,10 @@ class OW_RECORDER_PT_scene_props(Panel):
     def draw(self, context):
         scene_props = OWRecorderSceneProperties.from_context(context)
 
+        self.layout.label(
+            text=f"Current ground body: {scene_props.ground_body_name}"
+            if scene_props.ground_body_name
+            else "Ground body not loaded"
+        )
+
         self.layout.prop(scene_props, "time_scale")

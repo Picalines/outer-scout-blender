@@ -1,13 +1,13 @@
 from typing import Literal
+from os import makedirs
 
 import bpy
 from bpy.types import Operator, Context, Event, Object
-from bpy.path import abspath as bpy_abspath
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body, get_current_hdri_pivot
 from ..preferences import OWRecorderPreferences
-from ..properties import OWRecorderRenderProperties, OWRecorderSceneProperties
+from ..properties import OWRecorderRenderProperties, OWRecorderSceneProperties, OWRecorderReferencePropertis
+from ..utils import get_footage_path
 from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
 from ..api import APIClient
 
@@ -25,11 +25,13 @@ class OW_RECORDER_OT_render(Operator):
     _frame_count: int = 0
     _render_props: OWRecorderRenderProperties = None
     _scene_props: OWRecorderSceneProperties = None
+    _ref_props: OWRecorderReferencePropertis = None
     _stage: Literal["SENDING_ANIMATION", "RENDERING"] = ""
 
     @classmethod
     def poll(cls, context) -> bool:
-        return all((context.scene.camera, get_current_ground_body()))
+        reference_props = OWRecorderReferencePropertis.from_context(context)
+        return all((context.scene.camera, reference_props.ground_body, reference_props.hdri_pivot))
 
     def invoke(self, context: Context, _):
         self._api_client = APIClient(OWRecorderPreferences.from_context(context))
@@ -44,11 +46,15 @@ class OW_RECORDER_OT_render(Operator):
 
         self._render_props = OWRecorderRenderProperties.from_context(context)
         self._scene_props = OWRecorderSceneProperties.from_context(context)
+        self._ref_props = OWRecorderReferencePropertis.from_context(context)
 
         self._frame_count = scene.frame_end - scene.frame_start + 1
 
+        footage_path = get_footage_path(context)
+        makedirs(footage_path, exist_ok=True)
+
         recorder_settings: RecorderSettings = {
-            "output_directory": bpy_abspath("//Outer Wilds/footage/"),
+            "output_directory": footage_path,
             "start_frame": scene.frame_start,
             "end_frame": scene.frame_end,
             "frame_rate": scene.render.fps,
@@ -100,17 +106,18 @@ class OW_RECORDER_OT_render(Operator):
         return result
 
     def _stage_sending_animation(self, context: Context):
-        scene = context.scene
+        ground_body: Object = self._ref_props.ground_body
+        hdri_pivot: Object = self._ref_props.hdri_pivot
 
-        self._render_props.render_stage_description = "Sending animation"
+        scene = context.scene
 
         frame_start = scene.frame_start
         frame_end = scene.frame_end
-
         frame_number = scene.frame_current - frame_start + 1
+
+        self._render_props.render_stage_description = "Sending animation"
         self._render_props.render_stage_progress = frame_number / self._frame_count
 
-        ground_body = get_current_ground_body()
         camera = scene.camera
 
         animation_values: dict[str, list] = {
@@ -125,7 +132,7 @@ class OW_RECORDER_OT_render(Operator):
 
         animation_name_to_object = {
             "free_camera/transform": camera,
-            "hdri_pivot/transform": get_current_hdri_pivot(),
+            "hdri_pivot/transform": hdri_pivot,
         }
 
         chunk_start_frame = scene.frame_current

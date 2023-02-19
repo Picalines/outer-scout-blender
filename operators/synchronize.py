@@ -6,7 +6,7 @@ from bpy.types import Operator, Context, Object, View3DCursor
 from bpy.props import EnumProperty
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body, get_current_hdri_pivot
+from ..properties import OWRecorderReferencePropertis
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
@@ -50,8 +50,9 @@ class OW_RECORDER_OT_synchronize(Operator):
     )
 
     @classmethod
-    def poll(cls, _) -> bool:
-        return get_current_ground_body() is not None
+    def poll(cls, context) -> bool:
+        reference_props = OWRecorderReferencePropertis.from_context(context)
+        return reference_props.ground_body is not None
 
     def invoke(self, context: Context, _):
         return context.window_manager.invoke_props_dialog(self)
@@ -68,8 +69,9 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {"CANCELLED"}
 
     def _sync_ow_to_blender(self, context: Context):
+        reference_props = OWRecorderReferencePropertis.from_context(context)
         api_cilent = APIClient(OWRecorderPreferences.from_context(context))
-        ground_body: Object = get_current_ground_body()
+        ground_body: Object = reference_props.ground_body
 
         blender_item = self._get_blender_item(context)
 
@@ -113,8 +115,9 @@ class OW_RECORDER_OT_synchronize(Operator):
             self.report({"INFO"}, "modifying Player Camera is not allowed")
             return {"CANCELLED"}
 
+        reference_props = OWRecorderReferencePropertis.from_context(context)
         api_cilent = APIClient(OWRecorderPreferences.from_context(context))
-        ground_body: Object = get_current_ground_body()
+        ground_body: Object = reference_props.ground_body
 
         blender_item = self._get_blender_item(context)
 
@@ -151,7 +154,8 @@ class OW_RECORDER_OT_synchronize(Operator):
 
     def _get_blender_item(self, context: Context) -> Object | View3DCursor:
         if self.blender_item == "HDRI_PIVOT":
-            return get_current_hdri_pivot()
+            reference_props = OWRecorderReferencePropertis.from_context(context)
+            return reference_props.hdri_pivot
 
         return getattr(context.scene, self.blender_item.lower())
 

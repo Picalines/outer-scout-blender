@@ -2,7 +2,7 @@ import bpy
 from bpy.types import Operator
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_hdri_pivot, HDRI_PIVOT_NAME
+from ..properties import OWRecorderReferencePropertis
 
 
 @bpy_register
@@ -13,9 +13,12 @@ class OW_RECORDER_OT_create_ow_pivots(Operator):
     bl_label = "Create pivots"
 
     def execute(self, context):
-        if (hdri_pivot := get_current_hdri_pivot()) is None:
-            hdri_pivot = bpy.data.objects.new(HDRI_PIVOT_NAME, None)
+        reference_props = OWRecorderReferencePropertis.from_context(context)
+
+        if (hdri_pivot := reference_props.hdri_pivot) is None:
+            hdri_pivot = bpy.data.objects.new("HDRI Pivot", None)
             hdri_pivot.empty_display_type = "PLAIN_AXES"
             context.scene.collection.objects.link(hdri_pivot)
+            reference_props.hdri_pivot = hdri_pivot
 
         return {"FINISHED"}

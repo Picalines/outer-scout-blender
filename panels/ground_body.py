@@ -1,7 +1,7 @@
-from bpy.types import Panel
+from bpy.types import Panel, Object
 
 from ..bpy_register import bpy_register
-from ..ow_objects import get_current_ground_body
+from ..properties import OWRecorderReferencePropertis
 from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body
 from ..operators.set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible
 from ..operators.move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin
@@ -15,8 +15,9 @@ class OW_RECORDER_PT_ground_body(Panel):
     bl_category = "Outer Wilds Recorder"
     bl_label = "Ground Body"
 
-    def draw(self, _):
-        current_ground_body = get_current_ground_body()
+    def draw(self, context):
+        reference_props = OWRecorderReferencePropertis.from_context(context)
+        current_ground_body: Object = reference_props.ground_body
         has_ground_body = current_ground_body is not None
 
         load_ground_body_props = self.layout.operator(
