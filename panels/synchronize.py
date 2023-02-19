@@ -1,0 +1,20 @@
+from bpy.types import Panel
+
+from ..bpy_register import bpy_register
+from ..operators import OW_RECORDER_OT_synchronize
+
+
+@bpy_register
+class OW_RECORDER_PT_synchronize(Panel):
+    bl_idname = "OW_RECORDER_PT_synchronize"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Outer Wilds Recorder"
+    bl_label = "Synchronize"
+
+    def draw(self, _):
+        self.layout.operator(
+            operator=OW_RECORDER_OT_synchronize.bl_idname,
+            icon="UV_SYNC_SELECT",
+            text="Sync with Outer Wilds",
+        )
