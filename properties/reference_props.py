@@ -1,4 +1,4 @@
-from bpy.types import Context, Scene, PropertyGroup, Object, MovieClip, Image
+from bpy.types import Context, Scene, PropertyGroup, Object, MovieClip, Image, NodeTree
 from bpy.props import PointerProperty
 
 from ..bpy_register import bpy_register_property
@@ -27,6 +27,12 @@ class OWRecorderReferencePropertis(PropertyGroup):
     hdri_image: PointerProperty(
         name="HDRI Image",
         type=Image,
+        options=set(),
+    )
+
+    hdri_node_tree: PointerProperty(
+        name="HDRI Node Group",
+        type=NodeTree,
         options=set(),
     )
 

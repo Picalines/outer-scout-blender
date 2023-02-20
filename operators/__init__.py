@@ -7,3 +7,4 @@ from .synchronize import *
 from .set_ground_body_visible import *
 from .move_ground_to_origin import *
 from .create_ow_pivots import *
+from .generate_world_nodes import *

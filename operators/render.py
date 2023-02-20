@@ -192,10 +192,12 @@ class OW_RECORDER_OT_render(Operator):
         if frames_recorded < self._frame_count:
             return {"RUNNING_MODAL"}
 
-        bpy.ops.ow_recorder.load_camera_background()
-
         self.remove_timer(context)
         self.report({"INFO"}, "Outer Wilds render finished")
+
+        bpy.ops.ow_recorder.load_camera_background()
+        bpy.ops.ow_recorder.generate_world_nodes()
+
         return {"FINISHED"}
 
     def remove_timer(self, context: Context):
