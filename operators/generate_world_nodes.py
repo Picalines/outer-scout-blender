@@ -40,17 +40,14 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         else:
             bpy.data.images.remove(reference_props.hdri_image, do_unlink=True)
 
-        hdri_frame_duration = scene.frame_end - scene.frame_start + 1
-
         hdri_image: Image = bpy.data.images.load(hdri_video_path)
-        # TODO: frame_start???
         reference_props.hdri_image = hdri_image
 
         def init_environment_node(node: bpy.types.ShaderNodeTexEnvironment):
             node.image = hdri_image
             image_user = node.image_user
 
-            image_user.frame_duration = hdri_frame_duration
+            image_user.frame_duration = 1
             image_user.use_auto_refresh = True
             image_user.driver_add("frame_offset").driver.expression = "frame"
 
