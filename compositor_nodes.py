@@ -18,18 +18,6 @@ def set_compositor_nodes(owscene_filepath: str, scene: Scene, ow_data: OWSceneDa
         node.clip = bpy.data.movieclips.load(depth_video_path)
         node.clip.name = "OW_depth"
 
-    def build_math_node(operation: str, *, left: NodeBuilder, right: NodeBuilder):
-        return NodeBuilder(
-            bpy.types.CompositorNodeMath, operation=operation, _0=left, _1=right
-        )
-
-    def build_value_node(value: float, label="Value"):
-        def init(node: bpy.types.CompositorNodeValue):
-            node.label = label
-            node.outputs["Value"].default_value = value
-
-        return NodeBuilder(bpy.types.CompositorNodeValue, init=init)
-
     z_combine_node = NodeBuilder(
         bpy.types.CompositorNodeZcombine,
         use_alpha=True,

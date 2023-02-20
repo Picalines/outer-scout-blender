@@ -43,13 +43,45 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         hdri_image: Image = bpy.data.images.load(hdri_video_path)
         reference_props.hdri_image = hdri_image
 
+        strength_input: bpy.types.NodeSocketInterfaceFloat = next(
+            (
+                input
+                for input in hdri_node_tree.inputs
+                if input.name == "Strength"
+                and isinstance(input, bpy.types.NodeSocketInterfaceFloat)
+            ),
+            None,
+        )
+
+        strength_input = strength_input or hdri_node_tree.inputs.new(
+            bpy.types.NodeSocketFloat.__name__, "Strength"
+        )
+
+        for input in hdri_node_tree.inputs:
+            if input != strength_input:
+                hdri_node_tree.inputs.remove(input)
+
+        default_strength = 3
+        strength_input.default_value = default_strength
+        strength_input.min_value = 0
+
         def init_environment_node(node: bpy.types.ShaderNodeTexEnvironment):
             node.image = hdri_image
             image_user = node.image_user
 
             image_user.frame_duration = 1
             image_user.use_auto_refresh = True
-            image_user.driver_add("frame_offset").driver.expression = "frame"
+
+            frame_driver = image_user.driver_add("frame_offset").driver
+
+            frame_start_variable = frame_driver.variables.new()
+            frame_start_variable.name = "frame_start"
+            frame_start_variable.type = "SINGLE_PROP"
+            frame_start_variable.targets[0].id_type = "SCENE"
+            frame_start_variable.targets[0].id = scene
+            frame_start_variable.targets[0].data_path = "frame_start"
+
+            frame_driver.expression = "frame - frame_start"
 
         NodeBuilder(
             bpy.types.NodeGroupOutput,
@@ -67,12 +99,19 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
                         ),
                     ),
                 ),
+                Strength=NodeBuilder(
+                    bpy.types.NodeGroupInput,
+                    output="Strength",
+                ),
             ),
         ).build(hdri_node_tree)
         arrange_nodes(hdri_node_tree)
 
-        scene_world = scene.world
-        if scene_world is None or not scene_world.use_nodes:
+        if (
+            (scene_world := scene.world) is None
+            or (not scene_world.use_nodes)
+            or self._is_default_shader(scene_world.node_tree)
+        ):
             scene_world = scene.world = scene_world or bpy.data.worlds.new(
                 f"{scene.name} World"
             )
@@ -85,6 +124,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
                 Surface=NodeBuilder(
                     bpy.types.ShaderNodeGroup,
                     node_tree=hdri_node_tree,
+                    Strength=default_strength,
                 ),
             ).build(world_node_tree)
             arrange_nodes(world_node_tree)
@@ -101,3 +141,8 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
                 )
 
         return {"FINISHED"}
+
+    def _is_default_shader(self, node_tree: NodeTree):
+        return len(node_tree.nodes) == 2 and set(
+            type(node) for node in node_tree.nodes
+        ) == {bpy.types.ShaderNodeBackground, bpy.types.ShaderNodeOutputWorld}
