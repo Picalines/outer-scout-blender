@@ -21,15 +21,11 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         scene = context.scene
         reference_props = OWRecorderReferencePropertis.from_context(context)
 
-        hdri_node_tree: NodeTree = (
-            reference_props.hdri_node_tree
-            or bpy.data.node_groups.new(
-                name=f"Outer Wilds {scene.name} HDRI",
-                type=bpy.types.ShaderNodeTree.__name__,
-            )
+        hdri_node_tree: NodeTree = bpy.data.node_groups.new(
+            name=f"Outer Wilds {scene.name} HDRI",
+            type=bpy.types.ShaderNodeTree.__name__,
         )
 
-        reference_props.hdri_node_tree = hdri_node_tree
         hdri_node_tree.nodes.clear()
 
         hdri_video_path = get_hdri_video_path(context)
@@ -41,25 +37,12 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
             bpy.data.images.remove(reference_props.hdri_image, do_unlink=True)
 
         hdri_image: Image = bpy.data.images.load(hdri_video_path)
+        hdri_image.name = f"Outer Wilds {scene.name} HDRI"
         reference_props.hdri_image = hdri_image
 
-        strength_input: bpy.types.NodeSocketInterfaceFloat = next(
-            (
-                input
-                for input in hdri_node_tree.inputs
-                if input.name == "Strength"
-                and isinstance(input, bpy.types.NodeSocketInterfaceFloat)
-            ),
-            None,
-        )
-
-        strength_input = strength_input or hdri_node_tree.inputs.new(
+        strength_input = hdri_node_tree.inputs.new(
             bpy.types.NodeSocketFloat.__name__, "Strength"
         )
-
-        for input in hdri_node_tree.inputs:
-            if input != strength_input:
-                hdri_node_tree.inputs.remove(input)
 
         default_strength = 3
         strength_input.default_value = default_strength
@@ -106,6 +89,12 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
             ),
         ).build(hdri_node_tree)
         arrange_nodes(hdri_node_tree)
+
+        old_hdri_node_tree: NodeTree = reference_props.hdri_node_tree
+        if old_hdri_node_tree is not None:
+            old_hdri_node_tree.user_remap(hdri_node_tree)
+            bpy.data.node_groups.remove(old_hdri_node_tree, do_unlink=True)
+        reference_props.hdri_node_tree = hdri_node_tree
 
         if (
             (scene_world := scene.world) is None

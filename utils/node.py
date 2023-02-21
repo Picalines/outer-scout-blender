@@ -1,4 +1,5 @@
 from typing import Generic, TypeVar, Type, Callable, Any
+
 from bpy.types import NodeTree, Node, NodeSocket, NodeLink
 
 TNode = TypeVar("TNode", bound=Node)

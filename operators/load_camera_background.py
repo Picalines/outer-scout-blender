@@ -20,6 +20,8 @@ class OW_RECORDER_OT_load_camera_background(Operator):
         return context.scene.camera is not None
 
     def execute(self, context):
+        scene = context.scene
+
         background_video_path = get_background_video_path(context)
         if not path.isfile(background_video_path):
             self.report({"ERROR"}, "rendered background footage not found")
@@ -28,7 +30,7 @@ class OW_RECORDER_OT_load_camera_background(Operator):
         reference_props = OWRecorderReferencePropertis.from_context(context)
         background_movie_clip = reference_props.background_movie_clip
 
-        camera_data: Camera = context.scene.camera.data
+        camera_data: Camera = scene.camera.data
         camera_data.show_background_images = True
 
         camera_background: CameraBackgroundImage | None = next(
@@ -48,8 +50,8 @@ class OW_RECORDER_OT_load_camera_background(Operator):
             bpy.data.movieclips.remove(background_movie_clip, do_unlink=True)
 
         background_movie_clip = bpy.data.movieclips.load(background_video_path)
-        background_movie_clip.name = "Outer Wilds free camera"
-        background_movie_clip.frame_start = context.scene.frame_start
+        background_movie_clip.name = f"Outer Wilds {scene.name} free camera"
+        background_movie_clip.frame_start = scene.frame_start
         reference_props.background_movie_clip = background_movie_clip
 
         camera_background.source = "MOVIE_CLIP"

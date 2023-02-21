@@ -30,8 +30,20 @@ class OWRecorderReferencePropertis(PropertyGroup):
         options=set(),
     )
 
+    depth_movie_clip: PointerProperty(
+        name="Depth Movie Clip",
+        type=MovieClip,
+        options=set(),
+    )
+
     hdri_node_tree: PointerProperty(
         name="HDRI Node Group",
+        type=NodeTree,
+        options=set(),
+    )
+
+    compositor_node_tree: PointerProperty(
+        name="Compositor Background & Depth Node Group",
         type=NodeTree,
         options=set(),
     )

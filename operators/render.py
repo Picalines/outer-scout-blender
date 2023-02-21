@@ -197,6 +197,7 @@ class OW_RECORDER_OT_render(Operator):
 
         bpy.ops.ow_recorder.load_camera_background()
         bpy.ops.ow_recorder.generate_world_nodes()
+        bpy.ops.ow_recorder.generate_compositor_nodes()
 
         return {"FINISHED"}
 
