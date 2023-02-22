@@ -136,6 +136,8 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             for sector_index in sector_indices
         ]
 
+        sector_collection_instances: list[Object] = []
+
         for sector_collection_name in sector_collections_names:
             if sector_collection_name in bpy.data.collections:
                 continue
@@ -146,6 +148,8 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             if link_status != {"FINISHED"}:
                 self.report({"ERROR"}, f"could not link {sector_collection_name}")
                 return {"CANCELLED"}
+
+            sector_collection_instances.append(bpy.context.active_object)
 
         if current_ground_body is None:
             current_ground_body = bpy.data.objects.new(ground_body_name, None)
@@ -159,23 +163,9 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
 
         ground_body_hidden = current_ground_body.hide_get()
 
-        for sector_collection_name in sector_collections_names:
-            sector_collection = bpy.data.collections[sector_collection_name]
-
-            if any(
-                child.instance_collection == sector_collection
-                for child in current_ground_body.children
-            ):
-                continue
-
-            sector_collection_instance = bpy.data.objects.new(
-                sector_collection_name, None
-            )
-            context.scene.collection.objects.link(sector_collection_instance)
-
+        for sector_collection_instance in sector_collection_instances:
             sector_collection_instance.instance_type = "COLLECTION"
             sector_collection_instance.empty_display_type = "PLAIN_AXES"
-            sector_collection_instance.instance_collection = sector_collection
 
             sector_collection_instance.parent = current_ground_body
             sector_collection_instance.location = (0, 0, 0)
@@ -212,7 +202,9 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             filename=filename,
             filepath=str(blender_project_path.joinpath(resource_type, filename)),
             directory=str(blender_project_path.joinpath(resource_type)),
-            active_collection=False,
+            active_collection=True,
+            autoselect=True,
+            instance_collections=True,
         )
 
     def _iter_subpaths(self, path: str, separator="/"):

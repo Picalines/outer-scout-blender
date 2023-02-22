@@ -116,6 +116,14 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         for parent in list(iter_parents(extracted_ground_body_object)):
             bpy.data.objects.remove(parent, do_unlink=True)
 
+        self._log("INFO", f"clearing {len(bpy.data.materials)} materials")
+        for material in bpy.data.materials:
+            bpy.data.materials.remove(material, do_unlink=True)
+
+        self._log("INFO", f"clearing {len(bpy.data.images)} images")
+        for image in bpy.data.images:
+            bpy.data.images.remove(image, do_unlink=True)
+
         self._log("INFO", "loading sectors")
 
         ignored_object_name_parts: list[str] = preferences.ignored_objects.split(",")
