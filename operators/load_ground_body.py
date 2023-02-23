@@ -177,9 +177,9 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             sector_collection_instance.hide_set(state=ground_body_hidden)
 
         if self.move_ground_to_origin:
+            context.view_layer.objects.active = None
             bpy.ops.ow_recorder.synchronize(
                 sync_direction="OW_TO_BLENDER",
-                blender_item="CURSOR",
                 ow_item="player/body",
             )
             bpy.ops.ow_recorder.move_ground_to_origin()
