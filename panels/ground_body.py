@@ -1,7 +1,7 @@
 from bpy.types import Panel, Object
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferencePropertis, OWRecorderSceneProperties
 from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body
 from ..operators.set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible
 from ..operators.move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin
@@ -17,19 +17,26 @@ class OW_RECORDER_PT_ground_body(Panel):
 
     def draw(self, context):
         reference_props = OWRecorderReferencePropertis.from_context(context)
+        scene_props = OWRecorderSceneProperties.from_context(context)
+
         current_ground_body: Object = reference_props.ground_body
         has_ground_body = current_ground_body is not None
 
+        ground_body_text = (
+            scene_props.ground_body_name.removesuffix("_Body") or "ground body"
+        )
+
         load_ground_body_props = self.layout.operator(
             operator=OW_RECORDER_OT_load_ground_body.bl_idname,
-            icon="WORLD",
             text=("Load ground body" if not has_ground_body else "Add current sector"),
+            icon="WORLD",
         )
 
         load_ground_body_props.move_ground_to_origin = not has_ground_body
 
         self.layout.operator(
             operator=OW_RECORDER_OT_move_ground_to_origin.bl_idname,
+            text=f"Move {ground_body_text} to origin",
             icon="OBJECT_ORIGIN",
         )
 
@@ -37,7 +44,7 @@ class OW_RECORDER_PT_ground_body(Panel):
 
         show_body_props = self.layout.operator(
             operator=OW_RECORDER_OT_set_ground_body_visible.bl_idname,
-            text=("Hide ground body" if ground_body_visible else "Show ground body"),
+            text=("Hide " if ground_body_visible else "Show ") + ground_body_text,
             depress=ground_body_visible,
             icon="HIDE_" + ("OFF" if ground_body_visible else "ON"),
         )

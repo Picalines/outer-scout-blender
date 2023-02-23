@@ -5,20 +5,14 @@ from ..properties import OWRecorderSceneProperties
 
 
 @bpy_register
-class OW_RECORDER_PT_scene_props(Panel):
-    bl_idname = "OW_RECORDER_PT_scene_props"
+class OW_RECORDER_PT_animatable_props(Panel):
+    bl_idname = "OW_RECORDER_PT_animatable_props"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Outer Wilds Recorder"
-    bl_label = "Scene Properties"
+    bl_label = "Animatable Properties"
 
     def draw(self, context):
         scene_props = OWRecorderSceneProperties.from_context(context)
-
-        self.layout.label(
-            text=f"Current ground body: {scene_props.ground_body_name}"
-            if scene_props.ground_body_name
-            else "Ground body not loaded"
-        )
 
         self.layout.prop(scene_props, "time_scale")
