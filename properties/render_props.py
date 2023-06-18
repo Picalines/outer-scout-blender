@@ -12,6 +12,12 @@ class OWRecorderRenderProperties(PropertyGroup):
         options=set(),
     )
 
+    show_progress_gui: BoolProperty(
+        name="Show progress GUI",
+        description="Display current frame in game window (may affect performance)",
+        default=False,
+    )
+
     hdri_face_size: IntProperty(
         name="HDRI face size",
         default=1024,

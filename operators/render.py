@@ -6,7 +6,11 @@ from bpy.types import Operator, Context, Event, Object
 
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
-from ..properties import OWRecorderRenderProperties, OWRecorderSceneProperties, OWRecorderReferencePropertis
+from ..properties import (
+    OWRecorderRenderProperties,
+    OWRecorderSceneProperties,
+    OWRecorderReferencePropertis,
+)
 from ..utils import get_footage_path
 from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
 from ..api import APIClient
@@ -31,7 +35,13 @@ class OW_RECORDER_OT_render(Operator):
     @classmethod
     def poll(cls, context) -> bool:
         reference_props = OWRecorderReferencePropertis.from_context(context)
-        return all((context.scene.camera, reference_props.ground_body, reference_props.hdri_pivot))
+        return all(
+            (
+                context.scene.camera,
+                reference_props.ground_body,
+                reference_props.hdri_pivot,
+            )
+        )
 
     def invoke(self, context: Context, _):
         self._api_client = APIClient(OWRecorderPreferences.from_context(context))
@@ -62,6 +72,7 @@ class OW_RECORDER_OT_render(Operator):
             "resolution_y": scene.render.resolution_y,
             "hdri_face_size": self._render_props.hdri_face_size,
             "hide_player_model": self._render_props.hide_player_model,
+            "show_progress_gui": self._render_props.show_progress_gui,
         }
 
         if not self._api_client.set_recorder_settings(recorder_settings):

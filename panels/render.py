@@ -19,6 +19,7 @@ class OW_RECORDER_PT_render(Panel):
         self.layout.enabled = not render_props.is_rendering
 
         self.layout.prop(render_props, "hide_player_model")
+        self.layout.prop(render_props, "show_progress_gui")
         self.layout.prop(render_props, "hdri_face_size")
 
         if not render_props.is_rendering:

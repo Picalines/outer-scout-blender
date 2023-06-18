@@ -10,3 +10,4 @@ class RecorderSettings(TypedDict):
     resolution_y: int
     hdri_face_size: int
     hide_player_model: bool
+    show_progress_gui: bool
