@@ -46,8 +46,16 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         ow_compositor_node_tree.inputs.clear()
         ow_compositor_node_tree.outputs.clear()
 
-        ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketColor.__name__, "Image")
-        ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Depth")
+        image_pass_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketColor.__name__, "Image Pass")
+        depth_pass_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Depth Pass")
+
+        blur_input = ow_compositor_node_tree.inputs.new(
+            bpy.types.NodeSocketFloat.__name__, "Blur Edges"
+        )
+        blur_input.default_value = 0.3
+        blur_input.min_value = 0
+        blur_input.max_value = 1
+
         ow_compositor_node_tree.outputs.new(bpy.types.NodeSocketColor.__name__, "Image")
 
         def build_math_node(operation: str, *, left: NodeBuilder, right: NodeBuilder):
@@ -69,10 +77,10 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                 use_alpha=True,
                 _0=(
                     group_input_node := NodeBuilder(
-                        bpy.types.NodeGroupInput, output="Image"
+                        bpy.types.NodeGroupInput, output=image_pass_input.name
                     )
                 ),
-                _1=group_input_node.connect_output("Depth"),
+                _1=group_input_node.connect_output(depth_pass_input.name),
                 _2=NodeBuilder(
                     bpy.types.CompositorNodeMovieClip,
                     clip=reference_props.background_movie_clip,
@@ -87,6 +95,7 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                     ),
                     right=build_math_node(
                         "ADD",
+                        right=1,
                         left=build_math_node(
                             "MULTIPLY",
                             left=build_math_node(
@@ -102,29 +111,27 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                                 right=1,
                             ),
                             right=NodeBuilder(
-                                bpy.types.CompositorNodeDilateErode,
-                                distance=-1,
-                                Mask=NodeBuilder(
-                                    bpy.types.CompositorNodeSepRGBA,
-                                    output="R",
+                                bpy.types.CompositorNodeSepRGBA,
+                                output="R",
+                                Image=NodeBuilder(
+                                    bpy.types.CompositorNodeBlur,
+                                    size_x=10,
+                                    size_y=10,
+                                    Size=NodeBuilder(
+                                        bpy.types.NodeGroupInput, output=blur_input.name
+                                    ),
                                     Image=NodeBuilder(
-                                        bpy.types.CompositorNodeBlur,
-                                        size_x=2,
-                                        size_y=2,
+                                        bpy.types.CompositorNodeScale,
+                                        space="RENDER_SIZE",
                                         Image=NodeBuilder(
-                                            bpy.types.CompositorNodeScale,
-                                            space="RENDER_SIZE",
-                                            Image=NodeBuilder(
-                                                bpy.types.CompositorNodeMovieClip,
-                                                clip=depth_movie_clip,
-                                                output="Image",
-                                            ),
+                                            bpy.types.CompositorNodeMovieClip,
+                                            clip=depth_movie_clip,
+                                            output="Image",
                                         ),
                                     ),
                                 ),
                             ),
                         ),
-                        right=1,
                     ),
                 ),
             ),
@@ -150,13 +157,13 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                 Image=NodeBuilder(
                     bpy.types.CompositorNodeGroup,
                     node_tree=ow_compositor_node_tree,
-                    output="Image",
+                    output=image_pass_input.name,
                     Image=(
                         render_layers_node := NodeBuilder(
                             bpy.types.CompositorNodeRLayers, scene=scene, output="Image"
                         )
                     ),
-                    Depth=render_layers_node.connect_output("Depth"),
+                    Depth=render_layers_node.connect_output(depth_pass_input.name),
                 ),
             ).build(compositor_node_tree)
 
@@ -176,8 +183,7 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         return {"FINISHED"}
 
     def _is_default_compositor(self, node_tree: NodeTree):
-        return set(
-            type(node)
-            for node in node_tree.nodes
-            if type(node) != bpy.types.CompositorNodeViewer
-        ) == {bpy.types.CompositorNodeRLayers, bpy.types.CompositorNodeComposite}
+        return set(type(node) for node in node_tree.nodes) == {
+            bpy.types.CompositorNodeRLayers,
+            bpy.types.CompositorNodeComposite,
+        }
