@@ -131,7 +131,7 @@ class APIClient:
         return response.is_success()
 
     def get_transform_local_to_ground_body(
-        self, entity: Literal["free_camera", "player/body", "player/camera"]
+        self, entity: Literal["free_camera", "player_body", "player_camera"]
     ) -> TransformModel | None:
         response = self._get_response(
             Request(
@@ -147,7 +147,7 @@ class APIClient:
 
     def set_transform_local_to_ground_body(
         self,
-        entity: Literal["free_camera", "player/body"],
+        entity: Literal["free_camera", "player_body"],
         new_transform: TransformModel,
     ) -> bool:
         response = self._get_response(
@@ -160,7 +160,7 @@ class APIClient:
         return response.is_success()
 
     def get_camera_info(
-        self, camera: Literal["free_camera", "player/camera"]
+        self, camera: Literal["free_camera", "player_camera"]
     ) -> CameraInfo | None:
         response = self._get_response(
             Request(

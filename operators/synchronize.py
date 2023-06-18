@@ -30,9 +30,9 @@ class OW_RECORDER_OT_synchronize(Operator):
         name="Outer Wilds item",
         items=[
             ("free_camera", "Free camera", ""),
-            ("player/body", "Player body", ""),
+            ("player_body", "Player body", ""),
             (
-                "player/camera",
+                "player_camera",
                 "Player camera",
                 "(modifying Player camera is not allowed!)",
             ),
@@ -114,7 +114,7 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {"FINISHED"}
 
     def _sync_blender_to_ow(self, context: Context):
-        if self.ow_item == "player/camera":
+        if self.ow_item == "player_camera":
             self.report({"INFO"}, "modifying Player Camera is not allowed")
             return {"CANCELLED"}
 

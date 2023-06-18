@@ -41,4 +41,4 @@ class OW_RECORDER_PT_synchronize(Panel):
         if is_in_camera_view:
             sync_props.ow_item = "free_camera"
         elif has_active_object:
-            sync_props.ow_item = "player/camera" if is_camera_active else "player/body"
+            sync_props.ow_item = "player_camera" if is_camera_active else "player_body"
