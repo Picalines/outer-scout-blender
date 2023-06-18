@@ -21,13 +21,6 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         scene = context.scene
         reference_props = OWRecorderReferencePropertis.from_context(context)
 
-        hdri_node_tree: NodeTree = bpy.data.node_groups.new(
-            name=f"Outer Wilds {scene.name} HDRI",
-            type=bpy.types.ShaderNodeTree.__name__,
-        )
-
-        hdri_node_tree.nodes.clear()
-
         hdri_video_path = get_hdri_video_path(context)
         if reference_props.hdri_image is None:
             if not path.isfile(hdri_video_path):
@@ -40,9 +33,20 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         hdri_image.name = f"Outer Wilds {scene.name} HDRI"
         reference_props.hdri_image = hdri_image
 
+        hdri_node_tree: NodeTree = bpy.data.node_groups.new(
+            name=f"Outer Wilds {scene.name} HDRI",
+            type=bpy.types.ShaderNodeTree.__name__,
+        )
+
+        hdri_node_tree.nodes.clear()
+        hdri_node_tree.inputs.clear()
+        hdri_node_tree.outputs.clear()
+
         strength_input = hdri_node_tree.inputs.new(
             bpy.types.NodeSocketFloat.__name__, "Strength"
         )
+
+        hdri_node_tree.outputs.new(bpy.types.NodeSocketShader.__name__, "Background")
 
         default_strength = 3
         strength_input.default_value = default_strength
@@ -113,6 +117,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
                 Surface=NodeBuilder(
                     bpy.types.ShaderNodeGroup,
                     node_tree=hdri_node_tree,
+                    output="Background",
                     Strength=default_strength,
                 ),
             ).build(world_node_tree)
@@ -132,6 +137,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         return {"FINISHED"}
 
     def _is_default_shader(self, node_tree: NodeTree):
-        return len(node_tree.nodes) == 2 and set(
-            type(node) for node in node_tree.nodes
-        ) == {bpy.types.ShaderNodeBackground, bpy.types.ShaderNodeOutputWorld}
+        return set(type(node) for node in node_tree.nodes) == {
+            bpy.types.ShaderNodeBackground,
+            bpy.types.ShaderNodeOutputWorld,
+        }

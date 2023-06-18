@@ -24,13 +24,6 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         if reference_props.background_movie_clip is None:
             bpy.ops.ow_recorder.load_camera_background()
 
-        ow_compositor_node_tree: NodeTree = bpy.data.node_groups.new(
-            name=f"Outer Wilds {scene.name} Compositor",
-            type=bpy.types.CompositorNodeTree.__name__,
-        )
-
-        ow_compositor_node_tree.nodes.clear()
-
         depth_video_path = get_depth_video_path(context)
         if reference_props.depth_movie_clip is None:
             if not path.isfile(depth_video_path):
@@ -44,8 +37,18 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         depth_movie_clip.frame_start = scene.frame_start
         reference_props.depth_movie_clip = depth_movie_clip
 
+        ow_compositor_node_tree: NodeTree = bpy.data.node_groups.new(
+            name=f"Outer Wilds {scene.name} Compositor",
+            type=bpy.types.CompositorNodeTree.__name__,
+        )
+
+        ow_compositor_node_tree.nodes.clear()
+        ow_compositor_node_tree.inputs.clear()
+        ow_compositor_node_tree.outputs.clear()
+
         ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketColor.__name__, "Image")
         ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Depth")
+        ow_compositor_node_tree.outputs.new(bpy.types.NodeSocketColor.__name__, "Image")
 
         def build_math_node(operation: str, *, left: NodeBuilder, right: NodeBuilder):
             return NodeBuilder(
@@ -144,9 +147,10 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
 
             NodeBuilder(
                 bpy.types.CompositorNodeComposite,
-                _0=NodeBuilder(
+                Image=NodeBuilder(
                     bpy.types.CompositorNodeGroup,
                     node_tree=ow_compositor_node_tree,
+                    output="Image",
                     Image=(
                         render_layers_node := NodeBuilder(
                             bpy.types.CompositorNodeRLayers, scene=scene, output="Image"
@@ -172,6 +176,8 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         return {"FINISHED"}
 
     def _is_default_compositor(self, node_tree: NodeTree):
-        return len(node_tree.nodes) == 2 and set(
-            type(node) for node in node_tree.nodes
+        return set(
+            type(node)
+            for node in node_tree.nodes
+            if type(node) != bpy.types.CompositorNodeViewer
         ) == {bpy.types.CompositorNodeRLayers, bpy.types.CompositorNodeComposite}
