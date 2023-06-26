@@ -1,10 +1,17 @@
-from typing import Literal, Any
-
+from ..utils import GeneratorWithState
 from ..preferences import OWRecorderPreferences
 from .models import TransformModel, CameraInfo, RecorderSettings
-from .http import send_request, Request, Response
+from .http import (
+    send_request,
+    send_request_async_lines,
+    is_success_http_status,
+    Request,
+    Response,
+    HTTPStatus,
+)
 
-from dataclasses import replace
+from typing import Literal, Generator
+from dataclasses import replace as data_replace
 
 
 AnimationName = Literal[
@@ -63,8 +70,23 @@ class APIClient:
         )
         return int(response.body) if response.is_success() else None
 
+    def get_frames_recorded_async(self) -> Generator[int, None, bool]:
+        lines = GeneratorWithState(
+            self._get_response_async_lines(
+                Request(method="GET", url="recorder/frames_recorded_async")
+            )
+        )
+
+        for line in lines:
+            try:
+                yield int(line)
+            except ValueError:
+                pass
+
+        return bool(lines.returned)
+
     def set_animation_value_at_frame(
-        self, animation: AnimationName, frame: int, value_json: Any
+        self, animation: AnimationName, frame: int, value_json
     ) -> bool:
         response = self._get_response(
             Request(
@@ -77,7 +99,7 @@ class APIClient:
         return response.is_success()
 
     def set_animation_value_at_frame_range(
-        self, animation: AnimationName, from_frame: int, to_frame: int, value_json: Any
+        self, animation: AnimationName, from_frame: int, to_frame: int, value_json
     ) -> bool:
         response = self._get_response(
             Request(
@@ -90,7 +112,7 @@ class APIClient:
         return response.is_success()
 
     def set_animation_values_from_frame(
-        self, animation: AnimationName, from_frame: int, values: list[Any]
+        self, animation: AnimationName, from_frame: int, values: list
     ) -> bool:
         response = self._get_response(
             Request(
@@ -168,7 +190,7 @@ class APIClient:
                 url=f"{camera}/camera_info",
             )
         )
-        return response.typed_json(CameraInfo) if response.is_success else None
+        return response.typed_json(CameraInfo) if response.is_success() else None
 
     def set_camera_info(
         self, camera: Literal["free_camera"], new_info: CameraInfo
@@ -184,5 +206,11 @@ class APIClient:
 
     def _get_response(self, request: Request) -> Response | None:
         return send_request(
-            replace(request, url=self.base_url + request.url)
+            data_replace(request, url=self.base_url + request.url)
         ) or Response("", {}, -1)
+
+    def _get_response_async_lines(self, request: Request) -> Generator[str, None, bool]:
+        result = yield from send_request_async_lines(
+            data_replace(request, url=self.base_url + request.url)
+        )
+        return type(result) == HTTPStatus and is_success_http_status(result)

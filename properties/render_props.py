@@ -35,7 +35,7 @@ class OWRecorderRenderProperties(PropertyGroup):
 
     render_timer_delay: FloatProperty(
         name="Render timer delay",
-        description="Addon will send animation data and check recording progress with this timer delay (in seconds)",
+        description="Addon will send animation data with this timer delay (in seconds)",
         default=0.1,
         min=0.001,
         options=set(),

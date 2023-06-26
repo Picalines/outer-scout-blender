@@ -11,7 +11,7 @@ from ..properties import (
     OWRecorderSceneProperties,
     OWRecorderReferencePropertis,
 )
-from ..utils import get_footage_path
+from ..utils import GeneratorWithState, get_footage_path
 from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
 from ..api import APIClient
 
@@ -27,6 +27,8 @@ class OW_RECORDER_OT_render(Operator):
     _api_client: APIClient = None
     _was_on_frame: int = 0
     _frame_count: int = 0
+    _frames_recorded_generator: GeneratorWithState[int, None, None]
+
     _render_props: OWRecorderRenderProperties = None
     _scene_props: OWRecorderSceneProperties = None
     _ref_props: OWRecorderReferencePropertis = None
@@ -91,6 +93,7 @@ class OW_RECORDER_OT_render(Operator):
 
         scene.frame_set(frame=scene.frame_start)
         self._stage = "SENDING_ANIMATION"
+        self._render_props.render_stage_progress = 0
 
         self._render_props.is_rendering = True
 
@@ -187,13 +190,15 @@ class OW_RECORDER_OT_render(Operator):
             self._stage = "RENDERING"
             scene.frame_set(frame=self._was_on_frame)
 
+            self._frames_recorded_generator = GeneratorWithState(self._api_client.get_frames_recorded_async())
+
         return {"RUNNING_MODAL"}
 
     def _stage_rendering(self, context: Context):
         self._render_props.render_stage_description = "Rendering"
 
-        frames_recorded = self._api_client.get_frames_recorded()
-        if frames_recorded is None:
+        frames_recorded = next(self._frames_recorded_generator, self._frame_count)
+        if self._frames_recorded_generator.returned == False:
             self.remove_timer(context)
             self.report({"ERROR"}, "failed to receive recorded frames count")
             return {"CANCELLED"}

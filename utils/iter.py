@@ -1,4 +1,4 @@
-from typing import Generator, Any
+from typing import Generator, Any, TypeVar, Generic
 
 
 def iter_recursive(dict_or_list: dict | list) -> Generator[tuple[Any, Any], None, None]:
@@ -15,3 +15,29 @@ def iter_recursive(dict_or_list: dict | list) -> Generator[tuple[Any, Any], None
 
             if isinstance(item, (dict, list)):
                 yield from iter_recursive(item)
+
+
+TYield = TypeVar('TYield')
+TSend = TypeVar('TSend')
+TReturn = TypeVar('TReturn')
+
+
+class GeneratorWithState(Generic[TYield, TSend, TReturn]):
+    last_yielded: TYield | None
+    returned: TReturn | None
+
+    def __init__(self, generator: Generator[TYield, TSend, TReturn]) -> None:
+        self._generator = generator
+        self.last_yielded = None
+        self.returned = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            yielded = self.last_yielded = next(self._generator)
+            return yielded
+        except StopIteration as stop:
+            self.returned = stop.value
+            raise

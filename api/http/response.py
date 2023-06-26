@@ -7,6 +7,10 @@ import json
 TTypedDict = TypeVar("TTypedDict", bound=TypedDict)
 
 
+def is_success_http_status(http_status: HTTPStatus):
+    return int(http_status) in range(200, 300)
+
+
 @dataclass(frozen=True)
 class Response:
     body: str
@@ -14,7 +18,7 @@ class Response:
     status: HTTPStatus
 
     def is_success(self) -> bool:
-        return int(self.status) in range(200, 300)
+        return is_success_http_status(self.status)
 
     def json(self) -> Any:
         return json.loads(self.body)

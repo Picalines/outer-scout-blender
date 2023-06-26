@@ -2,49 +2,24 @@ from .request import Request
 from .response import Response
 
 from http import HTTPStatus
+from typing import Generator
 import urllib.parse
 import urllib.error
 import urllib.request
-import json
 
 
 def send_request(request: Request) -> Response | None:
-    url = request.url
-
-    if not url.startswith("http"):
-        raise ValueError("only http urls are supported")
-
-    method = request.method.upper()
-    headers = request.headers
-    data = request.data
-    query_params = request.query_params
-    request_data = None
-
-    headers.setdefault("Accept", "application/json")
-
-    if query_params is not None:
-        url += "?" + urllib.parse.urlencode(query_params, doseq=True, safe="/")
-
-    if data is not None:
-        if request.data_as_json:
-            request_data = json.dumps(data).encode()
-            headers["Content-Type"] = "application/json; charset=UTF-8"
-        else:
-            request_data = urllib.parse.urlencode(data).encode()
-
-    http_request = urllib.request.Request(
-        url, data=request_data, headers=headers, method=method
-    )
+    http_request = request.to_urllib_request()
 
     try:
-        http_response = urllib.request.urlopen(http_request)
-        response = Response(
-            body=http_response.read().decode(
-                http_response.headers.get_content_charset("utf-8")
-            ),
-            headers=http_response.headers,
-            status=http_response.status,
-        )
+        with urllib.request.urlopen(http_request) as http_response:
+            response = Response(
+                body=http_response.read().decode(
+                    http_response.headers.get_content_charset("utf-8")
+                ),
+                headers=http_response.headers,
+                status=http_response.status,
+            )
     except urllib.error.HTTPError as http_error:
         response = Response(
             body=str(http_error.reason),
@@ -55,3 +30,17 @@ def send_request(request: Request) -> Response | None:
         response = None
 
     return response
+
+
+def send_request_async_lines(request: Request) -> Generator[str, None, HTTPStatus | urllib.error.HTTPError | OSError]:
+    http_request = request.to_urllib_request()
+
+    try:
+        with urllib.request.urlopen(http_request) as http_response:
+            charset = http_response.headers.get_content_charset("utf-8")
+            for line in http_response:
+                yield line.decode(charset)
+
+        return http_response.status
+    except urllib.error.HTTPError or OSError as error:
+        return error
