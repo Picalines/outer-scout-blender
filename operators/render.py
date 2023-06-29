@@ -154,9 +154,6 @@ class OW_RECORDER_OT_render(AsyncOperator):
                     )
 
             if at_end:
-                if not api_client.set_is_recording(True):
-                    self.report({"ERROR"}, "failed to start recording")
-                    return {"CANCELLED"}
                 break
 
             yield {"TIMER"}
@@ -165,11 +162,13 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         # render
 
+        if not api_client.set_is_recording(True):
+            self.report({"ERROR"}, "failed to start recording")
+            return {"CANCELLED"}
+
         render_props.render_stage_description = "Rendering"
 
-        frames_recorded = GeneratorWithState(
-            api_client.get_frames_recorded_async()
-        )
+        frames_recorded = GeneratorWithState(api_client.get_frames_recorded_async())
 
         for count in frames_recorded:
             render_props.render_stage_progress = count / frame_count
