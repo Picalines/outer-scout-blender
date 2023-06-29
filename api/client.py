@@ -210,7 +210,10 @@ class APIClient:
         ) or Response("", {}, -1)
 
     def _get_response_async_lines(self, request: Request) -> Generator[str, None, bool]:
-        result = yield from send_request_async_lines(
-            data_replace(request, url=self.base_url + request.url)
+        return is_success_http_status(
+            (
+                yield from send_request_async_lines(
+                    data_replace(request, url=self.base_url + request.url)
+                )
+            )
         )
-        return type(result) == HTTPStatus and is_success_http_status(result)

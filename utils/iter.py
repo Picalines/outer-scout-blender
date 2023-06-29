@@ -25,11 +25,13 @@ TReturn = TypeVar('TReturn')
 class GeneratorWithState(Generic[TYield, TSend, TReturn]):
     last_yielded: TYield | None
     returned: TReturn | None
+    stopped: bool
 
     def __init__(self, generator: Generator[TYield, TSend, TReturn]) -> None:
         self._generator = generator
         self.last_yielded = None
         self.returned = None
+        self.stopped = False
 
     def __iter__(self):
         return self
@@ -40,4 +42,5 @@ class GeneratorWithState(Generic[TYield, TSend, TReturn]):
             return yielded
         except StopIteration as stop:
             self.returned = stop.value
+            self.stopped = True
             raise

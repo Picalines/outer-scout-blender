@@ -1,8 +1,7 @@
-from typing import Literal
 from os import makedirs
 
 import bpy
-from bpy.types import Operator, Context, Event, Object
+from bpy.types import Context, Event, Object
 
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
@@ -15,24 +14,19 @@ from ..utils import GeneratorWithState, get_footage_path
 from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
 from ..api import APIClient
 
+from .async_operator import AsyncOperator
+
 
 @bpy_register
-class OW_RECORDER_OT_render(Operator):
+class OW_RECORDER_OT_render(AsyncOperator):
     """Render footage in Outer Wilds and import it to current project"""
 
     bl_idname = "ow_recorder.render"
     bl_label = "Render"
 
     _timer = None
-    _api_client: APIClient = None
-    _was_on_frame: int = 0
-    _frame_count: int = 0
-    _frames_recorded_generator: GeneratorWithState[int, None, None]
 
     _render_props: OWRecorderRenderProperties = None
-    _scene_props: OWRecorderSceneProperties = None
-    _ref_props: OWRecorderReferencePropertis = None
-    _stage: Literal["SENDING_ANIMATION", "RENDERING"] = ""
 
     @classmethod
     def poll(cls, context) -> bool:
@@ -45,22 +39,24 @@ class OW_RECORDER_OT_render(Operator):
             )
         )
 
-    def invoke(self, context: Context, _):
-        self._api_client = APIClient(OWRecorderPreferences.from_context(context))
+    def _run_async(self, context: Context):
+        api_client = APIClient(OWRecorderPreferences.from_context(context))
 
-        if self._api_client.get_is_recording():
+        if api_client.get_is_recording():
             self.report({"ERROR"}, "already recording")
             return {"CANCELLED"}
 
         scene = context.scene
 
-        self._was_on_frame = scene.frame_current
+        was_on_frame = scene.frame_current
 
-        self._render_props = OWRecorderRenderProperties.from_context(context)
-        self._scene_props = OWRecorderSceneProperties.from_context(context)
-        self._ref_props = OWRecorderReferencePropertis.from_context(context)
+        render_props = OWRecorderRenderProperties.from_context(context)
+        scene_props = OWRecorderSceneProperties.from_context(context)
+        ref_props = OWRecorderReferencePropertis.from_context(context)
 
-        self._frame_count = scene.frame_end - scene.frame_start + 1
+        self._render_props = render_props
+
+        frame_count = scene.frame_end - scene.frame_start + 1
 
         footage_path = get_footage_path(context)
         makedirs(footage_path, exist_ok=True)
@@ -72,67 +68,35 @@ class OW_RECORDER_OT_render(Operator):
             "frame_rate": scene.render.fps,
             "resolution_x": scene.render.resolution_x,
             "resolution_y": scene.render.resolution_y,
-            "hdri_face_size": self._render_props.hdri_face_size,
-            "hide_player_model": self._render_props.hide_player_model,
-            "show_progress_gui": self._render_props.show_progress_gui,
+            "hdri_face_size": render_props.hdri_face_size,
+            "hide_player_model": render_props.hide_player_model,
+            "show_progress_gui": render_props.show_progress_gui,
         }
 
-        if not self._api_client.set_recorder_settings(recorder_settings):
+        if not api_client.set_recorder_settings(recorder_settings):
             self.report({"ERROR"}, "failed to set recorder settings")
             return {"CANCELLED"}
 
-        if not self._api_client.get_is_able_to_record():
+        if not api_client.get_is_able_to_record():
             self.report({"ERROR"}, "unable to record")
             return {"CANCELLED"}
 
         self._timer = context.window_manager.event_timer_add(
-            self._render_props.render_timer_delay, window=context.window
+            render_props.render_timer_delay, window=context.window
         )
 
-        context.window_manager.modal_handler_add(self)
-
         scene.frame_set(frame=scene.frame_start)
-        self._stage = "SENDING_ANIMATION"
-        self._render_props.render_stage_progress = 0
+        render_props.render_stage_progress = 0
 
-        self._render_props.is_rendering = True
+        render_props.is_rendering = True
 
-        return {"RUNNING_MODAL"}
+        # send animation data
 
-    def modal(self, context: Context, event: Event):
-        if event.type != "TIMER":
-            return {"RUNNING_MODAL"}
-
-        context.area.tag_redraw()
-
-        self._render_props.is_rendering = True
-
-        if self._stage == "SENDING_ANIMATION":
-            result = self._stage_sending_animation(context)
-        elif self._stage == "RENDERING":
-            result = self._stage_rendering(context)
-        else:
-            raise NotImplemented
-
-        if result != {"RUNNING_MODAL"}:
-            self._render_props.is_rendering = False
-
-        return result
-
-    def _stage_sending_animation(self, context: Context):
-        ground_body: Object = self._ref_props.ground_body
-        hdri_pivot: Object = self._ref_props.hdri_pivot
-
-        scene = context.scene
-
-        frame_start = scene.frame_start
-        frame_end = scene.frame_end
-        frame_number = scene.frame_current - frame_start + 1
-
-        self._render_props.render_stage_description = "Sending animation"
-        self._render_props.render_stage_progress = frame_number / self._frame_count
-
+        ground_body: Object = ref_props.ground_body
+        hdri_pivot: Object = ref_props.hdri_pivot
         camera = scene.camera
+
+        render_props.render_stage_description = "Sending animation"
 
         animation_values: dict[str, list] = {
             name: []
@@ -149,66 +113,76 @@ class OW_RECORDER_OT_render(Operator):
             "hdri_pivot/transform": hdri_pivot,
         }
 
-        chunk_start_frame = scene.frame_current
-        at_end = False
+        while True:
+            frame_number = scene.frame_current - scene.frame_start + 1
+            render_props.render_stage_progress = frame_number / frame_count
 
-        for chunk_frame_offset in range(self._render_props.animation_chunk_size):
-            scene.frame_set(frame=chunk_start_frame + chunk_frame_offset)
+            chunk_start_frame = scene.frame_current
+            at_end = False
 
-            for animation_name, object in animation_name_to_object.items():
-                animation_values[animation_name].append(
-                    self._get_transform_local_to(ground_body, object)
-                    .blender_to_unity()
-                    .to_json()
+            for chunk_frame_offset in range(render_props.animation_chunk_size):
+                scene.frame_set(frame=chunk_start_frame + chunk_frame_offset)
+
+                for animation_name, object in animation_name_to_object.items():
+                    animation_values[animation_name].append(
+                        self._get_transform_local_to(ground_body, object)
+                        .blender_to_unity()
+                        .to_json()
+                    )
+
+                animation_values["free_camera/camera_info"].append(
+                    camera_info_from_blender(camera.data)
                 )
 
-            animation_values["free_camera/camera_info"].append(
-                camera_info_from_blender(camera.data)
-            )
+                animation_values["time/scale"].append(scene_props.time_scale)
 
-            animation_values["time/scale"].append(self._scene_props.time_scale)
+                if scene.frame_current >= scene.frame_end:
+                    at_end = True
+                    break
 
-            if scene.frame_current >= frame_end:
-                at_end = True
+            for animation_name, frame_values in animation_values.items():
+                success = api_client.set_animation_values_from_frame(
+                    animation_name, chunk_start_frame, frame_values
+                )
+
+                frame_values.clear()
+
+                if not success:
+                    self.report(
+                        {"WARNING"},
+                        f"failed to send animation {animation_name} data at frame {chunk_start_frame}",
+                    )
+
+            if at_end:
+                if not api_client.set_is_recording(True):
+                    self.report({"ERROR"}, "failed to start recording")
+                    return {"CANCELLED"}
                 break
 
-        for animation_name, frame_values in animation_values.items():
-            success = self._api_client.set_animation_values_from_frame(
-                animation_name, chunk_start_frame, frame_values
-            )
-            if not success:
-                self.report(
-                    {"WARNING"},
-                    f"failed to send animation {animation_name} data at frame {chunk_start_frame}",
-                )
+            yield {"TIMER"}
 
-        if at_end:
-            if not self._api_client.set_is_recording(True):
-                self.report({"ERROR"}, "failed to start recording")
-                return {"CANCELLED"}
+        scene.frame_set(frame=was_on_frame)
 
-            self._stage = "RENDERING"
-            scene.frame_set(frame=self._was_on_frame)
+        # render
 
-            self._frames_recorded_generator = GeneratorWithState(self._api_client.get_frames_recorded_async())
+        render_props.render_stage_description = "Rendering"
 
-        return {"RUNNING_MODAL"}
+        frames_recorded = GeneratorWithState(
+            api_client.get_frames_recorded_async()
+        )
 
-    def _stage_rendering(self, context: Context):
-        self._render_props.render_stage_description = "Rendering"
+        for count in frames_recorded:
+            render_props.render_stage_progress = count / frame_count
+            yield {"TIMER"}
 
-        frames_recorded = next(self._frames_recorded_generator, self._frame_count)
-        if self._frames_recorded_generator.returned == False:
-            self.remove_timer(context)
+        if frames_recorded.returned == False:
+            self._remove_timer(context)
             self.report({"ERROR"}, "failed to receive recorded frames count")
             return {"CANCELLED"}
 
-        self._render_props.render_stage_progress = frames_recorded / self._frame_count
+        # end
 
-        if frames_recorded < self._frame_count:
-            return {"RUNNING_MODAL"}
-
-        self.remove_timer(context)
+        self._remove_timer(context)
         self.report({"INFO"}, "Outer Wilds render finished")
 
         bpy.ops.ow_recorder.load_camera_background()
@@ -217,7 +191,10 @@ class OW_RECORDER_OT_render(Operator):
 
         return {"FINISHED"}
 
-    def remove_timer(self, context: Context):
+    def _after_event(self, context: Context, event: Event):
+        context.area.tag_redraw()
+
+    def _remove_timer(self, context: Context):
         context.window_manager.event_timer_remove(self._timer)
         self._render_props.is_rendering = False
 
