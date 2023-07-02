@@ -94,6 +94,10 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         ).build(hdri_node_tree)
         arrange_nodes(hdri_node_tree)
 
+        warning_label_node = hdri_node_tree.nodes.new(bpy.types.NodeReroute.__name__)
+        warning_label_node.label = "This node tree is auto-generated!"
+        warning_label_node.location = (75, 35)
+
         old_hdri_node_tree: NodeTree = reference_props.hdri_node_tree
         if old_hdri_node_tree is not None:
             old_hdri_node_tree.user_remap(hdri_node_tree)

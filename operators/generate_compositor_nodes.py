@@ -136,8 +136,11 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                 ),
             ),
         ).build(ow_compositor_node_tree)
-
         arrange_nodes(ow_compositor_node_tree)
+
+        warning_label_node = ow_compositor_node_tree.nodes.new(bpy.types.NodeReroute.__name__)
+        warning_label_node.label = "This node tree is auto-generated!"
+        warning_label_node.location = (75, 35)
 
         old_ow_compositor_group: NodeTree = reference_props.compositor_node_tree
         if old_ow_compositor_group is not None:
