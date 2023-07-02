@@ -1,10 +1,10 @@
 from os import path
 
 import bpy
-from bpy.types import Operator, Context, NodeTree, MovieClip, Camera
+from bpy.types import ID, Operator, Context, NodeTree, MovieClip, Camera
 
 from ..bpy_register import bpy_register
-from ..utils import NodeBuilder, arrange_nodes, get_depth_video_path
+from ..utils import NodeBuilder, get_id_type, arrange_nodes, get_depth_video_path
 from ..properties import OWRecorderReferencePropertis
 
 
@@ -46,8 +46,12 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         ow_compositor_node_tree.inputs.clear()
         ow_compositor_node_tree.outputs.clear()
 
-        image_pass_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketColor.__name__, "Image Pass")
-        depth_pass_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Depth Pass")
+        image_pass_input = ow_compositor_node_tree.inputs.new(
+            bpy.types.NodeSocketColor.__name__, "Image Pass"
+        )
+        depth_pass_input = ow_compositor_node_tree.inputs.new(
+            bpy.types.NodeSocketFloat.__name__, "Depth Pass"
+        )
 
         blur_input = ow_compositor_node_tree.inputs.new(
             bpy.types.NodeSocketFloat.__name__, "Blur Edges"
@@ -63,12 +67,32 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                 bpy.types.CompositorNodeMath, operation=operation, _0=left, _1=right
             )
 
-        def build_value_node(value: float, label="Value"):
+        def build_value_node(value: float, *, label="Value", inits=None):
+            inits = [] if inits is None else inits
+
             def init(node: bpy.types.CompositorNodeValue):
                 node.label = label
                 node.outputs["Value"].default_value = value
 
-            return NodeBuilder(bpy.types.CompositorNodeValue, init=init)
+            return NodeBuilder(bpy.types.CompositorNodeValue, init=[init, *inits])
+
+        def init_driver_property(expression: str, *variables: tuple[str, ID, str]):
+            def init(node: bpy.types.CompositorNodeValue):
+                value_driver = node.outputs[0].driver_add("default_value").driver
+
+                for name, id, data_path in variables:
+                    variable = value_driver.variables.new()
+                    variable.name = name
+                    variable.type = "SINGLE_PROP"
+                    variable_target = variable.targets[0]
+
+                    variable_target.id_type = get_id_type(id)
+                    variable_target.id = id
+                    variable_target.data_path = data_path
+
+                value_driver.expression = expression
+
+            return init
 
         NodeBuilder(
             bpy.types.NodeGroupOutput,
@@ -90,7 +114,14 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                     "DIVIDE",
                     left=(
                         far_value_node := build_value_node(
-                            camera.clip_end, label="camera_far"  # TODO: driver
+                            camera.clip_end,
+                            label="camera_far",
+                            inits=[
+                                init_driver_property(
+                                    "clip_end",
+                                    ("clip_end", scene, "camera.data.clip_end"),
+                                )
+                            ],
                         )
                     ),
                     right=build_math_node(
@@ -104,8 +135,18 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
                                     "DIVIDE",
                                     left=far_value_node,
                                     right=build_value_node(
-                                        camera.clip_start,  # TODO: driver
+                                        camera.clip_start,
                                         label="camera_near",
+                                        inits=[
+                                            init_driver_property(
+                                                "clip_start",
+                                                (
+                                                    "clip_start",
+                                                    scene,
+                                                    "camera.data.clip_start",
+                                                ),
+                                            )
+                                        ],
                                     ),
                                 ),
                                 right=1,
@@ -138,7 +179,9 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         ).build(ow_compositor_node_tree)
         arrange_nodes(ow_compositor_node_tree)
 
-        warning_label_node = ow_compositor_node_tree.nodes.new(bpy.types.NodeReroute.__name__)
+        warning_label_node = ow_compositor_node_tree.nodes.new(
+            bpy.types.NodeReroute.__name__
+        )
         warning_label_node.label = "This node tree is auto-generated!"
         warning_label_node.location = (75, 35)
 

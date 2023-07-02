@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Type, Callable, Any
+from typing import Generic, TypeVar, Type, Callable, Iterable, Any
 
 from bpy.types import NodeTree, Node, NodeSocket, NodeLink
 
@@ -21,7 +21,7 @@ class NodeBuilder(Generic[TNode]):
         node_type: Type[TNode],
         *,
         output: int | str = 0,
-        init: Callable[[TNode], None] | None = None,
+        init: Callable[[TNode], None] | Iterable[Callable[[TNode], None]] | None = None,
         **inputs: Any | "NodeBuilder"
     ):
         super().__init__()
@@ -47,8 +47,12 @@ class NodeBuilder(Generic[TNode]):
 
         self.built_node = create_node(node_tree, self.node_type)
 
-        if self.init_node is not None:
+        if callable(self.init_node):
             self.init_node(self.built_node)
+
+        if isinstance(self.init_node, Iterable):
+            for init_node in self.init_node:
+                init_node(self.built_node)
 
         for input_key, value in self.inputs.items():
             if isinstance(value, NodeBuilderOutputConnection):
