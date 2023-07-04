@@ -33,8 +33,9 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         hdri_image.name = f"Outer Wilds {scene.name} HDRI"
         reference_props.hdri_image = hdri_image
 
+        hdri_node_tree_name = f"Outer Wilds {scene.name} HDRI"
         hdri_node_tree: NodeTree = bpy.data.node_groups.new(
-            name=f"Outer Wilds {scene.name} HDRI",
+            name=hdri_node_tree_name,
             type=bpy.types.ShaderNodeTree.__name__,
         )
 
@@ -103,6 +104,8 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
             old_hdri_node_tree.user_remap(hdri_node_tree)
             bpy.data.node_groups.remove(old_hdri_node_tree, do_unlink=True)
         reference_props.hdri_node_tree = hdri_node_tree
+
+        hdri_node_tree.name = hdri_node_tree_name
 
         if (
             (scene_world := scene.world) is None

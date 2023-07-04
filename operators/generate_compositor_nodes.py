@@ -37,8 +37,9 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         depth_movie_clip.frame_start = scene.frame_start
         reference_props.depth_movie_clip = depth_movie_clip
 
+        ow_compositor_node_tree_name = f"Outer Wilds {scene.name} Compositor"
         ow_compositor_node_tree: NodeTree = bpy.data.node_groups.new(
-            name=f"Outer Wilds {scene.name} Compositor",
+            name=ow_compositor_node_tree_name,
             type=bpy.types.CompositorNodeTree.__name__,
         )
 
@@ -190,6 +191,10 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
             old_ow_compositor_group.user_remap(ow_compositor_node_tree)
             bpy.data.node_groups.remove(old_ow_compositor_group, do_unlink=True)
         reference_props.compositor_node_tree = ow_compositor_node_tree
+
+        ow_compositor_node_tree.name = (
+            ow_compositor_node_tree_name  # prevent auto .001 postfix
+        )
 
         context.view_layer.use_pass_z = True
 
