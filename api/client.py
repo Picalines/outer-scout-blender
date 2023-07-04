@@ -204,6 +204,16 @@ class APIClient:
         )
         return response.is_success()
 
+    def warp_to(self, ground_body_name: str, local_transform: TransformModel) -> bool:
+        response = self._get_response(
+            Request(
+                method="POST",
+                url=f"warp_to/{ground_body_name}",
+                data=local_transform.to_json(),
+            )
+        )
+        return response.is_success()
+
     def _get_response(self, request: Request) -> Response | None:
         return send_request(
             data_replace(request, url=self.base_url + request.url)

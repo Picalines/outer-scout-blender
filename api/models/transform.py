@@ -36,6 +36,14 @@ class TransformModel:
     scale: Vector
 
     @staticmethod
+    def from_components_tuple(_tuple: tuple[float, ...]) -> "TransformModel":
+        return TransformModel(
+            position=Vector(_tuple[0:3]),
+            rotation=Quaternion(_tuple[3:7]),
+            scale=Vector(_tuple[7:10])
+        )
+
+    @staticmethod
     def from_json(json: TransformModelJSON) -> "TransformModel":
         return TransformModel(
             position=Vector(json[0]),
@@ -64,6 +72,13 @@ class TransformModel:
             position=blender_vector_to_unity(self.position),
             rotation=blender_quaternion_to_unity(self.rotation),
             scale=blender_vector_to_unity(self.scale),
+        )
+
+    def to_components_tuple(self) -> tuple[float, ...]:
+        return (
+            *self.position,
+            *self.rotation,
+            *self.scale,
         )
 
     def to_json(self) -> TransformModelJSON:
