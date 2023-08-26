@@ -43,9 +43,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         hdri_node_tree.inputs.clear()
         hdri_node_tree.outputs.clear()
 
-        strength_input = hdri_node_tree.inputs.new(
-            bpy.types.NodeSocketFloat.__name__, "Strength"
-        )
+        strength_input = hdri_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Strength")
 
         hdri_node_tree.outputs.new(bpy.types.NodeSocketShader.__name__, "Background")
 
@@ -71,28 +69,19 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
 
             frame_driver.expression = "frame - frame_start"
 
-        NodeBuilder(
-            bpy.types.NodeGroupOutput,
-            _0=NodeBuilder(
-                bpy.types.ShaderNodeBackground,
-                Color=NodeBuilder(
-                    bpy.types.ShaderNodeTexEnvironment,
-                    init=init_environment_node,
-                    Vector=NodeBuilder(
-                        bpy.types.ShaderNodeMapping,
-                        Rotation=Euler((0, radians(-90), 0)),
-                        Vector=NodeBuilder(
-                            bpy.types.ShaderNodeTexCoord,
-                            output="Generated",
-                        ),
-                    ),
-                ),
-                Strength=NodeBuilder(
-                    bpy.types.NodeGroupInput,
-                    output="Strength",
-                ),
-            ),
-        ).build(hdri_node_tree)
+        with NodeBuilder(hdri_node_tree, bpy.types.NodeGroupOutput) as output_node:
+            with output_node.build_input(0, bpy.types.ShaderNodeBackground) as background_node:
+                with background_node.build_input("Color", bpy.types.ShaderNodeTexEnvironment) as environment_node:
+                    environment_node.defer_init(init_environment_node)
+
+                    with environment_node.build_input("Vector", bpy.types.ShaderNodeMapping) as mapping_node:
+                        mapping_node.set_input_value("Rotation", Euler((0, radians(-90), 0)))  # TODO: 90 0 -90?
+                        with mapping_node.build_input("Vector", bpy.types.ShaderNodeTexCoord) as texture_coord_node:
+                            texture_coord_node.set_main_output("Generated")
+
+                with background_node.build_input("Strength", bpy.types.NodeGroupInput) as input_node:
+                    input_node.set_main_output("Strength")
+
         arrange_nodes(hdri_node_tree)
 
         warning_label_node = hdri_node_tree.nodes.new(bpy.types.NodeReroute.__name__)
@@ -112,22 +101,17 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
             or (not scene_world.use_nodes)
             or self._is_default_shader(scene_world.node_tree)
         ):
-            scene_world = scene.world = scene_world or bpy.data.worlds.new(
-                f"{scene.name} World"
-            )
+            scene_world = scene.world = scene_world or bpy.data.worlds.new(f"{scene.name} World")
             scene_world.use_nodes = True
             world_node_tree = scene_world.node_tree
             world_node_tree.nodes.clear()
 
-            NodeBuilder(
-                bpy.types.ShaderNodeOutputWorld,
-                Surface=NodeBuilder(
-                    bpy.types.ShaderNodeGroup,
-                    node_tree=hdri_node_tree,
-                    output="Background",
-                    Strength=default_strength,
-                ),
-            ).build(world_node_tree)
+            with NodeBuilder(world_node_tree, bpy.types.ShaderNodeOutputWorld) as output_node:
+                with output_node.build_input("Surface", bpy.types.ShaderNodeGroup) as addon_node_group:
+                    addon_node_group.set_main_output("Background")
+                    addon_node_group.set_attr("node_tree", hdri_node_tree)
+                    addon_node_group.set_input_value("Strength", default_strength)
+
             arrange_nodes(world_node_tree)
         else:
             world_node_tree = scene_world.node_tree
