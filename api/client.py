@@ -14,9 +14,7 @@ from typing import Literal, Generator
 from dataclasses import replace as data_replace
 
 
-AnimationName = Literal[
-    "free_camera/transform", "free_camera/fov", "hdri_pivot/transform"
-]
+AnimationName = Literal["free_camera/transform", "free_camera/fov", "hdri_pivot/transform"]
 
 
 class APIClient:
@@ -72,9 +70,7 @@ class APIClient:
 
     def get_frames_recorded_async(self) -> Generator[int, None, bool]:
         lines = GeneratorWithState(
-            self._get_response_async_lines(
-                Request(method="GET", url="recorder/frames_recorded_async")
-            )
+            self._get_response_async_lines(Request(method="GET", url="recorder/frames_recorded_async"))
         )
 
         for line in lines:
@@ -85,9 +81,7 @@ class APIClient:
 
         return bool(lines.returned)
 
-    def set_animation_value_at_frame(
-        self, animation: AnimationName, frame: int, value_json
-    ) -> bool:
+    def set_animation_value_at_frame(self, animation: AnimationName, frame: int, value_json) -> bool:
         response = self._get_response(
             Request(
                 method="PUT",
@@ -111,9 +105,7 @@ class APIClient:
         )
         return response.is_success()
 
-    def set_animation_values_from_frame(
-        self, animation: AnimationName, from_frame: int, values: list
-    ) -> bool:
+    def set_animation_values_from_frame(self, animation: AnimationName, from_frame: int, values: list) -> bool:
         response = self._get_response(
             Request(
                 method="PUT",
@@ -161,11 +153,7 @@ class APIClient:
                 url=f"{entity}/transform/local_to/ground_body",
             )
         )
-        return (
-            TransformModel.from_json_str(response.body)
-            if response.is_success()
-            else None
-        )
+        return TransformModel.from_json_str(response.body) if response.is_success() else None
 
     def set_transform_local_to_ground_body(
         self,
@@ -181,9 +169,7 @@ class APIClient:
         )
         return response.is_success()
 
-    def get_camera_info(
-        self, camera: Literal["free_camera", "player_camera"]
-    ) -> CameraInfo | None:
+    def get_camera_info(self, camera: Literal["free_camera", "player_camera"]) -> CameraInfo | None:
         response = self._get_response(
             Request(
                 method="GET",
@@ -192,9 +178,7 @@ class APIClient:
         )
         return response.typed_json(CameraInfo) if response.is_success() else None
 
-    def set_camera_info(
-        self, camera: Literal["free_camera"], new_info: CameraInfo
-    ) -> bool:
+    def set_camera_info(self, camera: Literal["free_camera"], new_info: CameraInfo) -> bool:
         response = self._get_response(
             Request(
                 method="PUT",
@@ -215,15 +199,9 @@ class APIClient:
         return response.is_success()
 
     def _get_response(self, request: Request) -> Response | None:
-        return send_request(
-            data_replace(request, url=self.base_url + request.url)
-        ) or Response("", {}, -1)
+        return send_request(data_replace(request, url=self.base_url + request.url)) or Response("", {}, -1)
 
     def _get_response_async_lines(self, request: Request) -> Generator[str, None, bool]:
         return is_success_http_status(
-            (
-                yield from send_request_async_lines(
-                    data_replace(request, url=self.base_url + request.url)
-                )
-            )
+            (yield from send_request_async_lines(data_replace(request, url=self.base_url + request.url)))
         )

@@ -80,39 +80,26 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         scene_props = OWRecorderSceneProperties.from_context(context)
         current_ground_body: Object = reference_props.ground_body
 
-        if (
-            current_ground_body is not None
-            and scene_props.ground_body_name != ground_body_name
-        ):
-            self.report(
-                {"ERROR"}, "multiple ground bodies in one project is not supported"
-            )
+        if current_ground_body is not None and scene_props.ground_body_name != ground_body_name:
+            self.report({"ERROR"}, "multiple ground bodies in one project is not supported")
             return {"CANCELLED"}
 
-        ground_body_project_path = Path(preferences.ow_bodies_folder).joinpath(
-            ground_body_name + ".blend"
-        )
+        ground_body_project_path = Path(preferences.ow_bodies_folder).joinpath(ground_body_name + ".blend")
 
         if not ground_body_project_path.exists():
-            return_code = self._generate_ground_body_file_in_new_instance(
-                ground_body_name
-            )
+            return_code = self._generate_ground_body_file_in_new_instance(ground_body_name)
             if not (return_code == 0 and ground_body_project_path.exists()):
                 self.report({"ERROR"}, "could not generate ground body .blend file")
                 return {"CANCELLED"}
 
         sectors_list_text_name = f"{ground_body_name} sectors"
         if sectors_list_text_name not in bpy.data.texts:
-            link_status = self._link(
-                ground_body_project_path, "Text", sectors_list_text_name
-            )
+            link_status = self._link(ground_body_project_path, "Text", sectors_list_text_name)
             if link_status != {"FINISHED"}:
                 self.report({"ERROR"}, "could not link ground body sector list text")
                 return {"CANCELLED"}
 
-        sector_list: dict[str, int] = json.loads(
-            bpy.data.texts[sectors_list_text_name].as_string()
-        )
+        sector_list: dict[str, int] = json.loads(bpy.data.texts[sectors_list_text_name].as_string())
 
         if self.sector_loading_mode == "ALL":
             sector_indices = sector_list.values()
@@ -122,9 +109,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
                 self.report({"ERROR"}, "could not get current sector path from API")
                 return {"CANCELLED"}
 
-            sector_indices = map(
-                lambda p: sector_list[p], self._iter_subpaths(current_sector_path)
-            )
+            sector_indices = map(lambda p: sector_list[p], self._iter_subpaths(current_sector_path))
 
             if self.sector_loading_mode == "CURRENT":
                 sector_indices = (list(sector_indices)[-1],)
@@ -132,8 +117,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         sector_indices: Iterable[int] | None
 
         sector_collections_names = [
-            f"{ground_body_name} Sector #{sector_index} Collection"
-            for sector_index in sector_indices
+            f"{ground_body_name} Sector #{sector_index} Collection" for sector_index in sector_indices
         ]
 
         sector_collection_instances: list[Object] = []
@@ -142,9 +126,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             if sector_collection_name in bpy.data.collections:
                 continue
 
-            link_status = self._link(
-                ground_body_project_path, "Collection", sector_collection_name
-            )
+            link_status = self._link(ground_body_project_path, "Collection", sector_collection_name)
             if link_status != {"FINISHED"}:
                 self.report({"ERROR"}, f"could not link {sector_collection_name}")
                 return {"CANCELLED"}
@@ -187,17 +169,15 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         return {"FINISHED"}
 
     def _generate_ground_body_file_in_new_instance(self, ground_body_name: str) -> int:
-        python_expr = f"import sys, bpy; bpy.ops.ow_recorder.generate_ground_body_background(ground_body='{ground_body_name}')"
+        python_expr = (
+            f"import sys, bpy; bpy.ops.ow_recorder.generate_ground_body_background(ground_body='{ground_body_name}')"
+        )
         cmd = f'"{bpy.app.binary_path}" -noaudio --background --log-level -1 --python-expr "{python_expr}"'
 
-        process = subprocess.run(
-            cmd, shell=False, creationflags=subprocess.CREATE_NEW_CONSOLE
-        )
+        process = subprocess.run(cmd, shell=False, creationflags=subprocess.CREATE_NEW_CONSOLE)
         return process.returncode
 
-    def _link(
-        self, blender_project_path: Path, resource_type: str, filename: str
-    ) -> set[str]:
+    def _link(self, blender_project_path: Path, resource_type: str, filename: str) -> set[str]:
         return bpy.ops.wm.link(
             filename=filename,
             filepath=str(blender_project_path.joinpath(resource_type, filename)),

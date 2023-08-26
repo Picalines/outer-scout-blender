@@ -14,9 +14,7 @@ def send_request(request: Request) -> Response | None:
     try:
         with urllib.request.urlopen(http_request) as http_response:
             response = Response(
-                body=http_response.read().decode(
-                    http_response.headers.get_content_charset("utf-8")
-                ),
+                body=http_response.read().decode(http_response.headers.get_content_charset("utf-8")),
                 headers=http_response.headers,
                 status=http_response.status,
             )

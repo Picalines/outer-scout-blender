@@ -22,9 +22,7 @@ class OW_RECORDER_OT_move_ground_to_origin(Operator):
         ground_body: Object = reference_props.ground_body
         cursor = context.scene.cursor
 
-        ground_body.matrix_world = (
-            ground_body.matrix_world.inverted() @ cursor.matrix
-        ).inverted()
+        ground_body.matrix_world = (ground_body.matrix_world.inverted() @ cursor.matrix).inverted()
         bpy.ops.view3d.snap_cursor_to_center()
 
         return {"FINISHED"}

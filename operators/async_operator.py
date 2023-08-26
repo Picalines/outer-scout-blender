@@ -24,7 +24,7 @@ class AsyncOperator(Operator):
         if self._async_generator.stopped:
             self._ended(context)
             return self._async_generator.returned
-        
+
         self._events_to_await = self._async_generator.last_yielded
         return {"RUNNING_MODAL"}
 
@@ -34,11 +34,11 @@ class AsyncOperator(Operator):
         context.window_manager.modal_handler_add(self)
 
         return self._poll_async_generator(context)
-    
+
     def modal(self, context: Context, event: Event):
         if event.type not in self._events_to_await:
             return {"RUNNING_MODAL"}
-        
+
         self._after_event(context, event)
-        
+
         return self._poll_async_generator(context)

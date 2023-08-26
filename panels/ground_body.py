@@ -24,9 +24,7 @@ class OW_RECORDER_PT_ground_body(Panel):
         current_ground_body: Object = reference_props.ground_body
         has_ground_body = current_ground_body is not None
 
-        ground_body_text = (
-            scene_props.ground_body_name.removesuffix("_Body") or "ground body"
-        )
+        ground_body_text = scene_props.ground_body_name.removesuffix("_Body") or "ground body"
 
         load_ground_body_props = self.layout.operator(
             operator=OW_RECORDER_OT_load_ground_body.bl_idname,
@@ -53,12 +51,6 @@ class OW_RECORDER_PT_ground_body(Panel):
 
         show_body_props.visible = not ground_body_visible
 
-        self.layout.operator(
-            operator=OW_RECORDER_OT_save_warp_transform.bl_idname,
-            icon="CURRENT_FILE"
-        )
+        self.layout.operator(operator=OW_RECORDER_OT_save_warp_transform.bl_idname, icon="CURRENT_FILE")
 
-        self.layout.operator(
-            operator=OW_RECORDER_OT_warp.bl_idname,
-            icon="ORIENTATION_PARENT"
-        )
+        self.layout.operator(operator=OW_RECORDER_OT_warp.bl_idname, icon="ORIENTATION_PARENT")

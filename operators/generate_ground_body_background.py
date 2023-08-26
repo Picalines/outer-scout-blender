@@ -9,9 +9,7 @@ from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
 @bpy_register
-class OW_RECORDER_OT_generate_ground_body_background(
-    Operator, GroundBodySelectionHelper
-):
+class OW_RECORDER_OT_generate_ground_body_background(Operator, GroundBodySelectionHelper):
     """Call ow_recorder.generate_ground_body in background environment"""
 
     bl_idname = "ow_recorder.generate_ground_body_background"
@@ -26,9 +24,7 @@ class OW_RECORDER_OT_generate_ground_body_background(
             context.scene.collection.children.unlink(c)
 
         try:
-            result = bpy.ops.ow_recorder.generate_ground_body(
-                ground_body=self.ground_body
-            )
+            result = bpy.ops.ow_recorder.generate_ground_body(ground_body=self.ground_body)
         except RuntimeError:
             result = {"ERROR"}
         if result != {"FINISHED"}:
@@ -38,9 +34,7 @@ class OW_RECORDER_OT_generate_ground_body_background(
         context.view_layer.update()
 
         bpy.ops.wm.save_as_mainfile(
-            filepath=str(
-                Path(preferences.ow_bodies_folder).joinpath(self.ground_body + ".blend")
-            )
+            filepath=str(Path(preferences.ow_bodies_folder).joinpath(self.ground_body + ".blend"))
         )
 
         bpy.ops.wm.quit_blender()

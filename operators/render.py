@@ -81,9 +81,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
             self.report({"ERROR"}, "unable to record")
             return {"CANCELLED"}
 
-        self._timer = context.window_manager.event_timer_add(
-            render_props.render_timer_delay, window=context.window
-        )
+        self._timer = context.window_manager.event_timer_add(render_props.render_timer_delay, window=context.window)
 
         scene.frame_set(frame=scene.frame_start)
         render_props.render_stage_progress = 0
@@ -125,14 +123,10 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
                 for animation_name, object in animation_name_to_object.items():
                     animation_values[animation_name].append(
-                        self._get_transform_local_to(ground_body, object)
-                        .blender_to_unity()
-                        .to_json()
+                        self._get_transform_local_to(ground_body, object).blender_to_unity().to_json()
                     )
 
-                animation_values["free_camera/camera_info"].append(
-                    camera_info_from_blender(camera.data)
-                )
+                animation_values["free_camera/camera_info"].append(camera_info_from_blender(camera.data))
 
                 animation_values["time/scale"].append(scene_props.time_scale)
 
@@ -141,9 +135,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
                     break
 
             for animation_name, frame_values in animation_values.items():
-                success = api_client.set_animation_values_from_frame(
-                    animation_name, chunk_start_frame, frame_values
-                )
+                success = api_client.set_animation_values_from_frame(animation_name, chunk_start_frame, frame_values)
 
                 frame_values.clear()
 

@@ -17,9 +17,9 @@ def iter_recursive(dict_or_list: dict | list) -> Generator[tuple[Any, Any], None
                 yield from iter_recursive(item)
 
 
-TYield = TypeVar('TYield')
-TSend = TypeVar('TSend')
-TReturn = TypeVar('TReturn')
+TYield = TypeVar("TYield")
+TSend = TypeVar("TSend")
+TReturn = TypeVar("TReturn")
 
 
 class GeneratorWithState(Generic[TYield, TSend, TReturn]):

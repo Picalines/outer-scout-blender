@@ -99,11 +99,7 @@ class OW_RECORDER_OT_synchronize(Operator):
         else:
             blender_item.matrix @= Matrix.Rotation(radians(-90), 4, (1, 0, 0))
 
-        if (
-            isinstance(blender_item, Object)
-            and blender_item.type == "CAMERA"
-            and ("camera" in self.ow_item)
-        ):
+        if isinstance(blender_item, Object) and blender_item.type == "CAMERA" and ("camera" in self.ow_item):
             camera_info = api_client.get_camera_info(self.ow_item)
             if camera_info is None:
                 self.report({"ERROR"}, "failed to get camera info from Outer Wilds")
@@ -133,18 +129,12 @@ class OW_RECORDER_OT_synchronize(Operator):
         new_transform = TransformModel.from_matrix(new_transform)
         new_transform = new_transform.blender_to_unity()
 
-        success = api_client.set_transform_local_to_ground_body(
-            self.ow_item, new_transform
-        )
+        success = api_client.set_transform_local_to_ground_body(self.ow_item, new_transform)
         if not success:
             self.report({"INFO"}, "failed to set transform in Outer Wilds")
             return {"CANCELLED"}
 
-        if (
-            isinstance(blender_item, Object)
-            and blender_item.type == "CAMERA"
-            and ("camera" in self.ow_item)
-        ):
+        if isinstance(blender_item, Object) and blender_item.type == "CAMERA" and ("camera" in self.ow_item):
             new_camera_info = camera_info_from_blender(blender_item.data)
             success = api_client.set_camera_info(self.ow_item, new_camera_info)
             if not success:
@@ -159,6 +149,4 @@ class OW_RECORDER_OT_synchronize(Operator):
             return context.scene.camera
 
         selected_objects = context.view_layer.objects.selected
-        return (
-            selected_objects[0] if len(selected_objects) > 0 else context.scene.cursor
-        )
+        return selected_objects[0] if len(selected_objects) > 0 else context.scene.cursor

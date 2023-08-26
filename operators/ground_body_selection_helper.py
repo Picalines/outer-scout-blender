@@ -49,9 +49,7 @@ class GroundBodySelectionHelper:
         ],
     )
 
-    def get_ground_body_name(
-        self, context: APIClient | OWRecorderPreferences | Context
-    ) -> str | None:
+    def get_ground_body_name(self, context: APIClient | OWRecorderPreferences | Context) -> str | None:
         if self.ground_body != "CURRENT":
             return self.ground_body
 

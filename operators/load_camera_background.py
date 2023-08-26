@@ -34,11 +34,7 @@ class OW_RECORDER_OT_load_camera_background(Operator):
         camera_data.show_background_images = True
 
         camera_background: CameraBackgroundImage | None = next(
-            (
-                bg
-                for bg in camera_data.background_images
-                if bg.clip == background_movie_clip
-            ),
+            (bg for bg in camera_data.background_images if bg.clip == background_movie_clip),
             None,
         )
 

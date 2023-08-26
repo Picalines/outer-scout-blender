@@ -25,7 +25,7 @@ class OW_RECORDER_OT_save_warp_transform(Operator):
         if player_transform is None:
             self.report({"ERROR"}, "failed to receive player transform")
             return {"CANCELLED"}
-        
+
         ground_body_name = api_client.get_ground_body_name()
         if ground_body_name is None:
             self.report({"ERROR"}, "failed to get current ground body name")

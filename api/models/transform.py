@@ -38,9 +38,7 @@ class TransformModel:
     @staticmethod
     def from_components_tuple(_tuple: tuple[float, ...]) -> "TransformModel":
         return TransformModel(
-            position=Vector(_tuple[0:3]),
-            rotation=Quaternion(_tuple[3:7]),
-            scale=Vector(_tuple[7:10])
+            position=Vector(_tuple[0:3]), rotation=Quaternion(_tuple[3:7]), scale=Vector(_tuple[7:10])
         )
 
     @staticmethod

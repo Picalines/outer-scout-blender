@@ -8,9 +8,7 @@ from bpy.types import Object
 DUPLICATE_OBJECT_NAME_REGEX = re.compile(r"(.*?)\.\d+")
 
 
-def set_parent(
-    children: Iterable[Object], parent: Object | None, *, keep_transform=True
-):
+def set_parent(children: Iterable[Object], parent: Object | None, *, keep_transform=True):
     for child in filter(lambda obj: obj is not None, children):
         child.parent = parent
         if keep_transform and parent is not None:
@@ -22,9 +20,7 @@ def create_empty():
     return bpy.context.active_object
 
 
-def get_child_by_path(
-    object: Object, path: Iterable[str], mask_duplicates=True
-) -> Object | None:
+def get_child_by_path(object: Object, path: Iterable[str], mask_duplicates=True) -> Object | None:
     current = object
 
     def match_child_name(expected_name: str, actual_name: str):
@@ -38,11 +34,7 @@ def get_child_by_path(
 
     for child_name in path:
         current = next(
-            (
-                child
-                for child in current.children
-                if match_child_name(child_name, child.name)
-            ),
+            (child for child in current.children if match_child_name(child_name, child.name)),
             None,
         )
         if not current:

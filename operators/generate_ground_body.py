@@ -27,9 +27,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
             self._log("ERROR", "plugin preferences are empty")
             return {"CANCELLED"}
 
-        ow_assets_folder, ow_bodies_folder = map(
-            Path, (preferences.ow_assets_folder, preferences.ow_bodies_folder)
-        )
+        ow_assets_folder, ow_bodies_folder = map(Path, (preferences.ow_assets_folder, preferences.ow_bodies_folder))
 
         api_client = APIClient(preferences)
 
@@ -56,9 +54,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 return {"CANCELLED"}
 
             self._log("INFO", "creating mesh list file")
-            success = api_client.generate_current_ground_body_mesh_list(
-                str(mesh_list_path)
-            )
+            success = api_client.generate_current_ground_body_mesh_list(str(mesh_list_path))
             if not success:
                 self._log("ERROR", "could not generate mesh list")
                 return {"CANCELLED"}
@@ -69,9 +65,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         self._log("INFO", "loading mesh list")
         with open(mesh_list_path, "rb") as ow_meshes_json_file:
-            ground_body_meshes_info: GroundBodyMeshInfo = json.loads(
-                ow_meshes_json_file.read()
-            )
+            ground_body_meshes_info: GroundBodyMeshInfo = json.loads(ow_meshes_json_file.read())
 
         imported_ow_objects: dict[str, Object | None] = {
             streamed_mesh["path"]: None
@@ -85,11 +79,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         )
         for asset_path in imported_ow_objects:
             try:
-                obj_path = str(
-                    ow_assets_folder.joinpath(
-                        asset_path.removesuffix(".asset") + ".obj"
-                    )
-                )
+                obj_path = str(ow_assets_folder.joinpath(asset_path.removesuffix(".asset") + ".obj"))
                 bpy.ops.wm.obj_import(filepath=obj_path)
             except:
                 self._log("WARNING", f"failed to import .obj file at {obj_path}")
@@ -104,9 +94,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         ground_body_fbx_path = str(ground_body_fbx_path)
         self._log("INFO", f"importing {ground_body_fbx_path}")
         if bpy.ops.import_scene.fbx(filepath=ground_body_fbx_path) != {"FINISHED"}:
-            self._log(
-                "ERROR", f"failed to import ground body fbx: {ground_body_fbx_path}"
-            )
+            self._log("ERROR", f"failed to import ground body fbx: {ground_body_fbx_path}")
             return {"CANCELLED"}
 
         extracted_ground_body_object = bpy.data.objects[ground_body_name]
@@ -138,9 +126,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         sectors_count = len(ground_body_meshes_info["sectors"])
 
-        ground_body_collection = bpy.data.collections.new(
-            f"{ground_body_name} Collection"
-        )
+        ground_body_collection = bpy.data.collections.new(f"{ground_body_name} Collection")
         context.scene.collection.children.link(ground_body_collection)
 
         sector_indices_text = bpy.data.texts.new(f"{ground_body_name} sectors")
@@ -159,9 +145,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 sector_indices_text.write(",")
             sector_indices_text.write("\n")
 
-            sector_collection = bpy.data.collections.new(
-                f"{ground_body_name} Sector #{sector_index} Collection"
-            )
+            sector_collection = bpy.data.collections.new(f"{ground_body_name} Sector #{sector_index} Collection")
             ground_body_collection.children.link(sector_collection)
 
             self._log(
@@ -180,9 +164,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 if skip_object:
                     continue
 
-                extracted_child = get_child_by_path(
-                    extracted_ground_body_object, mesh_path, mask_duplicates=True
-                )
+                extracted_child = get_child_by_path(extracted_ground_body_object, mesh_path, mask_duplicates=True)
                 if extracted_child is None:
                     self._log(
                         "WARNING",
@@ -197,9 +179,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 extracted_child.matrix_parent_inverse = Matrix.Identity(4)
                 extracted_child.matrix_world = (
                     ground_body_inverted_matrix
-                    @ TransformModel.from_json(plain_mesh_info["transform"])
-                    .unity_to_blender()
-                    .to_matrix()
+                    @ TransformModel.from_json(plain_mesh_info["transform"]).unity_to_blender().to_matrix()
                 )
 
             self._log(
@@ -222,9 +202,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
                 loaded_mesh.matrix_parent_inverse = Matrix.Identity(4)
                 loaded_mesh.matrix_local = (
                     ground_body_inverted_matrix
-                    @ TransformModel.from_json(streamed_mesh_info["transform"])
-                    .unity_to_blender()
-                    .to_matrix()
+                    @ TransformModel.from_json(streamed_mesh_info["transform"]).unity_to_blender().to_matrix()
                 )
 
             self._log("INFO", "deleting empties")
