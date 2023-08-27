@@ -75,7 +75,8 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
                     environment_node.defer_init(init_environment_node)
 
                     with environment_node.build_input("Vector", bpy.types.ShaderNodeMapping) as mapping_node:
-                        mapping_node.set_input_value("Rotation", Euler((0, radians(-90), 0)))  # TODO: 90 0 -90?
+                        mapping_node.set_input_value("Rotation", Euler((radians(90), 0, radians(-90))))
+
                         with mapping_node.build_input("Vector", bpy.types.ShaderNodeTexCoord) as texture_coord_node:
                             texture_coord_node.set_main_output("Generated")
 
