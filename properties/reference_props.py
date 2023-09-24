@@ -5,7 +5,7 @@ from ..bpy_register import bpy_register_property
 
 
 @bpy_register_property(Scene, "ow_recorder_reference_props")
-class OWRecorderReferencePropertis(PropertyGroup):
+class OWRecorderReferenceProperties(PropertyGroup):
     ground_body: PointerProperty(
         name="Ground Body",
         type=Object,
@@ -49,5 +49,5 @@ class OWRecorderReferencePropertis(PropertyGroup):
     )
 
     @staticmethod
-    def from_context(context: Context) -> "OWRecorderReferencePropertis":
+    def from_context(context: Context) -> "OWRecorderReferenceProperties":
         return context.scene.ow_recorder_reference_props

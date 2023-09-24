@@ -8,7 +8,7 @@ from ..preferences import OWRecorderPreferences
 from ..properties import (
     OWRecorderRenderProperties,
     OWRecorderSceneProperties,
-    OWRecorderReferencePropertis,
+    OWRecorderReferenceProperties,
 )
 from ..utils import GeneratorWithState, get_footage_path
 from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
@@ -30,7 +30,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
     @classmethod
     def poll(cls, context) -> bool:
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         return all(
             (
                 context.scene.camera,
@@ -52,7 +52,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         render_props = OWRecorderRenderProperties.from_context(context)
         scene_props = OWRecorderSceneProperties.from_context(context)
-        ref_props = OWRecorderReferencePropertis.from_context(context)
+        ref_props = OWRecorderReferenceProperties.from_context(context)
 
         self._render_props = render_props
 
@@ -68,6 +68,8 @@ class OW_RECORDER_OT_render(AsyncOperator):
             "frame_rate": scene.render.fps,
             "resolution_x": scene.render.resolution_x,
             "resolution_y": scene.render.resolution_y,
+            "record_hdri": render_props.use_hdri,
+            "record_depth": render_props.use_depth,
             "hdri_face_size": render_props.hdri_face_size,
             "hide_player_model": render_props.hide_player_model,
             "show_progress_gui": render_props.show_progress_gui,
@@ -101,14 +103,14 @@ class OW_RECORDER_OT_render(AsyncOperator):
             for name in (
                 "free_camera/transform",
                 "free_camera/camera_info",
-                "hdri_pivot/transform",
                 "time/scale",
+                *(("hdri_pivot/transform",) if render_props.use_hdri else ()),
             )
         }
 
         animation_name_to_object = {
             "free_camera/transform": camera,
-            "hdri_pivot/transform": hdri_pivot,
+            **({"hdri_pivot/transform": hdri_pivot} if render_props.use_hdri else {}),
         }
 
         while True:

@@ -7,7 +7,6 @@ from .http import (
     is_success_http_status,
     Request,
     Response,
-    HTTPStatus,
 )
 
 from typing import Literal, Generator

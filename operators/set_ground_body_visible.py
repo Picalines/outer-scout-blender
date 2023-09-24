@@ -2,7 +2,7 @@ from bpy.types import Operator, Object
 from bpy.props import BoolProperty
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferenceProperties
 
 
 @bpy_register
@@ -19,11 +19,11 @@ class OW_RECORDER_OT_set_ground_body_visible(Operator):
 
     @classmethod
     def poll(cls, context) -> bool:
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         return reference_props.ground_body is not None
 
     def execute(self, context):
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         ground_body: Object = reference_props.ground_body
 
         hide = not self.visible

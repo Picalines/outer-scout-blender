@@ -5,7 +5,7 @@ from bpy.types import Operator, Camera, CameraBackgroundImage
 
 from ..bpy_register import bpy_register
 from ..utils import get_background_video_path
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferenceProperties
 
 
 @bpy_register
@@ -27,7 +27,7 @@ class OW_RECORDER_OT_load_camera_background(Operator):
             self.report({"ERROR"}, "rendered background footage not found")
             return {"CANCELLED"}
 
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         background_movie_clip = reference_props.background_movie_clip
 
         camera_data: Camera = scene.camera.data

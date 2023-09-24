@@ -8,7 +8,7 @@ from bpy.types import Operator, Context, Object
 from bpy.props import EnumProperty, BoolProperty
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferencePropertis, OWRecorderSceneProperties
+from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from .ground_body_selection_helper import GroundBodySelectionHelper
@@ -37,7 +37,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
     )
 
     def invoke(self, context: Context, _):
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         current_ground_body = reference_props.ground_body
 
         if current_ground_body is not None:
@@ -47,7 +47,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context: Context):
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         current_ground_body = reference_props.ground_body
 
         row = self.layout.row(align=True)
@@ -76,7 +76,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             self.report({"ERROR"}, "could not get current ground body name")
             return {"CANCELLED"}
 
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         scene_props = OWRecorderSceneProperties.from_context(context)
         current_ground_body: Object = reference_props.ground_body
 

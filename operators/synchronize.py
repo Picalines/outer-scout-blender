@@ -5,7 +5,7 @@ from bpy.types import Operator, Context, Object, View3DCursor, SpaceView3D
 from bpy.props import EnumProperty
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferenceProperties
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
@@ -41,7 +41,7 @@ class OW_RECORDER_OT_synchronize(Operator):
 
     @classmethod
     def poll(cls, context) -> bool:
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         return reference_props.ground_body is not None
 
     def invoke(self, context: Context, _):
@@ -64,7 +64,7 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {"CANCELLED"}
 
     def _sync_ow_to_blender(self, context: Context):
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         api_client = APIClient(OWRecorderPreferences.from_context(context))
         ground_body: Object = reference_props.ground_body
 
@@ -114,7 +114,7 @@ class OW_RECORDER_OT_synchronize(Operator):
             self.report({"INFO"}, "modifying Player Camera is not allowed")
             return {"CANCELLED"}
 
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         api_client = APIClient(OWRecorderPreferences.from_context(context))
         ground_body: Object = reference_props.ground_body
 

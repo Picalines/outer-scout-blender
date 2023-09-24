@@ -1,7 +1,7 @@
 from bpy.types import Context, Operator
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderSceneProperties, OWRecorderReferencePropertis
+from ..properties import OWRecorderSceneProperties, OWRecorderReferenceProperties
 from ..preferences import OWRecorderPreferences
 from ..api import APIClient
 
@@ -15,7 +15,7 @@ class OW_RECORDER_OT_save_warp_transform(Operator):
 
     @classmethod
     def poll(cls, context) -> bool:
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
         return reference_props.ground_body is not None
 
     def invoke(self, context: Context, _):

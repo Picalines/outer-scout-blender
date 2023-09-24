@@ -18,6 +18,18 @@ class OWRecorderRenderProperties(PropertyGroup):
         default=False,
     )
 
+    use_hdri: BoolProperty(
+        name="Use HDRI",
+        description="Use HDRI recorded from Outer Wilds?",
+        default=False,
+    )
+
+    use_depth: BoolProperty(
+        name="Use depth",
+        description="Use depth texture recorded from Outer Wilds?",
+        default=False,
+    )
+
     hdri_face_size: IntProperty(
         name="HDRI face size",
         default=1024,

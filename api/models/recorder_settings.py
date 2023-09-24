@@ -8,6 +8,8 @@ class RecorderSettings(TypedDict):
     frame_rate: float
     resolution_x: int
     resolution_y: int
+    record_hdri: bool
+    record_depth: bool
     hdri_face_size: int
     hide_player_model: bool
     show_progress_gui: bool

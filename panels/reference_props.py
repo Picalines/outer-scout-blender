@@ -1,7 +1,7 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferenceProperties
 from ..operators import OW_RECORDER_OT_create_ow_pivots
 
 
@@ -14,7 +14,7 @@ class OW_RECORDER_PT_reference_props(Panel):
     bl_label = "Scene References"
 
     def draw(self, context):
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
 
         self.layout.prop(reference_props, "hdri_pivot", text="")
 
@@ -38,7 +38,7 @@ class OW_RECORDER_PT_reference_props_debug(Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
 
         column = self.layout.column()
         column.enabled = False

@@ -5,7 +5,7 @@ from bpy.types import ID, Operator, Context, NodeTree, MovieClip, Camera
 
 from ..bpy_register import bpy_register
 from ..utils import NodeBuilder, PostfixNodeBuilder, get_id_type, arrange_nodes, get_depth_video_path
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
 
 
 @bpy_register
@@ -19,7 +19,8 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         scene = context.scene
         camera: Camera = scene.camera.data
 
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
+        render_props = OWRecorderRenderProperties.from_context(context)
 
         if reference_props.background_movie_clip is None:
             bpy.ops.ow_recorder.load_camera_background()
@@ -76,79 +77,83 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
             return init
 
         with NodeBuilder(ow_compositor_node_tree, bpy.types.NodeGroupOutput) as output_node:
-            with output_node.build_input(0, bpy.types.CompositorNodeZcombine) as z_combine_node:
-                z_combine_node.set_attr("use_alpha", True)
+            if render_props.use_depth:
+                with output_node.build_input(0, bpy.types.CompositorNodeZcombine) as z_combine_node:
+                    z_combine_node.set_attr("use_alpha", True)
 
-                with z_combine_node.build_input(0, bpy.types.NodeGroupInput) as group_input_node:
-                    group_input_node.set_main_output(image_pass_input.name)
+                    with z_combine_node.build_input(0, bpy.types.NodeGroupInput) as group_input_node:
+                        group_input_node.set_main_output(image_pass_input.name)
 
-                z_combine_node.defer_connect(1, group_input_node, depth_pass_input.name)
+                    z_combine_node.defer_connect(1, group_input_node, depth_pass_input.name)
 
-                with z_combine_node.build_input(2, bpy.types.CompositorNodeMovieClip) as background_movie_node:
-                    background_movie_node.set_main_output("Image")
-                    background_movie_node.set_attr("clip", reference_props.background_movie_clip)
+                    with z_combine_node.build_input(2, bpy.types.CompositorNodeMovieClip) as background_movie_node:
+                        background_movie_node.set_main_output("Image")
+                        background_movie_node.set_attr("clip", reference_props.background_movie_clip)
 
-                with PostfixNodeBuilder(
-                    ow_compositor_node_tree, ["far", "far", "near", "/", "1", "-", "raw_depth", "*", "1", "+", "/"]
-                ) as depth_expr_node:
-                    math_node_type = bpy.types.CompositorNodeMath
-                    depth_expr_node.map_new("+", math_node_type, connect=[1, 0], attrs={"operation": "ADD"})
-                    depth_expr_node.map_new("-", math_node_type, connect=[1, 0], attrs={"operation": "SUBTRACT"})
-                    depth_expr_node.map_new("*", math_node_type, connect=[1, 0], attrs={"operation": "MULTIPLY"})
-                    depth_expr_node.map_new("/", math_node_type, connect=[1, 0], attrs={"operation": "DIVIDE"})
+                    with PostfixNodeBuilder(
+                        ow_compositor_node_tree, "far far near / 1 - raw_depth * 1 + /".split()
+                    ) as depth_expr_node:
+                        math_node_type = bpy.types.CompositorNodeMath
+                        depth_expr_node.map_new("+", math_node_type, connect=[1, 0], attrs={"operation": "ADD"})
+                        depth_expr_node.map_new("-", math_node_type, connect=[1, 0], attrs={"operation": "SUBTRACT"})
+                        depth_expr_node.map_new("*", math_node_type, connect=[1, 0], attrs={"operation": "MULTIPLY"})
+                        depth_expr_node.map_new("/", math_node_type, connect=[1, 0], attrs={"operation": "DIVIDE"})
 
-                    depth_expr_node.map_new("1", bpy.types.CompositorNodeValue, outputs={"Value": 1})
+                        depth_expr_node.map_new("1", bpy.types.CompositorNodeValue, outputs={"Value": 1})
 
-                    with output_node.sibling_builder(bpy.types.CompositorNodeValue) as far_value_node:
-                        far_value_node.set_attr("label", "camera_far")
-                        far_value_node.set_output_value("Value", camera.clip_end)
-                        far_value_node.defer_init(
-                            init_driver_property(
-                                "clip_end",
-                                ("clip_end", scene, "camera.data.clip_end"),
+                        with output_node.sibling_builder(bpy.types.CompositorNodeValue) as far_value_node:
+                            far_value_node.set_attr("label", "camera_far")
+                            far_value_node.set_output_value("Value", camera.clip_end)
+                            far_value_node.defer_init(
+                                init_driver_property(
+                                    "clip_end",
+                                    ("clip_end", scene, "camera.data.clip_end"),
+                                )
                             )
-                        )
 
-                    depth_expr_node.map_connect("far", far_value_node)
+                        depth_expr_node.map_connect("far", far_value_node)
 
-                    with output_node.sibling_builder(bpy.types.CompositorNodeValue) as near_value_node:
-                        near_value_node.set_attr("label", "camera_near")
-                        near_value_node.set_output_value("Value", camera.clip_start)
-                        near_value_node.defer_init(
-                            init_driver_property(
-                                "clip_start",
-                                (
+                        with output_node.sibling_builder(bpy.types.CompositorNodeValue) as near_value_node:
+                            near_value_node.set_attr("label", "camera_near")
+                            near_value_node.set_output_value("Value", camera.clip_start)
+                            near_value_node.defer_init(
+                                init_driver_property(
                                     "clip_start",
-                                    scene,
-                                    "camera.data.clip_start",
-                                ),
+                                    (
+                                        "clip_start",
+                                        scene,
+                                        "camera.data.clip_start",
+                                    ),
+                                )
                             )
-                        )
 
-                    depth_expr_node.map_connect("near", near_value_node)
+                        depth_expr_node.map_connect("near", near_value_node)
 
-                    with output_node.sibling_builder(bpy.types.CompositorNodeSepRGBA) as raw_depth_node:
-                        raw_depth_node.set_main_output("R")
+                        with output_node.sibling_builder(bpy.types.CompositorNodeSepRGBA) as raw_depth_node:
+                            raw_depth_node.set_main_output("R")
 
-                        with raw_depth_node.build_input("Image", bpy.types.CompositorNodeBlur) as blur_node:
-                            blur_node.set_attr("size_x", 10)
-                            blur_node.set_attr("size_y", 10)
+                            with raw_depth_node.build_input("Image", bpy.types.CompositorNodeBlur) as blur_node:
+                                blur_node.set_attr("size_x", 10)
+                                blur_node.set_attr("size_y", 10)
 
-                            with blur_node.build_input("Size", bpy.types.NodeGroupInput) as group_input_node:
-                                group_input_node.set_main_output(blur_input.name)
+                                with blur_node.build_input("Size", bpy.types.NodeGroupInput) as group_input_node:
+                                    group_input_node.set_main_output(blur_input.name)
 
-                            with blur_node.build_input("Image", bpy.types.CompositorNodeScale) as scale_node:
-                                scale_node.set_attr("space", "RENDER_SIZE")
+                                with blur_node.build_input("Image", bpy.types.CompositorNodeScale) as scale_node:
+                                    scale_node.set_attr("space", "RENDER_SIZE")
 
-                                with scale_node.build_input(
-                                    "Image", bpy.types.CompositorNodeMovieClip
-                                ) as depth_movie_node:
-                                    depth_movie_node.set_main_output("Image")
-                                    depth_movie_node.set_attr("clip", depth_movie_clip)
+                                    with scale_node.build_input(
+                                        "Image", bpy.types.CompositorNodeMovieClip
+                                    ) as depth_movie_node:
+                                        depth_movie_node.set_main_output("Image")
+                                        depth_movie_node.set_attr("clip", depth_movie_clip)
 
-                    depth_expr_node.map_connect("raw_depth", raw_depth_node)
+                        depth_expr_node.map_connect("raw_depth", raw_depth_node)
 
-                z_combine_node.defer_connect(3, depth_expr_node, 0)
+                    z_combine_node.defer_connect(3, depth_expr_node, 0)
+            else:
+                with output_node.build_input(0, bpy.types.NodeGroupInput) as group_input_node:
+                    group_input_node.set_main_output(image_pass_input.name)
 
         arrange_nodes(ow_compositor_node_tree)
 

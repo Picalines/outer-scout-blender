@@ -7,7 +7,7 @@ from bpy.types import Operator, Context, NodeTree, Image
 
 from ..bpy_register import bpy_register
 from ..utils import NodeBuilder, arrange_nodes, get_hdri_video_path
-from ..properties import OWRecorderReferencePropertis
+from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
 
 
 @bpy_register
@@ -19,7 +19,8 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
 
     def execute(self, context: Context):
         scene = context.scene
-        reference_props = OWRecorderReferencePropertis.from_context(context)
+        reference_props = OWRecorderReferenceProperties.from_context(context)
+        render_props = OWRecorderRenderProperties.from_context(context)
 
         hdri_video_path = get_hdri_video_path(context)
         if reference_props.hdri_image is None:
@@ -71,17 +72,18 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
 
         with NodeBuilder(hdri_node_tree, bpy.types.NodeGroupOutput) as output_node:
             with output_node.build_input(0, bpy.types.ShaderNodeBackground) as background_node:
-                with background_node.build_input("Color", bpy.types.ShaderNodeTexEnvironment) as environment_node:
-                    environment_node.defer_init(init_environment_node)
+                if render_props.use_hdri:
+                    with background_node.build_input("Color", bpy.types.ShaderNodeTexEnvironment) as environment_node:
+                        environment_node.defer_init(init_environment_node)
 
-                    with environment_node.build_input("Vector", bpy.types.ShaderNodeMapping) as mapping_node:
-                        mapping_node.set_input_value("Rotation", Euler((radians(90), 0, radians(-90))))
+                        with environment_node.build_input("Vector", bpy.types.ShaderNodeMapping) as mapping_node:
+                            mapping_node.set_input_value("Rotation", Euler((radians(90), 0, radians(-90))))
 
-                        with mapping_node.build_input("Vector", bpy.types.ShaderNodeTexCoord) as texture_coord_node:
-                            texture_coord_node.set_main_output("Generated")
+                            with mapping_node.build_input("Vector", bpy.types.ShaderNodeTexCoord) as texture_coord_node:
+                                texture_coord_node.set_main_output("Generated")
 
-                with background_node.build_input("Strength", bpy.types.NodeGroupInput) as input_node:
-                    input_node.set_main_output("Strength")
+                    with background_node.build_input("Strength", bpy.types.NodeGroupInput) as input_node:
+                        input_node.set_main_output("Strength")
 
         arrange_nodes(hdri_node_tree)
 
