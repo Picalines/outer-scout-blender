@@ -1,6 +1,8 @@
 import bpy.types
 
 import bpy
+
+
 def get_id_type(id: bpy.types.ID) -> str:
     if isinstance(id, bpy.types.LightProbe):
         id_type = "LIGHT_PROBE"
