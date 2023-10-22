@@ -38,7 +38,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         ground_body_fbx_path = ow_bodies_folder.joinpath(ground_body_name + ".fbx")
         if not ground_body_fbx_path.is_file():
-            self._log({"ERROR"}, f"{ground_body_fbx_path} not found")
+            self._log("ERROR", f"{ground_body_fbx_path} not found")
             return {"CANCELLED"}
 
         self._log("INFO", f"generating {ground_body_name} object...")
