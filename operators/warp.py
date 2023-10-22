@@ -1,4 +1,3 @@
-import typing
 from bpy.types import Context, Operator
 
 from ..bpy_register import bpy_register
