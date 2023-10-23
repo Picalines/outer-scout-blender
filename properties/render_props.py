@@ -18,15 +18,15 @@ class OWRecorderRenderProperties(PropertyGroup):
         default=False,
     )
 
-    use_hdri: BoolProperty(
-        name="Use HDRI",
-        description="Use HDRI recorded from Outer Wilds?",
+    record_hdri: BoolProperty(
+        name="Record HDRI",
+        description="Take a 360 video in Outer Wilds and use it as the environment texture for the scene",
         default=False,
     )
 
-    use_depth: BoolProperty(
-        name="Use depth",
-        description="Use depth texture recorded from Outer Wilds?",
+    record_depth: BoolProperty(
+        name="Record depth",
+        description="Make a video from the Free Camera's depth texture in Outer Wilds and use it in the Compositor",
         default=False,
     )
 

@@ -19,13 +19,14 @@ class OW_RECORDER_PT_render(Panel):
         self.layout.enabled = not render_props.is_rendering
 
         self.layout.prop(render_props, "hide_player_model")
-        self.layout.prop(render_props, "show_progress_gui")
 
-        self.layout.prop(render_props, "use_hdri")
-        if render_props.use_hdri:
+        row = self.layout.row()
+        row.prop(render_props, "use_background", text="Bg", toggle=1)
+        row.prop(render_props, "use_hdri", text="HDRI", toggle=1)
+        row.prop(render_props, "use_depth", text="Depth", toggle=1)
+
+        if render_props.record_hdri:
             self.layout.prop(render_props, "hdri_face_size")
-
-        self.layout.prop(render_props, "use_depth")
 
         if not render_props.is_rendering:
             self.layout.operator(
@@ -57,5 +58,6 @@ class OW_RECORDER_PT_render_editor_settings(Panel):
         render_props = OWRecorderRenderProperties.from_context(context)
         self.layout.enabled = not render_props.is_rendering
 
+        self.layout.prop(render_props, "show_progress_gui")
         self.layout.prop(render_props, "animation_chunk_size")
         self.layout.prop(render_props, "render_timer_delay")

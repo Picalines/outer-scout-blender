@@ -68,8 +68,8 @@ class OW_RECORDER_OT_render(AsyncOperator):
             "frame_rate": scene.render.fps,
             "resolution_x": scene.render.resolution_x,
             "resolution_y": scene.render.resolution_y,
-            "record_hdri": render_props.use_hdri,
-            "record_depth": render_props.use_depth,
+            "record_hdri": render_props.record_hdri,
+            "record_depth": render_props.record_depth,
             "hdri_face_size": render_props.hdri_face_size,
             "hide_player_model": render_props.hide_player_model,
             "show_progress_gui": render_props.show_progress_gui,
@@ -104,13 +104,13 @@ class OW_RECORDER_OT_render(AsyncOperator):
                 "free_camera/transform",
                 "free_camera/camera_info",
                 "time/scale",
-                *(("hdri_pivot/transform",) if render_props.use_hdri else ()),
+                *(("hdri_pivot/transform",) if render_props.record_hdri else ()),
             )
         }
 
         animation_name_to_object = {
             "free_camera/transform": camera,
-            **({"hdri_pivot/transform": hdri_pivot} if render_props.use_hdri else {}),
+            **({"hdri_pivot/transform": hdri_pivot} if render_props.record_hdri else {}),
         }
 
         while True:

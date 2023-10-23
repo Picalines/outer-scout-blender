@@ -72,7 +72,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
 
         with NodeBuilder(hdri_node_tree, bpy.types.NodeGroupOutput) as output_node:
             with output_node.build_input(0, bpy.types.ShaderNodeBackground) as background_node:
-                if render_props.use_hdri:
+                if render_props.record_hdri:
                     with background_node.build_input("Color", bpy.types.ShaderNodeTexEnvironment) as environment_node:
                         environment_node.defer_init(init_environment_node)
 

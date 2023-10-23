@@ -77,7 +77,7 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
             return init
 
         with NodeBuilder(ow_compositor_node_tree, bpy.types.NodeGroupOutput) as output_node:
-            if render_props.use_depth:
+            if render_props.record_depth:
                 with output_node.build_input(0, bpy.types.CompositorNodeZcombine) as z_combine_node:
                     z_combine_node.set_attr("use_alpha", True)
 
