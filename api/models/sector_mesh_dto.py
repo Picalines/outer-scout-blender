@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from .mesh_info import MeshDTO
+from .mesh_dto import MeshDTO
 
 
 class SectorMeshDTO(TypedDict):

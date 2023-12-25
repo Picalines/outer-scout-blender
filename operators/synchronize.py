@@ -113,7 +113,7 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {"FINISHED"}
 
     def _sync_blender_to_ow(self, context: Context):
-        if self.ow_item == "player_camera":
+        if self.ow_item == "player/camera":
             self.report({"INFO"}, "modifying Player Camera is not allowed")
             return {"CANCELLED"}
 

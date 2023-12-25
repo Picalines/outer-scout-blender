@@ -8,7 +8,7 @@ from http import HTTPStatus
 from typing import Any, Generator, Literal
 from urllib.request import Request as UrllibRequest
 
-from response import Response
+from .response import Response
 
 HTTPMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
 
@@ -93,4 +93,3 @@ class Request:
                 request_data = urllib.parse.urlencode(data).encode()
 
         return UrllibRequest(url, data=request_data, headers=headers, method=method)
-

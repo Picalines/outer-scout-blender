@@ -38,7 +38,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         ground_body_fbx_path = ow_bodies_folder.joinpath(ground_body_name + ".fbx")
         if not ground_body_fbx_path.is_file():
-            self._log("ERROR", f"{ground_body_fbx_path} not found")
+            self._log("ERROR", f"{ground_body_fbx_path} not found. Export it using asset extractor")
             return {"CANCELLED"}
 
         self._log("INFO", f"generating {ground_body_name} object...")
@@ -60,7 +60,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         imported_ow_objects: dict[str, Object | None] = {
             streamed_mesh["path"]: None
             for sector in ground_body_meshes_info["sectors"]
-            for streamed_mesh in sector["streamed_meshes"]
+            for streamed_mesh in sector["streamedMeshes"]
         }
 
         self._log(

@@ -162,7 +162,7 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             context.view_layer.objects.active = None
             bpy.ops.ow_recorder.synchronize(
                 sync_direction="OW_TO_BLENDER",
-                ow_item="player_body",
+                ow_item="player/body",
             )
             bpy.ops.ow_recorder.move_ground_to_origin()
 
