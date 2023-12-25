@@ -3,7 +3,7 @@ from bpy.types import Context, Operator
 from ..bpy_register import bpy_register
 from ..properties import OWRecorderSceneProperties
 from ..preferences import OWRecorderPreferences
-from ..api import APIClient, TransformModel
+from ..api import APIClient, TransformDTO
 
 
 @bpy_register
@@ -23,7 +23,7 @@ class OW_RECORDER_OT_warp(Operator):
         scene_props = OWRecorderSceneProperties.from_context(context)
 
         success = api_client.warp_to(
-            scene_props.warp_ground_body, TransformModel.from_components_tuple(scene_props.warp_transform)
+            scene_props.warp_ground_body, TransformDTO.from_components_tuple(scene_props.warp_transform)
         )
 
         if not success:

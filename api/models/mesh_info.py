@@ -1,7 +1,10 @@
 from typing import TypedDict
-from .transform import TransformModelJSON
+
+from .transform import TransformDTOJson
 
 
-class MeshInfo(TypedDict):
+class MeshDTO(TypedDict):
     path: str
-    transform: TransformModelJSON
+    globalTransform: TransformDTOJson
+    localTransform: TransformDTOJson
+

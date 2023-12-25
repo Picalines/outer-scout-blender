@@ -1,14 +1,14 @@
 from math import radians
-from mathutils import Quaternion, Matrix
 
-from bpy.types import Operator, Context, Object, View3DCursor, SpaceView3D
 from bpy.props import EnumProperty
+from bpy.types import Context, Object, Operator, SpaceView3D, View3DCursor
+from mathutils import Matrix, Quaternion
 
-from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferenceProperties
-from ..preferences import OWRecorderPreferences
 from ..api import APIClient
-from ..api.models import TransformModel, apply_camera_info, camera_info_from_blender
+from ..api.models import TransformDTO, apply_camera_info, camera_info_from_blender
+from ..bpy_register import bpy_register
+from ..preferences import OWRecorderPreferences
+from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
 
 
 @bpy_register
@@ -29,10 +29,10 @@ class OW_RECORDER_OT_synchronize(Operator):
     ow_item: EnumProperty(
         name="Outer Wilds item",
         items=[
-            ("free_camera", "Free camera", ""),
-            ("player_body", "Player body", ""),
+            ("free-camera", "Free camera", ""),
+            ("player/body", "Player body", ""),
             (
-                "player_camera",
+                "player/camera",
                 "Player camera",
                 "(modifying Player camera is not allowed!)",
             ),
@@ -47,7 +47,7 @@ class OW_RECORDER_OT_synchronize(Operator):
     def invoke(self, context: Context, _):
         return context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, context: Context):
+    def draw(self, _: Context):
         self.layout.prop(self, "sync_direction", expand=True)
 
         row = self.layout.row(align=True)
@@ -64,16 +64,19 @@ class OW_RECORDER_OT_synchronize(Operator):
         return {"CANCELLED"}
 
     def _sync_ow_to_blender(self, context: Context):
+        scene_props = OWRecorderSceneProperties.from_context(context)
         reference_props = OWRecorderReferenceProperties.from_context(context)
         api_client = APIClient(OWRecorderPreferences.from_context(context))
         ground_body: Object = reference_props.ground_body
 
         blender_item = self._get_blender_item(context)
 
-        new_transform = api_client.get_transform_local_to_ground_body(self.ow_item)
-        if new_transform is None:
+        transforms = api_client.get_transform(self.ow_item, local_to=scene_props.ground_body_name)
+        if transforms is None:
             self.report({"ERROR"}, "failed to get transform from Outer Wilds")
             return {"CANCELLED"}
+
+        _, new_transform = transforms
 
         if isinstance(blender_item, Object):
             blender_item.matrix_parent_inverse = Matrix.Identity(4)
@@ -114,6 +117,7 @@ class OW_RECORDER_OT_synchronize(Operator):
             self.report({"INFO"}, "modifying Player Camera is not allowed")
             return {"CANCELLED"}
 
+        scene_props = OWRecorderSceneProperties.from_context(context)
         reference_props = OWRecorderReferenceProperties.from_context(context)
         api_client = APIClient(OWRecorderPreferences.from_context(context))
         ground_body: Object = reference_props.ground_body
@@ -126,10 +130,10 @@ class OW_RECORDER_OT_synchronize(Operator):
             blender_item_matrix = blender_item.matrix
 
         new_transform = ground_body.matrix_world.inverted() @ blender_item_matrix
-        new_transform = TransformModel.from_matrix(new_transform)
+        new_transform = TransformDTO.from_matrix(new_transform)
         new_transform = new_transform.blender_to_unity()
 
-        success = api_client.set_transform_local_to_ground_body(self.ow_item, new_transform)
+        success = api_client.set_transform(self.ow_item, new_transform, local_to=scene_props.ground_body_name)
         if not success:
             self.report({"INFO"}, "failed to set transform in Outer Wilds")
             return {"CANCELLED"}
@@ -150,3 +154,4 @@ class OW_RECORDER_OT_synchronize(Operator):
 
         selected_objects = context.view_layer.objects.selected
         return selected_objects[0] if len(selected_objects) > 0 else context.scene.cursor
+

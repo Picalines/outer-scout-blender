@@ -1,16 +1,16 @@
-import subprocess
 import json
+import subprocess
 from pathlib import Path
 from typing import Iterable
 
 import bpy
-from bpy.types import Operator, Context, Object
-from bpy.props import EnumProperty, BoolProperty
+from bpy.props import BoolProperty, EnumProperty
+from bpy.types import Context, Object, Operator
 
-from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
-from ..preferences import OWRecorderPreferences
 from ..api import APIClient
+from ..bpy_register import bpy_register
+from ..preferences import OWRecorderPreferences
+from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
 from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
@@ -104,12 +104,12 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
         if self.sector_loading_mode == "ALL":
             sector_indices = sector_list.values()
         else:
-            current_sector_path = api_client.get_current_sector_path()
-            if current_sector_path is None:
+            current_sectors = api_client.get_player_sectors()
+            if current_sectors is None:
                 self.report({"ERROR"}, "could not get current sector path from API")
                 return {"CANCELLED"}
 
-            sector_indices = map(lambda p: sector_list[p], self._iter_subpaths(current_sector_path))
+            sector_indices = map(lambda p: sector_list[p], current_sectors["sectors"])
 
             if self.sector_loading_mode == "CURRENT":
                 sector_indices = (list(sector_indices)[-1],)
@@ -187,9 +187,3 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             instance_collections=True,
         )
 
-    def _iter_subpaths(self, path: str, separator="/"):
-        path_parts = path.split(separator)
-        current_path = ""
-        for path_part in path_parts:
-            current_path += separator + path_part
-            yield current_path[len(separator) :]

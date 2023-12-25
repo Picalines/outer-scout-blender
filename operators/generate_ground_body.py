@@ -1,16 +1,16 @@
-import bpy
-from bpy.types import Operator, Object
-
-from mathutils import Matrix
+import json
 from math import radians
 from pathlib import Path
-import json
 
+import bpy
+from bpy.types import Object, Operator
+from mathutils import Matrix
+
+from ..api import APIClient
+from ..api.models import GroundBodyMeshDTO, TransformDTO
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
-from ..api import APIClient
-from ..api.models import TransformModel, GroundBodyMeshInfo
-from ..utils import iter_parents, get_child_by_path
+from ..utils import get_child_by_path, iter_parents
 from .ground_body_selection_helper import GroundBodySelectionHelper
 
 
@@ -43,29 +43,19 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         self._log("INFO", f"generating {ground_body_name} object...")
 
-        mesh_list_path = ow_bodies_folder.joinpath(ground_body_name + "_meshes.json")
-        if not mesh_list_path.is_file():
-            current_ground_body_name = api_client.get_ground_body_name()
-            if current_ground_body_name != ground_body_name:
-                self._log(
-                    "ERROR",
-                    f"unable to create mesh list file. Go to {ground_body_name} in game and call operator again",
-                )
-                return {"CANCELLED"}
-
-            self._log("INFO", "creating mesh list file")
-            success = api_client.generate_current_ground_body_mesh_list(str(mesh_list_path))
-            if not success:
-                self._log("ERROR", "could not generate mesh list")
-                return {"CANCELLED"}
-
-        if not mesh_list_path.is_file():
-            self._log("ERROR", "BUG: mesh list was not created by API")
+        current_ground_body = api_client.get_ground_body()
+        if current_ground_body is None or current_ground_body["name"] != ground_body_name:
+            self._log(
+                "ERROR",
+                f"unable to create mesh list file. Go to {ground_body_name} in game and call operator again",
+            )
             return {"CANCELLED"}
 
-        self._log("INFO", "loading mesh list")
-        with open(mesh_list_path, "rb") as ow_meshes_json_file:
-            ground_body_meshes_info: GroundBodyMeshInfo = json.loads(ow_meshes_json_file.read())
+        self._log("INFO", "fetching mesh list")
+        ground_body_meshes_info = api_client.get_ground_body_meshes()
+        if ground_body_meshes_info is None:
+            self._log("ERROR", f"failed to get ground body meshes")
+            return {"CENCELLED"}
 
         imported_ow_objects: dict[str, Object | None] = {
             streamed_mesh["path"]: None
@@ -118,7 +108,7 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
         ground_body_inverted_matrix = (
             Matrix.Rotation(radians(90), 4, (0, 1, 0))
-            @ TransformModel.from_json(ground_body_meshes_info["body_transform"])
+            @ TransformDTO.from_json(ground_body_meshes_info["body"]["transform"])
             .unity_to_blender()
             .to_matrix()
             .inverted()
@@ -150,9 +140,9 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
             self._log(
                 "INFO",
-                f'placing plain meshes ({len(sector_info["plain_meshes"])} objects)',
+                f'placing plain meshes ({len(sector_info["plainMeshes"])} objects)',
             )
-            for plain_mesh_info in sector_info["plain_meshes"]:
+            for plain_mesh_info in sector_info["plainMeshes"]:
                 mesh_path = plain_mesh_info["path"].split("/")[1:]
 
                 skip_object = False
@@ -177,16 +167,17 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
                 extracted_child.parent = None
                 extracted_child.matrix_parent_inverse = Matrix.Identity(4)
+                # TODO: rework to use localTransform
                 extracted_child.matrix_world = (
                     ground_body_inverted_matrix
-                    @ TransformModel.from_json(plain_mesh_info["transform"]).unity_to_blender().to_matrix()
+                    @ TransformDTO.from_json(plain_mesh_info["globalTransform"]).unity_to_blender().to_matrix()
                 )
 
             self._log(
                 "INFO",
-                f'placing streamed meshes ({len(sector_info["streamed_meshes"])} objects)',
+                f'placing streamed meshes ({len(sector_info["streamedMeshes"])} objects)',
             )
-            for streamed_mesh_info in sector_info["streamed_meshes"]:
+            for streamed_mesh_info in sector_info["streamedMeshes"]:
                 asset_path = streamed_mesh_info["path"]
                 if asset_path not in imported_ow_objects:
                     continue
@@ -200,9 +191,10 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
 
                 loaded_mesh.parent = None
                 loaded_mesh.matrix_parent_inverse = Matrix.Identity(4)
+                # TODO: rework to use localTransform
                 loaded_mesh.matrix_local = (
                     ground_body_inverted_matrix
-                    @ TransformModel.from_json(streamed_mesh_info["transform"]).unity_to_blender().to_matrix()
+                    @ TransformDTO.from_json(streamed_mesh_info["globalTransform"]).unity_to_blender().to_matrix()
                 )
 
             self._log("INFO", "deleting empties")
@@ -226,3 +218,4 @@ class OW_RECORDER_OT_generate_ground_body(Operator, GroundBodySelectionHelper):
         print(f"[{type}] {message}")
         # reports don't appear dynamically in console window
         # self.report({type}, message)
+

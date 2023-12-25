@@ -3,7 +3,7 @@ from bpy.types import Camera
 from typing import TypedDict
 
 
-class CameraInfo(TypedDict):
+class CameraDTO(TypedDict):
     sensor_size: tuple[float, float]
     focal_length: float
     lens_shift: tuple[float, float]
@@ -12,7 +12,7 @@ class CameraInfo(TypedDict):
 
 
 def camera_info_from_blender(camera: Camera):
-    return CameraInfo(
+    return CameraDTO(
         sensor_size=(camera.sensor_width, camera.sensor_height),
         focal_length=camera.lens,
         lens_shift=(camera.shift_x, camera.shift_y),
@@ -21,7 +21,7 @@ def camera_info_from_blender(camera: Camera):
     )
 
 
-def apply_camera_info(camera: Camera, info: CameraInfo):
+def apply_camera_info(camera: Camera, info: CameraDTO):
     camera.type = "PERSP"
     camera.lens_unit = "MILLIMETERS"
 

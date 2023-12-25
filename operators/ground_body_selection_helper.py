@@ -1,8 +1,8 @@
-from bpy.types import Context
 from bpy.props import EnumProperty
+from bpy.types import Context
 
-from ..preferences import OWRecorderPreferences
 from ..api import APIClient
+from ..preferences import OWRecorderPreferences
 
 
 class GroundBodySelectionHelper:
@@ -60,4 +60,6 @@ class GroundBodySelectionHelper:
         if isinstance(context, OWRecorderPreferences):
             context = APIClient(context)
 
-        return context.get_ground_body_name()
+        ground_body = context.get_ground_body()
+        return ground_body["name"] if ground_body is not None else None
+

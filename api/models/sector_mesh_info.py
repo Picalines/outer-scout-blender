@@ -1,9 +1,9 @@
 from typing import TypedDict
 
-from .mesh_info import MeshInfo
+from .mesh_info import MeshDTO
 
 
-class SectorMeshInfo(TypedDict):
+class SectorMeshDTO(TypedDict):
     path: str
-    plain_meshes: list[MeshInfo]
-    streamed_meshes: list[MeshInfo]
+    plainMeshes: list[MeshDTO]
+    streamedMeshes: list[MeshDTO]

@@ -1,9 +1,9 @@
 from bpy.types import Context, Operator
 
-from ..bpy_register import bpy_register
-from ..properties import OWRecorderSceneProperties, OWRecorderReferenceProperties
-from ..preferences import OWRecorderPreferences
 from ..api import APIClient
+from ..bpy_register import bpy_register
+from ..preferences import OWRecorderPreferences
+from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
 
 
 @bpy_register
@@ -21,19 +21,22 @@ class OW_RECORDER_OT_save_warp_transform(Operator):
     def invoke(self, context: Context, _):
         api_client = APIClient(OWRecorderPreferences.from_context(context))
 
-        player_transform = api_client.get_transform_local_to_ground_body("player_body")
-        if player_transform is None:
+        ground_body = api_client.get_ground_body()
+        if ground_body is None:
+            self.report({"ERROR"}, "failed to get current ground body")
+            return {"CANCELLED"}
+
+        transforms = api_client.get_transform("player/body", local_to=ground_body["name"])
+        if transforms is None:
             self.report({"ERROR"}, "failed to receive player transform")
             return {"CANCELLED"}
 
-        ground_body_name = api_client.get_ground_body_name()
-        if ground_body_name is None:
-            self.report({"ERROR"}, "failed to get current ground body name")
-            return {"CANCELLED"}
+        _, player_transform = transforms
 
         scene_props = OWRecorderSceneProperties.from_context(context)
-        scene_props.warp_ground_body = ground_body_name
-        scene_props.warp_transform = player_transform.to_components_tuple()
+        scene_props.warp_ground_body = ground_body["name"]
+        scene_props.warp_transform = player_transform.components()
         scene_props.has_saved_warp = True
 
         return {"FINISHED"}
+

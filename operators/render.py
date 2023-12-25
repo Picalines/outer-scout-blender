@@ -3,17 +3,12 @@ from os import makedirs
 import bpy
 from bpy.types import Context, Event, Object
 
+from ..api import APIClient
+from ..api.models import RecorderSettings, TransformDTO, camera_info_from_blender
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
-from ..properties import (
-    OWRecorderRenderProperties,
-    OWRecorderSceneProperties,
-    OWRecorderReferenceProperties,
-)
+from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties, OWRecorderSceneProperties
 from ..utils import GeneratorWithState, get_footage_path
-from ..api.models import RecorderSettings, TransformModel, camera_info_from_blender
-from ..api import APIClient
-
 from .async_operator import AsyncOperator
 
 
@@ -42,8 +37,14 @@ class OW_RECORDER_OT_render(AsyncOperator):
     def _run_async(self, context: Context):
         api_client = APIClient(OWRecorderPreferences.from_context(context))
 
-        if api_client.get_is_recording():
+        recorder_status = api_client.get_recorder_status()
+
+        if recorder_status["enabled"]:
             self.report({"ERROR"}, "already recording")
+            return {"CANCELLED"}
+
+        if not recorder_status["isAbleToRecord"]:
+            self.report({"ERROR"}, "unable to record")
             return {"CANCELLED"}
 
         scene = context.scene
@@ -62,25 +63,21 @@ class OW_RECORDER_OT_render(AsyncOperator):
         makedirs(footage_path, exist_ok=True)
 
         recorder_settings: RecorderSettings = {
-            "output_directory": footage_path,
-            "start_frame": scene.frame_start,
-            "end_frame": scene.frame_end,
-            "frame_rate": scene.render.fps,
-            "resolution_x": scene.render.resolution_x,
-            "resolution_y": scene.render.resolution_y,
-            "record_hdri": render_props.record_hdri,
-            "record_depth": render_props.record_depth,
-            "hdri_face_size": render_props.hdri_face_size,
-            "hide_player_model": render_props.hide_player_model,
-            "show_progress_gui": render_props.show_progress_gui,
+            "outputDirectory": footage_path,
+            "startFrame": scene.frame_start,
+            "endFrame": scene.frame_end,
+            "frameRate": scene.render.fps,
+            "resolutionX": scene.render.resolution_x,
+            "resolutionY": scene.render.resolution_y,
+            "recordHdri": render_props.record_hdri,
+            "recordDepth": render_props.record_depth,
+            "hdriFaceSize": render_props.hdri_face_size,
+            "hidePlayerModel": render_props.hide_player_model,
+            "showProgressGui": render_props.show_progress_gui,
         }
 
         if not api_client.set_recorder_settings(recorder_settings):
             self.report({"ERROR"}, "failed to set recorder settings")
-            return {"CANCELLED"}
-
-        if not api_client.get_is_able_to_record():
-            self.report({"ERROR"}, "unable to record")
             return {"CANCELLED"}
 
         self._timer = context.window_manager.event_timer_add(render_props.render_timer_delay, window=context.window)
@@ -137,7 +134,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
                     break
 
             for animation_name, frame_values in animation_values.items():
-                success = api_client.set_animation_values_from_frame(animation_name, chunk_start_frame, frame_values)
+                success = api_client.set_keyframes_from_frame(animation_name, chunk_start_frame, frame_values)
 
                 frame_values.clear()
 
@@ -156,7 +153,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         # render
 
-        if not api_client.set_is_recording(True):
+        if not api_client.set_recorder_enabled(True):
             self.report({"ERROR"}, "failed to start recording")
             return {"CANCELLED"}
 
@@ -191,6 +188,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
         context.window_manager.event_timer_remove(self._timer)
         self._render_props.is_rendering = False
 
-    def _get_transform_local_to(self, parent: Object, child: Object) -> TransformModel:
+    def _get_transform_local_to(self, parent: Object, child: Object) -> TransformDTO:
         local_matrix = parent.matrix_world.inverted() @ child.matrix_world
-        return TransformModel.from_matrix(local_matrix)
+        return TransformDTO.from_matrix(local_matrix)
+

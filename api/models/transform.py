@@ -1,9 +1,10 @@
+import json
 from dataclasses import dataclass
 from math import radians
-from mathutils import Vector, Quaternion, Matrix
-import json
+from typing import TypedDict
 
 from bpy.types import Object
+from mathutils import Matrix, Quaternion, Vector
 
 
 def unity_vector_to_blender(unity_vector: Vector) -> Vector:
@@ -26,60 +27,58 @@ def blender_quaternion_to_unity(blender_quaternion: Quaternion) -> Quaternion:
     return Quaternion((z, w, x, y)) @ Quaternion((0, 1, 0), radians(-90))
 
 
-TransformModelJSON = list[list[float]]
+TransformDTOJson = list[list[float]]
 
 
 @dataclass(frozen=True)
-class TransformModel:
+class TransformDTO:
     position: Vector
     rotation: Quaternion
     scale: Vector
 
     @staticmethod
-    def from_components_tuple(_tuple: tuple[float, ...]) -> "TransformModel":
-        return TransformModel(
-            position=Vector(_tuple[0:3]), rotation=Quaternion(_tuple[3:7]), scale=Vector(_tuple[7:10])
-        )
+    def from_components_tuple(_tuple: tuple[float, ...]) -> "TransformDTO":
+        return TransformDTO(position=Vector(_tuple[0:3]), rotation=Quaternion(_tuple[3:7]), scale=Vector(_tuple[7:10]))
 
     @staticmethod
-    def from_json(json: TransformModelJSON) -> "TransformModel":
-        return TransformModel(
+    def from_json(json: TransformDTOJson) -> "TransformDTO":
+        return TransformDTO(
             position=Vector(json[0]),
             rotation=Quaternion(json[1]),
             scale=Vector(json[2]),
         )
 
     @staticmethod
-    def from_json_str(json_str: str) -> "TransformModel":
-        json_array: TransformModelJSON = json.loads(json_str)
-        return TransformModel.from_json(json_array)
+    def from_json_str(json_str: str) -> "TransformDTO":
+        json_array: TransformDTOJson = json.loads(json_str)
+        return TransformDTO.from_json(json_array)
 
     @staticmethod
-    def from_matrix(matrix: Matrix) -> "TransformModel":
-        return TransformModel(*matrix.decompose())
+    def from_matrix(matrix: Matrix) -> "TransformDTO":
+        return TransformDTO(*matrix.decompose())
 
-    def unity_to_blender(self) -> "TransformModel":
-        return TransformModel(
+    def unity_to_blender(self) -> "TransformDTO":
+        return TransformDTO(
             position=unity_vector_to_blender(self.position),
             rotation=unity_quaternion_to_blender(self.rotation),
             scale=unity_vector_to_blender(self.scale),
         )
 
-    def blender_to_unity(self) -> "TransformModel":
-        return TransformModel(
+    def blender_to_unity(self) -> "TransformDTO":
+        return TransformDTO(
             position=blender_vector_to_unity(self.position),
             rotation=blender_quaternion_to_unity(self.rotation),
             scale=blender_vector_to_unity(self.scale),
         )
 
-    def to_components_tuple(self) -> tuple[float, ...]:
+    def components(self) -> tuple[float, ...]:
         return (
             *self.position,
             *self.rotation,
             *self.scale,
         )
 
-    def to_json(self) -> TransformModelJSON:
+    def to_json(self) -> TransformDTOJson:
         return [
             [*self.position],
             [*self.rotation],
@@ -97,3 +96,9 @@ class TransformModel:
         object.scale = self.scale
         object.rotation_mode = "QUATERNION"
         object.rotation_quaternion = self.rotation
+
+
+class RelativeTransformDTO(TypedDict):
+    origin: TransformDTOJson
+    transform: TransformDTOJson
+

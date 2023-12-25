@@ -1,28 +1,23 @@
-from typing import TypeVar, Type, TypedDict, Any
+import json
 from dataclasses import dataclass
 from http import HTTPStatus
-import json
+from typing import Any, Type, TypeVar
 
-
-TTypedDict = TypeVar("TTypedDict", bound=TypedDict)
-
-
-def is_success_http_status(http_status: HTTPStatus):
-    return int(http_status) in range(200, 300)
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
 class Response:
     body: str
-    headers: dict[str, str]
     status: HTTPStatus
 
-    def is_success(self) -> bool:
-        return is_success_http_status(self.status)
+    def is_ok(self) -> bool:
+        return self.status in range(200, 300)
 
     def json(self) -> Any:
         return json.loads(self.body)
 
-    def typed_json(self, model_type: Type[TTypedDict]) -> TTypedDict:
+    def typed_json(self, model_type: Type[T]) -> T:
         model: model_type = self.json()
         return model
+

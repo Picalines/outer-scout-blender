@@ -1,76 +1,34 @@
-from ..utils import GeneratorWithState
+from typing import Any, Generator, Literal
+
 from ..preferences import OWRecorderPreferences
-from .models import TransformModel, CameraInfo, RecorderSettings
-from .http import (
-    send_request,
-    send_request_async_lines,
-    is_success_http_status,
-    Request,
-    Response,
+from ..utils import GeneratorWithState
+from .http import Request, Response
+from .models import (
+    CameraDTO,
+    GameObjectDTO,
+    GroundBodyMeshDTO,
+    RecorderSettings,
+    RecorderStatus,
+    RelativeTransformDTO,
+    SectorListDTO,
+    TransformDTO,
 )
-
-from typing import Literal, Generator
-from dataclasses import replace as data_replace
-
-
-AnimationName = Literal["free_camera/transform", "free_camera/fov", "hdri_pivot/transform"]
 
 
 class APIClient:
     def __init__(self, preferences: OWRecorderPreferences):
         self.base_url = f"http://localhost:{preferences.api_port}/"
 
-    def get_is_able_to_record(self) -> bool:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url="recorder/is_able_to_record",
-            )
+    def get_recorder_status(self) -> RecorderStatus:
+        response = self._get("recorder/status")
+        return (
+            response.typed_json(RecorderStatus)
+            if response.is_ok()
+            else {"enabled": False, "isAbleToRecord": False, "framesRecorded": 0}
         )
-        return response.is_success() and bool(response.json())
-
-    def get_is_recording(self) -> bool:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url="recorder/enabled",
-            )
-        )
-        return response.is_success() and bool(response.json())
-
-    def set_is_recording(self, should_record: bool) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url="recorder/enabled",
-                data=should_record,
-            )
-        )
-        return response.is_success()
-
-    def set_recorder_settings(self, recorder_settings: RecorderSettings) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url="recorder/settings",
-                data=recorder_settings,
-            )
-        )
-        return response.is_success()
-
-    def get_frames_recorded(self) -> int | None:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url="recorder/frames_recorded",
-            )
-        )
-        return int(response.body) if response.is_success() else None
 
     def get_frames_recorded_async(self) -> Generator[int, None, bool]:
-        lines = GeneratorWithState(
-            self._get_response_async_lines(Request(method="GET", url="recorder/frames_recorded_async"))
-        )
+        lines = GeneratorWithState(self._get_async(route="recorder/frames-recorded-async"))
 
         for line in lines:
             try:
@@ -78,129 +36,74 @@ class APIClient:
             except ValueError:
                 pass
 
-        return bool(lines.returned)
+        return bool(lines.returned) and lines.returned.is_ok()
 
-    def set_animation_value_at_frame(self, animation: AnimationName, frame: int, value_json) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url=f"animation/{animation}/value",
-                query_params={"at_frame": frame},
-                data=value_json,
-            )
-        )
-        return response.is_success()
+    def set_recorder_enabled(self, enabled: bool) -> bool:
+        return self._put("recorder/enabled", query={"value": enabled}).is_ok()
 
-    def set_animation_value_at_frame_range(
-        self, animation: AnimationName, from_frame: int, to_frame: int, value_json
-    ) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url=f"animation/{animation}/value",
-                query_params={"from_frame": from_frame, "to_frame": to_frame},
-                data=value_json,
-            )
-        )
-        return response.is_success()
+    def set_recorder_settings(self, recorder_settings: RecorderSettings) -> bool:
+        return self._put("recorder/settings", recorder_settings).is_ok()
 
-    def set_animation_values_from_frame(self, animation: AnimationName, from_frame: int, values: list) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url=f"animation/{animation}/values",
-                query_params={"from_frame": from_frame},
-                data=values,
-            )
-        )
-        return response.is_success()
+    def set_keyframes_from_frame(self, property: str, from_frame: int, values: list) -> bool:
+        return self._put(f"{property}/keyframes", data={"fromFrame": from_frame, "values": values}).is_ok()
 
-    def get_ground_body_name(self) -> str | None:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url="ground_body/name",
-            )
-        )
-        return response.body if response.is_success() else None
+    def get_ground_body(self) -> GameObjectDTO | None:
+        response = self._get("player/ground-body")
+        return response.typed_json(GameObjectDTO) if response.is_ok() else None
 
-    def get_current_sector_path(self) -> str | None:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url="ground_body/sectors/current/path",
-            )
-        )
-        return response.body if response.is_success() else None
+    def get_player_sectors(self) -> SectorListDTO | None:
+        response = self._get("player/sectors")
+        return response.typed_json(SectorListDTO) if response.is_ok() else None
 
-    def generate_current_ground_body_mesh_list(self, output_file_path: str) -> bool:
-        response = self._get_response(
-            Request(
-                method="POST",
-                url="ground_body/mesh_list",
-                query_params={"output_file_path": output_file_path},
-            )
-        )
-        return response.is_success()
+    def get_ground_body_meshes(self) -> GroundBodyMeshDTO | None:
+        response = self._get("player/ground-body/meshes")
+        return response.typed_json(GroundBodyMeshDTO) if response.is_ok() else None
 
-    def get_transform_local_to_ground_body(
-        self, entity: Literal["free_camera", "player_body", "player_camera"]
-    ) -> TransformModel | None:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url=f"{entity}/transform/local_to/ground_body",
-            )
-        )
-        return TransformModel.from_json_str(response.body) if response.is_success() else None
+    def get_transform(self, entity: str, *, local_to: str) -> tuple[TransformDTO, TransformDTO] | None:
+        response = self._get(f"{entity}/transform", query={"localTo": local_to})
+        if not response.is_ok():
+            return None
 
-    def set_transform_local_to_ground_body(
-        self,
-        entity: Literal["free_camera", "player_body"],
-        new_transform: TransformModel,
-    ) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url=f"{entity}/transform/local_to/ground_body",
-                data=new_transform.to_json(),
-            )
-        )
-        return response.is_success()
+        relative_dto = response.typed_json(RelativeTransformDTO)
+        return (TransformDTO.from_json(relative_dto["origin"]), TransformDTO.from_json(relative_dto["transform"]))
 
-    def get_camera_info(self, camera: Literal["free_camera", "player_camera"]) -> CameraInfo | None:
-        response = self._get_response(
-            Request(
-                method="GET",
-                url=f"{camera}/camera_info",
-            )
-        )
-        return response.typed_json(CameraInfo) if response.is_success() else None
+    def set_transform(self, entity: str, new_transform: TransformDTO, *, local_to: str) -> bool:
+        return self._put(f"{entity}/transform", {"localTo": local_to, "transform": new_transform.to_json()}).is_ok()
 
-    def set_camera_info(self, camera: Literal["free_camera"], new_info: CameraInfo) -> bool:
-        response = self._get_response(
-            Request(
-                method="PUT",
-                url=f"{camera}/camera_info",
-                data=new_info,
-            )
-        )
-        return response.is_success()
+    def get_camera_info(self, camera: str) -> CameraDTO | None:
+        response = self._get(f"{camera}/camera-info")
+        return response.typed_json(CameraDTO) if response.is_ok() else None
 
-    def warp_to(self, ground_body_name: str, local_transform: TransformModel) -> bool:
-        response = self._get_response(
-            Request(
-                method="POST",
-                url=f"warp_to/{ground_body_name}",
-                data=local_transform.to_json(),
-            )
-        )
-        return response.is_success()
+    def set_camera_info(self, camera: str, new_info: CameraDTO) -> bool:
+        response = self._put(f"{camera}/camera-info", new_info)
+        return response.is_ok()
 
-    def _get_response(self, request: Request) -> Response | None:
-        return send_request(data_replace(request, url=self.base_url + request.url)) or Response("", {}, -1)
+    def warp_to(self, ground_body_name: str, local_transform: TransformDTO) -> bool:
+        response = self._post(f"{ground_body_name}/warp", {"localTransform": local_transform.to_json()})
+        return response.is_ok()
 
-    def _get_response_async_lines(self, request: Request) -> Generator[str, None, bool]:
-        return is_success_http_status(
-            (yield from send_request_async_lines(data_replace(request, url=self.base_url + request.url)))
-        )
+    def _get_response(
+        self, *, route: str, method: str, data: Any | None = None, query: dict[str, str] | None = None
+    ) -> Response:
+        request = Request(url=self.base_url + route, method=method, data=data, query_params=query)
+        return request.send() or Response("", -1)
+
+    def _get(self, route: str, query: dict[str, str] | None = None) -> Response:
+        return self._get_response(route=route, method="GET", query=query)
+
+    def _post(self, route: str, data: Any, query: dict[str, str] | None = None) -> Response:
+        return self._get_response(route=route, method="POST", data=data, query=query)
+
+    def _put(self, route: str, data: Any, query: dict[str, str] | None = None) -> Response:
+        return self._get_response(route=route, method="PUT", data=data, query=query)
+
+    def _get_response_async(
+        self, *, route: str, method: str, data: Any | None = None, query: dict[str, str] | None = None
+    ) -> Generator[str, None, Response]:
+        return (
+            yield from Request(url=self.base_url + route, method=method, data=data, query_params=query).send_async()
+        ) or Response("", -1)
+
+    def _get_async(self, route: str, query: dict[str, str] | None = None) -> Generator[str, None, Response]:
+        return self._get_response_async(route=route, method="GET", query=query)
+

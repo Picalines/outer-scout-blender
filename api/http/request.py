@@ -1,9 +1,14 @@
-from dataclasses import dataclass, field
-from typing import Literal, Any
-from urllib.request import Request as UrllibRequest
-import urllib
 import json
+import urllib
+import urllib.error
+import urllib.parse
+import urllib.request
+from dataclasses import dataclass, field
+from http import HTTPStatus
+from typing import Any, Generator, Literal
+from urllib.request import Request as UrllibRequest
 
+from response import Response
 
 HTTPMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
 
@@ -17,7 +22,53 @@ class Request:
     query_params: dict[str, str] | None = None
     headers: dict[str, str] = field(default_factory=dict)
 
-    def to_urllib_request(self) -> UrllibRequest:
+    def send(self) -> Response | None:
+        http_request = self._to_urllib_request()
+
+        try:
+            with urllib.request.urlopen(http_request) as http_response:
+                return Response(
+                    status=http_response.status,
+                    body=http_response.read().decode(http_response.headers.get_content_charset("utf-8")),
+                )
+
+        except urllib.error.HTTPError as http_error:
+            return Response(
+                status=HTTPStatus(http_error.code),
+                body=str(http_error.reason),
+            )
+
+        except OSError as os_error:
+            print(os_error)
+
+        return None
+
+    def send_async(self, *, join_body=False) -> Generator[str, None, Response | None]:
+        http_request = self._to_urllib_request()
+
+        try:
+            lines = []
+
+            with urllib.request.urlopen(http_request) as http_response:
+                charset = http_response.headers.get_content_charset("utf-8")
+                for line in http_response:
+                    decoded_line = line.decode(charset)
+                    yield decoded_line
+
+                    if join_body:
+                        lines.append(decoded_line)
+
+            return Response(status=http_response.status, body="\n".join(lines))
+
+        except urllib.error.HTTPError as http_error:
+            return Response(status=http_error.code, body=str(http_error.reason))
+
+        except OSError as os_error:
+            print(os_error)
+
+        return None
+
+    def _to_urllib_request(self) -> UrllibRequest:
         url = self.url
 
         if not url.startswith("http"):
@@ -42,3 +93,4 @@ class Request:
                 request_data = urllib.parse.urlencode(data).encode()
 
         return UrllibRequest(url, data=request_data, headers=headers, method=method)
+
