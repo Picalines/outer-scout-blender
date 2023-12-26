@@ -154,6 +154,9 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             sector_collection_instance.rotation_euler = (0, 0, 0)
             sector_collection_instance.scale = (1, 1, 1)
 
+            sector_collection_instance.users_collection[0].objects.unlink(sector_collection_instance)
+            context.scene.collection.objects.link(sector_collection_instance)
+
             sector_collection_instance.hide_render = True
             sector_collection_instance.hide_select = True
             sector_collection_instance.hide_set(state=ground_body_hidden)
