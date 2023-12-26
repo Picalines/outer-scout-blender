@@ -1,12 +1,10 @@
-from bpy.types import Panel, Object
+from bpy.types import Object, Panel
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
 from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body
-from ..operators.set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible
 from ..operators.move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin
-from ..operators.save_warp_transform import OW_RECORDER_OT_save_warp_transform
-from ..operators.warp import OW_RECORDER_OT_warp
+from ..operators.set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible
+from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
 
 
 @bpy_register
@@ -16,6 +14,7 @@ class OW_RECORDER_PT_ground_body(Panel):
     bl_region_type = "UI"
     bl_category = "Outer Wilds Recorder"
     bl_label = "Ground Body"
+    bl_order = 3
 
     def draw(self, context):
         reference_props = OWRecorderReferenceProperties.from_context(context)
@@ -51,6 +50,3 @@ class OW_RECORDER_PT_ground_body(Panel):
 
         show_body_props.visible = not ground_body_visible
 
-        self.layout.operator(operator=OW_RECORDER_OT_save_warp_transform.bl_idname, icon="CURRENT_FILE")
-
-        self.layout.operator(operator=OW_RECORDER_OT_warp.bl_idname, icon="ORIENTATION_PARENT")

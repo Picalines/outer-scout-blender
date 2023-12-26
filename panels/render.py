@@ -1,8 +1,8 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderRenderProperties
 from ..operators.render import OW_RECORDER_OT_render
+from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
 
 
 @bpy_register
@@ -12,6 +12,17 @@ class OW_RECORDER_PT_render(Panel):
     bl_region_type = "UI"
     bl_category = "Outer Wilds Recorder"
     bl_label = "Render"
+    bl_order = 5
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        reference_props = OWRecorderReferenceProperties.from_context(context)
+        return all(
+            (
+                reference_props.ground_body,
+                reference_props.hdri_pivot,
+            )
+        )
 
     def draw(self, context):
         render_props = OWRecorderRenderProperties.from_context(context)
@@ -60,3 +71,4 @@ class OW_RECORDER_PT_render_editor_settings(Panel):
         self.layout.prop(render_props, "show_progress_gui")
         self.layout.prop(render_props, "animation_chunk_size")
         self.layout.prop(render_props, "render_timer_delay")
+
