@@ -169,6 +169,8 @@ class OW_RECORDER_OT_load_ground_body(Operator, GroundBodySelectionHelper):
             )
             bpy.ops.ow_recorder.move_ground_to_origin()
 
+        bpy.ops.ow_recorder.create_ow_pivots()
+
         return {"FINISHED"}
 
     def _generate_ground_body_file_in_new_instance(self, ground_body_name: str) -> int:
