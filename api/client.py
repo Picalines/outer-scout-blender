@@ -44,8 +44,8 @@ class APIClient:
     def set_recorder_settings(self, recorder_settings: RecorderSettings) -> bool:
         return self._put("recorder/settings", recorder_settings).is_ok()
 
-    def set_keyframes_from_frame(self, property: str, from_frame: int, values: list) -> bool:
-        return self._put(f"{property}/keyframes", data={"fromFrame": from_frame, "values": values}).is_ok()
+    def set_keyframes(self, property: str, from_frame: int, values: list) -> bool:
+        return self._put(f"{property}/keyframes", {"fromFrame": from_frame, "values": values}).is_ok()
 
     def get_ground_body(self) -> GameObjectDTO | None:
         response = self._get("player/ground-body")
@@ -86,7 +86,10 @@ class APIClient:
         self, *, route: str, method: str, data: Any | None = None, query: dict[str, str] | None = None
     ) -> Response:
         request = Request(url=self.base_url + route, method=method, data=data, query_params=query)
-        return request.send() or Response("", -1)
+        response = request.send()
+        if response and not response.is_ok():
+            self._system_log(f"{response.status} at {method} '{route}': {response.body}")
+        return response or Response("", -1)
 
     def _get(self, route: str, query: dict[str, str] | None = None) -> Response:
         return self._get_response(route=route, method="GET", query=query)
@@ -94,16 +97,21 @@ class APIClient:
     def _post(self, route: str, data: Any, query: dict[str, str] | None = None) -> Response:
         return self._get_response(route=route, method="POST", data=data, query=query)
 
-    def _put(self, route: str, data: Any, query: dict[str, str] | None = None) -> Response:
+    def _put(self, route: str, data: Any | None = None, query: dict[str, str] | None = None) -> Response:
         return self._get_response(route=route, method="PUT", data=data, query=query)
 
     def _get_response_async(
         self, *, route: str, method: str, data: Any | None = None, query: dict[str, str] | None = None
     ) -> Generator[str, None, Response]:
-        return (
-            yield from Request(url=self.base_url + route, method=method, data=data, query_params=query).send_async()
-        ) or Response("", -1)
+        request = Request(url=self.base_url + route, method=method, data=data, query_params=query)
+        response = yield from request.send_async()
+        if response and not response.is_ok():
+            self._system_log(f"{response.status} at {method} '{route}': {response.body}")
+        return response or Response("", -1)
 
     def _get_async(self, route: str, query: dict[str, str] | None = None) -> Generator[str, None, Response]:
         return self._get_response_async(route=route, method="GET", query=query)
+
+    def _system_log(self, message: str):
+        print(f"outer-wilds-scene-recorder API: {message}")
 
