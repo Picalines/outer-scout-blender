@@ -14,7 +14,7 @@ from .async_operator import AsyncOperator
 
 @bpy_register
 class OW_RECORDER_OT_render(AsyncOperator):
-    """Render footage in Outer Wilds and import it to current project"""
+    """Render footage in Outer Wilds and import it to current project (save project before running)"""
 
     bl_idname = "ow_recorder.render"
     bl_label = "Render"
@@ -28,6 +28,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
         reference_props = OWRecorderReferenceProperties.from_context(context)
         return all(
             (
+                bpy.data.is_saved,
                 context.scene.camera,
                 reference_props.ground_body,
                 reference_props.hdri_pivot,
@@ -41,10 +42,6 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         if recorder_status["enabled"]:
             self.report({"ERROR"}, "already recording")
-            return {"CANCELLED"}
-
-        if not recorder_status["isAbleToRecord"]:
-            self.report({"ERROR"}, "unable to record")
             return {"CANCELLED"}
 
         scene = context.scene
@@ -80,6 +77,12 @@ class OW_RECORDER_OT_render(AsyncOperator):
             self.report({"ERROR"}, "failed to set recorder settings")
             return {"CANCELLED"}
 
+        recorder_status = api_client.get_recorder_status()
+
+        if not recorder_status["isAbleToRecord"]:
+            self.report({"ERROR"}, "unable to record")
+            return {"CANCELLED"}
+
         self._timer = context.window_manager.event_timer_add(render_props.render_timer_delay, window=context.window)
 
         scene.frame_set(frame=scene.frame_start)
@@ -99,15 +102,15 @@ class OW_RECORDER_OT_render(AsyncOperator):
             name: []
             for name in (
                 "free-camera/transform",
-                "free-camera/camera_info",
+                "free-camera/camera-info",
                 "time/scale",
-                *(("hdri_pivot/transform",) if render_props.record_hdri else ()),
+                *(("hdri-pivot/transform",) if render_props.record_hdri else ()),
             )
         }
 
         animation_name_to_object = {
             "free-camera/transform": camera,
-            **({"hdri_pivot/transform": hdri_pivot} if render_props.record_hdri else {}),
+            **({"hdri-pivot/transform": hdri_pivot} if render_props.record_hdri else {}),
         }
 
         while True:
@@ -125,7 +128,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
                         self._get_transform_local_to(ground_body, object).blender_to_unity().to_json()
                     )
 
-                animation_values["free-camera/camera_info"].append(get_camera_dto(camera.data))
+                animation_values["free-camera/camera-info"].append(get_camera_dto(camera.data))
 
                 animation_values["time/scale"].append(scene_props.time_scale)
 
@@ -134,7 +137,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
                     break
 
             for animation_name, frame_values in animation_values.items():
-                success = api_client.set_keyframes_from_frame(animation_name, chunk_start_frame, frame_values)
+                success = api_client.set_keyframes(animation_name, chunk_start_frame, frame_values)
 
                 frame_values.clear()
 
