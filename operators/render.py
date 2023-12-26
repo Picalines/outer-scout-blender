@@ -178,13 +178,9 @@ class OW_RECORDER_OT_render(AsyncOperator):
         self._remove_timer(context)
         self.report({"INFO"}, "Outer Wilds render finished")
 
-        bpy.ops.ow_recorder.load_camera_background()
-        bpy.ops.ow_recorder.generate_world_nodes()
-        bpy.ops.ow_recorder.generate_compositor_nodes()
-
         return {"FINISHED"}
 
-    def _after_event(self, context: Context, event: Event):
+    def _after_event(self, context: Context, _: Event):
         context.area.tag_redraw()
 
     def _remove_timer(self, context: Context):
