@@ -5,7 +5,7 @@ from bpy.types import Context, Object, Operator, SpaceView3D, View3DCursor
 from mathutils import Matrix, Quaternion
 
 from ..api import APIClient
-from ..api.models import TransformDTO, apply_camera_info, camera_info_from_blender
+from ..api.models import TransformDTO, apply_camera_dto, get_camera_dto
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
@@ -108,7 +108,7 @@ class OW_RECORDER_OT_synchronize(Operator):
                 self.report({"ERROR"}, "failed to get camera info from Outer Wilds")
                 return {"CANCELLED"}
 
-            apply_camera_info(blender_item.data, camera_info)
+            apply_camera_dto(blender_item.data, camera_info)
 
         return {"FINISHED"}
 
@@ -139,7 +139,7 @@ class OW_RECORDER_OT_synchronize(Operator):
             return {"CANCELLED"}
 
         if isinstance(blender_item, Object) and blender_item.type == "CAMERA" and ("camera" in self.ow_item):
-            new_camera_info = camera_info_from_blender(blender_item.data)
+            new_camera_info = get_camera_dto(blender_item.data)
             success = api_client.set_camera_info(self.ow_item, new_camera_info)
             if not success:
                 self.report({"INFO"}, "failed to set camera info in Outer Wilds")

@@ -4,14 +4,10 @@ import bpy
 from bpy.types import Context, Event, Object
 
 from ..api import APIClient
-from ..api.models import RecorderSettings, TransformDTO, camera_info_from_blender
+from ..api.models import RecorderSettings, TransformDTO, get_camera_dto
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
-from ..properties import (
-    OWRecorderReferenceProperties,
-    OWRecorderRenderProperties,
-    OWRecorderSceneProperties,
-)
+from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties, OWRecorderSceneProperties
 from ..utils import GeneratorWithState, get_footage_path
 from .async_operator import AsyncOperator
 
@@ -129,7 +125,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
                         self._get_transform_local_to(ground_body, object).blender_to_unity().to_json()
                     )
 
-                animation_values["free-camera/camera_info"].append(camera_info_from_blender(camera.data))
+                animation_values["free-camera/camera_info"].append(get_camera_dto(camera.data))
 
                 animation_values["time/scale"].append(scene_props.time_scale)
 
@@ -195,3 +191,4 @@ class OW_RECORDER_OT_render(AsyncOperator):
     def _get_transform_local_to(self, parent: Object, child: Object) -> TransformDTO:
         local_matrix = parent.matrix_world.inverted() @ child.matrix_world
         return TransformDTO.from_matrix(local_matrix)
+
