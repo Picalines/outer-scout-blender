@@ -46,18 +46,25 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         )
 
         ow_compositor_node_tree.nodes.clear()
-        ow_compositor_node_tree.inputs.clear()
-        ow_compositor_node_tree.outputs.clear()
+        ow_compositor_node_tree.interface.clear()
 
-        image_pass_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketColor.__name__, "Image Pass")
-        depth_pass_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Depth Pass")
+        image_pass_input = ow_compositor_node_tree.interface.new_socket(
+            "Image Pass", socket_type=bpy.types.NodeSocketColor.__name__, in_out="INPUT"
+        )
+        depth_pass_input = ow_compositor_node_tree.interface.new_socket(
+            "Depth Pass", socket_type=bpy.types.NodeSocketFloat.__name__, in_out="INPUT"
+        )
 
-        blur_input = ow_compositor_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Blur Edges")
+        blur_input = ow_compositor_node_tree.interface.new_socket(
+            "Blur Edges", socket_type=bpy.types.NodeSocketFloat.__name__, in_out="INPUT"
+        )
         blur_input.default_value = 0.3
         blur_input.min_value = 0
         blur_input.max_value = 1
 
-        ow_compositor_node_tree.outputs.new(bpy.types.NodeSocketColor.__name__, "Image")
+        ow_compositor_node_tree.interface.new_socket(
+            "Image", socket_type=bpy.types.NodeSocketColor.__name__, in_out="OUTPUT"
+        )
 
         def init_driver_property(expression: str, *variables: tuple[str, ID, str]):
             def init(node: bpy.types.CompositorNodeValue):
@@ -175,7 +182,7 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         if not scene.use_nodes or self._is_default_compositor(scene.node_tree):
             scene.use_nodes = True
             compositor_node_tree = scene.node_tree
-            compositor_node_tree.nodes.clear()
+            compositor_node_tree.interface.clear()
 
             with NodeBuilder(compositor_node_tree, bpy.types.CompositorNodeComposite) as composite_node:
                 with composite_node.build_input("Image", bpy.types.CompositorNodeGroup) as addon_group_node:

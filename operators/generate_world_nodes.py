@@ -1,13 +1,13 @@
-from mathutils import Euler
 from math import radians
 from os import path
 
 import bpy
-from bpy.types import Operator, Context, NodeTree, Image
+from bpy.types import Context, Image, NodeTree, Operator
+from mathutils import Euler
 
 from ..bpy_register import bpy_register
-from ..utils import NodeBuilder, arrange_nodes, get_hdri_video_path
 from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
+from ..utils import NodeBuilder, arrange_nodes, get_hdri_video_path
 
 
 @bpy_register
@@ -42,12 +42,15 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         )
 
         hdri_node_tree.nodes.clear()
-        hdri_node_tree.inputs.clear()
-        hdri_node_tree.outputs.clear()
+        hdri_node_tree.interface.clear()
 
-        strength_input = hdri_node_tree.inputs.new(bpy.types.NodeSocketFloat.__name__, "Strength")
+        strength_input = hdri_node_tree.interface.new_socket(
+            "Strength", socket_type=bpy.types.NodeSocketFloat.__name__, in_out="INPUT"
+        )
 
-        hdri_node_tree.outputs.new(bpy.types.NodeSocketShader.__name__, "Background")
+        hdri_node_tree.interface.new_socket(
+            "Background", socket_type=bpy.types.NodeSocketShader.__name__, in_out="OUTPUT"
+        )
 
         default_strength = 3
         strength_input.default_value = default_strength
@@ -136,3 +139,4 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
             bpy.types.ShaderNodeBackground,
             bpy.types.ShaderNodeOutputWorld,
         }
+
