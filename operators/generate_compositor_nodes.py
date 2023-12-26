@@ -1,11 +1,11 @@
 from os import path
 
 import bpy
-from bpy.types import ID, Operator, Context, NodeTree, MovieClip, Camera
+from bpy.types import ID, Camera, Context, MovieClip, NodeTree, Operator
 
 from ..bpy_register import bpy_register
-from ..utils import NodeBuilder, PostfixNodeBuilder, get_id_type, arrange_nodes, get_depth_video_path
 from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
+from ..utils import NodeBuilder, PostfixNodeBuilder, arrange_nodes, get_depth_video_path, get_id_type
 
 
 @bpy_register
@@ -25,18 +25,19 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         if reference_props.background_movie_clip is None:
             bpy.ops.ow_recorder.load_camera_background()
 
-        depth_video_path = get_depth_video_path(context)
-        if reference_props.depth_movie_clip is None:
-            if not path.isfile(depth_video_path):
-                self.report({"ERROR"}, "rendered depth footage not found")
-                return {"CANCELLED"}
-        else:
-            bpy.data.movieclips.remove(reference_props.depth_movie_clip, do_unlink=True)
+        if render_props.record_depth:
+            depth_video_path = get_depth_video_path(context)
+            if reference_props.depth_movie_clip is None:
+                if not path.isfile(depth_video_path):
+                    self.report({"ERROR"}, "rendered depth footage not found")
+                    return {"CANCELLED"}
+            else:
+                bpy.data.movieclips.remove(reference_props.depth_movie_clip, do_unlink=True)
 
-        depth_movie_clip: MovieClip = bpy.data.movieclips.load(depth_video_path)
-        depth_movie_clip.name = f"Outer Wilds {scene.name} depth"
-        depth_movie_clip.frame_start = scene.frame_start
-        reference_props.depth_movie_clip = depth_movie_clip
+            depth_movie_clip: MovieClip = bpy.data.movieclips.load(depth_video_path)
+            depth_movie_clip.name = f"Outer Wilds {scene.name} depth"
+            depth_movie_clip.frame_start = scene.frame_start
+            reference_props.depth_movie_clip = depth_movie_clip
 
         ow_compositor_node_tree_name = f"Outer Wilds {scene.name} Compositor"
         ow_compositor_node_tree: NodeTree = bpy.data.node_groups.new(
@@ -207,3 +208,4 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
             bpy.types.CompositorNodeRLayers,
             bpy.types.CompositorNodeComposite,
         }
+
