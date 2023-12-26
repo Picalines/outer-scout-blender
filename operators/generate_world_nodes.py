@@ -22,17 +22,18 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         reference_props = OWRecorderReferenceProperties.from_context(context)
         render_props = OWRecorderRenderProperties.from_context(context)
 
-        hdri_video_path = get_hdri_video_path(context)
-        if reference_props.hdri_image is None:
-            if not path.isfile(hdri_video_path):
-                self.report({"ERROR"}, "rendered HDRI footage not found")
-                return {"CANCELLED"}
-        else:
-            bpy.data.images.remove(reference_props.hdri_image, do_unlink=True)
+        if render_props.record_hdri:
+            hdri_video_path = get_hdri_video_path(context)
+            if reference_props.hdri_image is None:
+                if not path.isfile(hdri_video_path):
+                    self.report({"ERROR"}, "rendered HDRI footage not found")
+                    return {"CANCELLED"}
+            else:
+                bpy.data.images.remove(reference_props.hdri_image, do_unlink=True)
 
-        hdri_image: Image = bpy.data.images.load(hdri_video_path)
-        hdri_image.name = f"Outer Wilds {scene.name} HDRI"
-        reference_props.hdri_image = hdri_image
+            hdri_image: Image = bpy.data.images.load(hdri_video_path)
+            hdri_image.name = f"Outer Wilds {scene.name} HDRI"
+            reference_props.hdri_image = hdri_image
 
         hdri_node_tree_name = f"Outer Wilds {scene.name} HDRI"
         hdri_node_tree: NodeTree = bpy.data.node_groups.new(
