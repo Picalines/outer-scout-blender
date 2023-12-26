@@ -35,7 +35,7 @@ class Request:
         except urllib.error.HTTPError as http_error:
             return Response(
                 status=HTTPStatus(http_error.code),
-                body=str(http_error.reason),
+                body=http_error.read().decode(http_error.headers.get_content_charset("utf-8")),
             )
 
         except OSError as os_error:
@@ -61,7 +61,10 @@ class Request:
             return Response(status=http_response.status, body="\n".join(lines))
 
         except urllib.error.HTTPError as http_error:
-            return Response(status=http_error.code, body=str(http_error.reason))
+            return Response(
+                status=http_error.code,
+                body=http_error.read().decode(http_error.headers.get_content_charset("utf-8")),
+            )
 
         except OSError as os_error:
             print(os_error)
@@ -93,3 +96,4 @@ class Request:
                 request_data = urllib.parse.urlencode(data).encode()
 
         return UrllibRequest(url, data=request_data, headers=headers, method=method)
+
