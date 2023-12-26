@@ -1,4 +1,3 @@
-import json
 from math import radians
 from pathlib import Path
 
@@ -7,7 +6,7 @@ from bpy.types import Object, Operator
 from mathutils import Matrix
 
 from ..api import APIClient
-from ..api.models import GroundBodyMeshDTO, TransformDTO
+from ..api.models import TransformDTO
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..utils import get_child_by_path, iter_parents
