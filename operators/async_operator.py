@@ -1,6 +1,6 @@
 from typing import Generator
 
-from bpy.types import Operator, Context, Event
+from bpy.types import Context, Event, Operator
 
 from ..utils import GeneratorWithState
 
@@ -31,9 +31,12 @@ class AsyncOperator(Operator):
     def invoke(self, context: Context, _):
         self._async_generator = GeneratorWithState(self._run_async(context))
 
-        context.window_manager.modal_handler_add(self)
+        first_result = self._poll_async_generator(context)
 
-        return self._poll_async_generator(context)
+        if first_result == {"RUNNING_MODAL"}:
+            context.window_manager.modal_handler_add(self)
+
+        return first_result
 
     def modal(self, context: Context, event: Event):
         if event.type not in self._events_to_await:
@@ -42,3 +45,4 @@ class AsyncOperator(Operator):
         self._after_event(context, event)
 
         return self._poll_async_generator(context)
+
