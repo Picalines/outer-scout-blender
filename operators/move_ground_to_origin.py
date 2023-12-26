@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import Operator, Object
+from bpy.types import Object, Operator
 
 from ..bpy_register import bpy_register
 from ..properties import OWRecorderReferenceProperties
@@ -11,6 +11,7 @@ class OW_RECORDER_OT_move_ground_to_origin(Operator):
 
     bl_idname = "ow_recorder.move_ground_to_origin"
     bl_label = "Move ground to origin"
+    bl_options = {"UNDO"}
 
     @classmethod
     def poll(cls, context) -> bool:
@@ -23,6 +24,9 @@ class OW_RECORDER_OT_move_ground_to_origin(Operator):
         cursor = context.scene.cursor
 
         ground_body.matrix_world = (ground_body.matrix_world.inverted() @ cursor.matrix).inverted()
-        bpy.ops.view3d.snap_cursor_to_center()
+
+        with context.temp_override():
+            bpy.ops.view3d.snap_cursor_to_center()
 
         return {"FINISHED"}
+
