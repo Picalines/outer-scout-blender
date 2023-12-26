@@ -21,9 +21,8 @@ class OW_RECORDER_PT_render(Panel):
         self.layout.prop(render_props, "hide_player_model")
 
         row = self.layout.row()
-        row.prop(render_props, "use_background", text="Bg", toggle=1)
-        row.prop(render_props, "use_hdri", text="HDRI", toggle=1)
-        row.prop(render_props, "use_depth", text="Depth", toggle=1)
+        row.prop(render_props, "record_hdri", text="HDRI", toggle=1)
+        row.prop(render_props, "record_depth", text="Depth", toggle=1)
 
         if render_props.record_hdri:
             self.layout.prop(render_props, "hdri_face_size")
