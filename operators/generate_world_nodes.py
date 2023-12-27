@@ -135,7 +135,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
         return {"FINISHED"}
 
     def _is_default_shader(self, node_tree: NodeTree):
-        return set(type(node) for node in node_tree.nodes) == {
+        return len(node_tree.nodes) == 2 and set(type(node) for node in node_tree.nodes) == {
             bpy.types.ShaderNodeBackground,
             bpy.types.ShaderNodeOutputWorld,
         }

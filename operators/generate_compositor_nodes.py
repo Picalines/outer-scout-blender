@@ -182,18 +182,21 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         if not scene.use_nodes or self._is_default_compositor(scene.node_tree):
             scene.use_nodes = True
             compositor_node_tree = scene.node_tree
+            compositor_node_tree.nodes.clear()
             compositor_node_tree.interface.clear()
 
             with NodeBuilder(compositor_node_tree, bpy.types.CompositorNodeComposite) as composite_node:
                 with composite_node.build_input("Image", bpy.types.CompositorNodeGroup) as addon_group_node:
-                    addon_group_node.set_main_output(image_pass_input.name)
+                    addon_group_node.set_main_output(0)
                     addon_group_node.set_attr("node_tree", ow_compositor_node_tree)
 
-                    with addon_group_node.build_input("Image", bpy.types.CompositorNodeRLayers) as render_node:
+                    with addon_group_node.build_input(
+                        image_pass_input.name, bpy.types.CompositorNodeRLayers
+                    ) as render_node:
                         render_node.set_main_output("Image")
                         render_node.set_attr("scene", scene)
 
-                    addon_group_node.defer_connect("Depth", render_node, depth_pass_input.name)
+                    addon_group_node.defer_connect(depth_pass_input.name, render_node, "Depth")
 
             arrange_nodes(compositor_node_tree)
         else:
@@ -211,7 +214,7 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         return {"FINISHED"}
 
     def _is_default_compositor(self, node_tree: NodeTree):
-        return set(type(node) for node in node_tree.nodes) == {
+        return len(node_tree.nodes) == 2 and set(type(node) for node in node_tree.nodes) == {
             bpy.types.CompositorNodeRLayers,
             bpy.types.CompositorNodeComposite,
         }
