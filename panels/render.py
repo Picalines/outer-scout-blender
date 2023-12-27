@@ -1,7 +1,7 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..operators.render import OW_RECORDER_OT_render
+from ..operators import OW_RECORDER_OT_load_camera_background, OW_RECORDER_OT_render
 from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
 
 
@@ -52,6 +52,10 @@ class OW_RECORDER_PT_render(Panel):
                 text=render_props.render_stage_description,
                 slider=True,
             )
+
+        column = self.layout.column()
+        column.enabled = not render_props.is_rendering
+        column.operator(operator=OW_RECORDER_OT_load_camera_background.bl_idname, icon="CAMERA_DATA")
 
 
 @bpy_register
