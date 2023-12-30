@@ -14,6 +14,7 @@ class GroundBodySelectionHelper:
             ("SunStation_Pivot", "Sun > Station", ""),
             ("CaveTwin_Body", "Hourglass > Ember Twin", ""),
             ("TowerTwin_Body", "Hourglass > Tower Twin", ""),
+            ("TimeLoopRing_Body", "Hourglass > Tower Twin > ATP", ""),
             ("TimberHearth_Body", "Timber Hearth", ""),
             ("Moon_Body", "Timber Hearth > Attlerock", ""),
             ("BrittleHollow_Body", "Brittle Hollow", ""),
