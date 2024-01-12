@@ -1,20 +1,13 @@
-from typing import Generator, Any, TypeVar, Generic
+from typing import Any, Generator, Generic, Iterable, TypeVar
+
+TItem = TypeVar("TItem")
 
 
-def iter_recursive(dict_or_list: dict | list) -> Generator[tuple[Any, Any], None, None]:
-    if isinstance(dict_or_list, dict):
-        for key, value in dict_or_list.items():
-            yield (key, value)
-
-            if isinstance(value, (dict, list)):
-                yield from iter_recursive(value)
-
-    elif isinstance(dict_or_list, list):
-        for i, item in enumerate(dict_or_list, start=0):
-            yield (i, item)
-
-            if isinstance(item, (dict, list)):
-                yield from iter_recursive(item)
+def iter_with_prev(iterable: Iterable[TItem]) -> Generator[tuple[TItem | None, TItem], Any, None]:
+    prev_item = None
+    for item in iterable:
+        yield (prev_item, item)
+        prev_item = item
 
 
 TYield = TypeVar("TYield")
@@ -44,3 +37,4 @@ class GeneratorWithState(Generic[TYield, TSend, TReturn]):
             self.returned = stop.value
             self.stopped = True
             raise
+

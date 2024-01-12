@@ -8,7 +8,7 @@ from ..api.models import RecorderSettings, TransformDTO, get_camera_dto
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties, OWRecorderSceneProperties
-from ..utils import GeneratorWithState, get_footage_path
+from ..utils import GeneratorWithState, get_footage_path, iter_with_prev
 from .async_operator import AsyncOperator
 
 
@@ -85,9 +85,7 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         self._timer = context.window_manager.event_timer_add(render_props.render_timer_delay, window=context.window)
 
-        scene.frame_set(frame=scene.frame_start)
         render_props.render_stage_progress = 0
-
         render_props.is_rendering = True
 
         # send animation data
@@ -98,53 +96,60 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         render_props.render_stage_description = "Sending animation"
 
-        animation_values: dict[str, list] = {
-            name: []
-            for name in (
+        max_chunk_size = render_props.animation_chunk_size
+
+        chunk_keyframe_values: dict[str, list] = {
+            prop_name: [None] * max_chunk_size
+            for prop_name in (
                 "free-camera/transform",
+                *(("hdri-pivot/transform",) if render_props.record_hdri else ()),
                 "free-camera/camera-info",
                 "time/scale",
-                *(("hdri-pivot/transform",) if render_props.record_hdri else ()),
             )
         }
 
-        animation_name_to_object = {
+        animated_transform_objects = {
             "free-camera/transform": camera,
             **({"hdri-pivot/transform": hdri_pivot} if render_props.record_hdri else {}),
         }
+
+        scene.frame_set(frame=scene.frame_start)
 
         while True:
             frame_number = scene.frame_current - scene.frame_start + 1
             render_props.render_stage_progress = frame_number / frame_count
 
+            current_chunk_size = 0
             chunk_start_frame = scene.frame_current
             at_end = False
 
-            for chunk_frame_offset in range(render_props.animation_chunk_size):
+            for chunk_frame_offset in range(max_chunk_size):
                 scene.frame_set(frame=chunk_start_frame + chunk_frame_offset)
+                current_chunk_size += 1
 
-                for animation_name, object in animation_name_to_object.items():
-                    animation_values[animation_name].append(
-                        self._get_transform_local_to(ground_body, object).blender_to_unity().to_json()
-                    )
+                for prop_api_name, transform_object in animated_transform_objects.items():
+                    local_matrix = ground_body.matrix_world.inverted() @ transform_object.matrix_world
+                    local_transform = TransformDTO.from_matrix(local_matrix)
+                    transform_keyframe = local_transform.blender_to_unity().to_json()
 
-                animation_values["free-camera/camera-info"].append(get_camera_dto(camera.data))
+                    chunk_keyframe_values[prop_api_name][chunk_frame_offset] = transform_keyframe
 
-                animation_values["time/scale"].append(scene_props.time_scale)
+                chunk_keyframe_values["free-camera/camera-info"][chunk_frame_offset] = get_camera_dto(camera.data)
+
+                chunk_keyframe_values["time/scale"][chunk_frame_offset] = scene_props.time_scale
 
                 if scene.frame_current >= scene.frame_end:
                     at_end = True
                     break
 
-            for animation_name, frame_values in animation_values.items():
-                success = api_client.set_keyframes(animation_name, chunk_start_frame, frame_values)
-
-                frame_values.clear()
+            for prop_api_name, keyframe_values in chunk_keyframe_values.items():
+                keyframe_values = keyframe_values[:current_chunk_size]
+                success = api_client.set_keyframes(prop_api_name, chunk_start_frame, keyframe_values)
 
                 if not success:
                     self.report(
                         {"WARNING"},
-                        f"failed to send animation {animation_name} data at frame {chunk_start_frame}",
+                        f"failed to send animation {prop_api_name} data at frame {chunk_start_frame}",
                     )
 
             if at_end:
@@ -164,8 +169,14 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         frames_recorded = GeneratorWithState(api_client.get_frames_recorded_async())
 
-        for count in frames_recorded:
-            render_props.render_stage_progress = count / frame_count
+        for prev_count, current_count in iter_with_prev(frames_recorded):
+            render_props.render_stage_progress = current_count / frame_count
+
+            if prev_count != current_count:
+                recorder_status = api_client.get_recorder_status()
+                if not recorder_status["enabled"]:
+                    break
+
             yield {"TIMER"}
 
         if frames_recorded.returned == False:
