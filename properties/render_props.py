@@ -12,12 +12,6 @@ class OWRecorderRenderProperties(PropertyGroup):
         options=set(),
     )
 
-    show_progress_gui: BoolProperty(
-        name="Show progress GUI",
-        description="Display current frame in game window (may affect performance)",
-        default=False,
-    )
-
     record_hdri: BoolProperty(
         name="Record HDRI",
         description="Take a 360 video in Outer Wilds and use it as the environment texture for the scene",

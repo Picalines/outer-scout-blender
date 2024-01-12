@@ -72,7 +72,6 @@ class OW_RECORDER_PT_render_editor_settings(Panel):
         render_props = OWRecorderRenderProperties.from_context(context)
         self.layout.enabled = not render_props.is_rendering
 
-        self.layout.prop(render_props, "show_progress_gui")
         self.layout.prop(render_props, "animation_chunk_size")
         self.layout.prop(render_props, "render_timer_delay")
 

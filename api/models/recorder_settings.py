@@ -12,4 +12,3 @@ class RecorderSettings(TypedDict):
     recordDepth: bool
     hdriFaceSize: int
     hidePlayerModel: bool
-    showProgressGui: bool

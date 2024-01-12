@@ -70,7 +70,6 @@ class OW_RECORDER_OT_render(AsyncOperator):
             "recordDepth": render_props.record_depth,
             "hdriFaceSize": render_props.hdri_face_size,
             "hidePlayerModel": render_props.hide_player_model,
-            "showProgressGui": render_props.show_progress_gui,
         }
 
         if not api_client.set_recorder_settings(recorder_settings):
