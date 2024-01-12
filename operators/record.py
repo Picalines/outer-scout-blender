@@ -4,7 +4,7 @@ import bpy
 from bpy.types import Context, Event, Object
 
 from ..api import APIClient
-from ..api.models import RecorderSettings, TransformDTO, get_camera_dto
+from ..api.models import RecorderSettingsDTO, TransformDTO, get_camera_dto
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
 from ..properties import OWRecorderProperties, OWRecorderReferenceProperties, OWRecorderSceneProperties
@@ -55,7 +55,7 @@ class OW_RECORDER_OT_record(AsyncOperator):
         footage_path = get_footage_path(context)
         makedirs(footage_path, exist_ok=True)
 
-        recorder_settings: RecorderSettings = {
+        recorder_settings: RecorderSettingsDTO = {
             "outputDirectory": footage_path,
             "startFrame": scene.frame_start,
             "endFrame": scene.frame_end,

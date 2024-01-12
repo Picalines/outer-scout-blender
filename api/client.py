@@ -7,8 +7,8 @@ from .models import (
     CameraDTO,
     GameObjectDTO,
     GroundBodyMeshDTO,
-    RecorderSettings,
-    RecorderStatus,
+    RecorderSettingsDTO,
+    RecorderStatusDTO,
     RelativeTransformDTO,
     SectorListDTO,
     TransformDTO,
@@ -19,10 +19,10 @@ class APIClient:
     def __init__(self, preferences: OWRecorderPreferences):
         self.base_url = f"http://localhost:{preferences.api_port}/"
 
-    def get_recorder_status(self) -> RecorderStatus:
+    def get_recorder_status(self) -> RecorderStatusDTO:
         response = self._get("recorder/status")
         return (
-            response.typed_json(RecorderStatus)
+            response.typed_json(RecorderStatusDTO)
             if response.is_ok()
             else {"enabled": False, "isAbleToRecord": False, "framesRecorded": 0}
         )
@@ -41,7 +41,7 @@ class APIClient:
     def set_recorder_enabled(self, enabled: bool) -> bool:
         return self._put("recorder/enabled", query={"value": enabled}).is_ok()
 
-    def set_recorder_settings(self, recorder_settings: RecorderSettings) -> bool:
+    def set_recorder_settings(self, recorder_settings: RecorderSettingsDTO) -> bool:
         return self._put("recorder/settings", recorder_settings).is_ok()
 
     def set_keyframes(self, property: str, from_frame: int, values: list) -> bool:

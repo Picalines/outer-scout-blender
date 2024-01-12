@@ -1,7 +1,7 @@
 from typing import TypedDict
 
 
-class RecorderSettings(TypedDict):
+class RecorderSettingsDTO(TypedDict):
     outputDirectory: str
     startFrame: int
     endFrame: int

@@ -1,7 +1,7 @@
 from typing import TypedDict
 
 
-class RecorderStatus(TypedDict):
+class RecorderStatusDTO(TypedDict):
     enabled: bool
     isAbleToRecord: bool
     framesRecorded: int
