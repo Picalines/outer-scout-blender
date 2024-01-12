@@ -1,16 +1,16 @@
 from os import path
 
 import bpy
-from bpy.types import Operator, Camera, CameraBackgroundImage
+from bpy.types import Camera, CameraBackgroundImage, Operator
 
 from ..bpy_register import bpy_register
-from ..utils import get_background_video_path
 from ..properties import OWRecorderReferenceProperties
+from ..utils import get_background_video_path
 
 
 @bpy_register
 class OW_RECORDER_OT_load_camera_background(Operator):
-    """Adds or edits camera background to rendered Outer Wilds footage"""
+    """Adds or edits camera background with footage recorded in Outer Wilds"""
 
     bl_idname = "ow_recorder.load_camera_background"
     bl_label = "Load camera background"
@@ -24,7 +24,7 @@ class OW_RECORDER_OT_load_camera_background(Operator):
 
         background_video_path = get_background_video_path(context)
         if not path.isfile(background_video_path):
-            self.report({"ERROR"}, "rendered background footage not found")
+            self.report({"ERROR"}, "recorded background footage not found")
             return {"CANCELLED"}
 
         reference_props = OWRecorderReferenceProperties.from_context(context)
@@ -55,3 +55,4 @@ class OW_RECORDER_OT_load_camera_background(Operator):
         camera_background.alpha = 1
 
         return {"FINISHED"}
+

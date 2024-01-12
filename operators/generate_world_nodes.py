@@ -6,7 +6,7 @@ from bpy.types import Context, Image, NodeTree, Operator
 from mathutils import Euler
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
+from ..properties import OWRecorderProperties, OWRecorderReferenceProperties
 from ..utils import NodeBuilder, arrange_nodes, get_hdri_video_path
 
 
@@ -20,13 +20,13 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
     def execute(self, context: Context):
         scene = context.scene
         reference_props = OWRecorderReferenceProperties.from_context(context)
-        render_props = OWRecorderRenderProperties.from_context(context)
+        recorder_props = OWRecorderProperties.from_context(context)
 
-        if render_props.record_hdri:
+        if recorder_props.record_hdri:
             hdri_video_path = get_hdri_video_path(context)
             if reference_props.hdri_image is None:
                 if not path.isfile(hdri_video_path):
-                    self.report({"ERROR"}, "rendered HDRI footage not found")
+                    self.report({"ERROR"}, "recorded HDRI footage not found")
                     return {"CANCELLED"}
             else:
                 bpy.data.images.remove(reference_props.hdri_image, do_unlink=True)
@@ -76,7 +76,7 @@ class OW_RECORDER_OT_generate_world_nodes(Operator):
 
         with NodeBuilder(hdri_node_tree, bpy.types.NodeGroupOutput) as output_node:
             with output_node.build_input(0, bpy.types.ShaderNodeBackground) as background_node:
-                if render_props.record_hdri:
+                if recorder_props.record_hdri:
                     with background_node.build_input("Color", bpy.types.ShaderNodeTexEnvironment) as environment_node:
                         environment_node.defer_init(init_environment_node)
 

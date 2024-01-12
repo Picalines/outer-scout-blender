@@ -4,7 +4,7 @@ import bpy
 from bpy.types import ID, Camera, Context, MovieClip, NodeTree, Operator
 
 from ..bpy_register import bpy_register
-from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties
+from ..properties import OWRecorderProperties, OWRecorderReferenceProperties
 from ..utils import NodeBuilder, PostfixNodeBuilder, arrange_nodes, get_depth_video_path, get_id_type
 
 
@@ -20,16 +20,16 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         camera: Camera = scene.camera.data
 
         reference_props = OWRecorderReferenceProperties.from_context(context)
-        render_props = OWRecorderRenderProperties.from_context(context)
+        recorder_props = OWRecorderProperties.from_context(context)
 
         if reference_props.background_movie_clip is None:
             bpy.ops.ow_recorder.load_camera_background()
 
-        if render_props.record_depth:
+        if recorder_props.record_depth:
             depth_video_path = get_depth_video_path(context)
             if reference_props.depth_movie_clip is None:
                 if not path.isfile(depth_video_path):
-                    self.report({"ERROR"}, "rendered depth footage not found")
+                    self.report({"ERROR"}, "recorded depth footage not found")
                     return {"CANCELLED"}
             else:
                 bpy.data.movieclips.remove(reference_props.depth_movie_clip, do_unlink=True)
@@ -85,7 +85,7 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
             return init
 
         with NodeBuilder(ow_compositor_node_tree, bpy.types.NodeGroupOutput) as output_node:
-            if render_props.record_depth:
+            if recorder_props.record_depth:
                 with output_node.build_input(0, bpy.types.CompositorNodeZcombine) as z_combine_node:
                     z_combine_node.set_attr("use_alpha", True)
 

@@ -7,21 +7,19 @@ from ..api import APIClient
 from ..api.models import RecorderSettings, TransformDTO, get_camera_dto
 from ..bpy_register import bpy_register
 from ..preferences import OWRecorderPreferences
-from ..properties import OWRecorderReferenceProperties, OWRecorderRenderProperties, OWRecorderSceneProperties
+from ..properties import OWRecorderProperties, OWRecorderReferenceProperties, OWRecorderSceneProperties
 from ..utils import GeneratorWithState, get_footage_path, iter_with_prev
 from .async_operator import AsyncOperator
 
 
 @bpy_register
-class OW_RECORDER_OT_render(AsyncOperator):
-    """Render footage in Outer Wilds and import it to current project (save project before running)"""
+class OW_RECORDER_OT_record(AsyncOperator):
+    """Record footage from Outer Wilds and import it to current project (save project before running)"""
 
-    bl_idname = "ow_recorder.render"
-    bl_label = "Render"
+    bl_idname = "ow_recorder.record"
+    bl_label = "Record"
 
     _timer = None
-
-    _render_props: OWRecorderRenderProperties = None
 
     @classmethod
     def poll(cls, context) -> bool:
@@ -48,11 +46,9 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         was_on_frame = scene.frame_current
 
-        render_props = OWRecorderRenderProperties.from_context(context)
+        recorder_props = OWRecorderProperties.from_context(context)
         scene_props = OWRecorderSceneProperties.from_context(context)
         ref_props = OWRecorderReferenceProperties.from_context(context)
-
-        self._render_props = render_props
 
         frame_count = scene.frame_end - scene.frame_start + 1
 
@@ -66,10 +62,10 @@ class OW_RECORDER_OT_render(AsyncOperator):
             "frameRate": scene.render.fps,
             "resolutionX": scene.render.resolution_x,
             "resolutionY": scene.render.resolution_y,
-            "recordHdri": render_props.record_hdri,
-            "recordDepth": render_props.record_depth,
-            "hdriFaceSize": render_props.hdri_face_size,
-            "hidePlayerModel": render_props.hide_player_model,
+            "recordHdri": recorder_props.record_hdri,
+            "recordDepth": recorder_props.record_depth,
+            "hdriFaceSize": recorder_props.hdri_face_size,
+            "hidePlayerModel": recorder_props.hide_player_model,
         }
 
         if not api_client.set_recorder_settings(recorder_settings):
@@ -82,10 +78,10 @@ class OW_RECORDER_OT_render(AsyncOperator):
             self.report({"ERROR"}, "unable to record")
             return {"CANCELLED"}
 
-        self._timer = context.window_manager.event_timer_add(render_props.render_timer_delay, window=context.window)
+        self._timer = context.window_manager.event_timer_add(recorder_props.modal_timer_delay, window=context.window)
 
-        render_props.render_stage_progress = 0
-        render_props.is_rendering = True
+        recorder_props.stage_progress = 0
+        recorder_props.is_recording = True
 
         # send animation data
 
@@ -93,15 +89,15 @@ class OW_RECORDER_OT_render(AsyncOperator):
         hdri_pivot: Object = ref_props.hdri_pivot
         camera = scene.camera
 
-        render_props.render_stage_description = "Sending animation"
+        recorder_props.stage_description = "Sending animation"
 
-        max_chunk_size = render_props.animation_chunk_size
+        max_chunk_size = recorder_props.animation_chunk_size
 
         chunk_keyframe_values: dict[str, list] = {
             prop_name: [None] * max_chunk_size
             for prop_name in (
                 "free-camera/transform",
-                *(("hdri-pivot/transform",) if render_props.record_hdri else ()),
+                *(("hdri-pivot/transform",) if recorder_props.record_hdri else ()),
                 "free-camera/camera-info",
                 "time/scale",
             )
@@ -109,14 +105,14 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         animated_transform_objects = {
             "free-camera/transform": camera,
-            **({"hdri-pivot/transform": hdri_pivot} if render_props.record_hdri else {}),
+            **({"hdri-pivot/transform": hdri_pivot} if recorder_props.record_hdri else {}),
         }
 
         scene.frame_set(frame=scene.frame_start)
 
         while True:
             frame_number = scene.frame_current - scene.frame_start + 1
-            render_props.render_stage_progress = frame_number / frame_count
+            recorder_props.stage_progress = frame_number / frame_count
 
             current_chunk_size = 0
             chunk_start_frame = scene.frame_current
@@ -158,18 +154,18 @@ class OW_RECORDER_OT_render(AsyncOperator):
 
         scene.frame_set(frame=was_on_frame)
 
-        # render
+        # record
 
         if not api_client.set_recorder_enabled(True):
             self.report({"ERROR"}, "failed to start recording")
             return {"CANCELLED"}
 
-        render_props.render_stage_description = "Rendering"
+        recorder_props.stage_description = "Recording"
 
         frames_recorded = GeneratorWithState(api_client.get_frames_recorded_async())
 
         for prev_count, current_count in iter_with_prev(frames_recorded):
-            render_props.render_stage_progress = current_count / frame_count
+            recorder_props.stage_progress = current_count / frame_count
 
             if prev_count != current_count:
                 recorder_status = api_client.get_recorder_status()
@@ -194,8 +190,10 @@ class OW_RECORDER_OT_render(AsyncOperator):
         context.area.tag_redraw()
 
     def _remove_timer(self, context: Context):
+        recorder_props = OWRecorderProperties.from_context(context)
+
         context.window_manager.event_timer_remove(self._timer)
-        self._render_props.is_rendering = False
+        recorder_props.is_recording = False
 
     def _get_transform_local_to(self, parent: Object, child: Object) -> TransformDTO:
         local_matrix = parent.matrix_world.inverted() @ child.matrix_world
