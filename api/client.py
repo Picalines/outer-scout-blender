@@ -1,4 +1,4 @@
-from typing import Any, Generator, Literal
+from typing import Any, Generator
 
 from ..preferences import OWRecorderPreferences
 from ..utils import GeneratorWithState
