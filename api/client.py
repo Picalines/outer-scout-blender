@@ -4,6 +4,7 @@ from ..preferences import OWRecorderPreferences
 from ..utils import GeneratorWithState
 from .http import Request, Response
 from .models import (
+    ApiStatusDTO,
     CameraDTO,
     GameObjectDTO,
     GroundBodyMeshDTO,
@@ -18,6 +19,10 @@ from .models import (
 class APIClient:
     def __init__(self, preferences: OWRecorderPreferences):
         self.base_url = f"http://localhost:{preferences.api_port}/"
+
+    def get_api_status(self) -> ApiStatusDTO:
+        response = self._get("api-status")
+        return response.typed_json(ApiStatusDTO) if response.is_ok() else {"available": False}
 
     def get_recorder_status(self) -> RecorderStatusDTO:
         response = self._get("recorder/status")
