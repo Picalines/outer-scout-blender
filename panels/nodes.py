@@ -47,7 +47,7 @@ class OW_RECORDER_PT_compositor_nodes(Panel):
         return space.tree_type == "CompositorNodeTree" and all(
             (
                 reference_props.ground_body,
-                reference_props.background_movie_clip,
+                reference_props.main_color_movie_clip,
             )
         )
 

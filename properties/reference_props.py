@@ -18,8 +18,14 @@ class OWRecorderReferenceProperties(PropertyGroup):
         options=set(),
     )
 
-    background_movie_clip: PointerProperty(
-        name="Background Movie Clip",
+    main_color_movie_clip: PointerProperty(
+        name="Color Movie Clip",
+        type=MovieClip,
+        options=set(),
+    )
+
+    main_depth_movie_clip: PointerProperty(
+        name="Depth Movie Clip",
         type=MovieClip,
         options=set(),
     )
@@ -27,12 +33,6 @@ class OWRecorderReferenceProperties(PropertyGroup):
     hdri_image: PointerProperty(
         name="HDRI Image",
         type=Image,
-        options=set(),
-    )
-
-    depth_movie_clip: PointerProperty(
-        name="Depth Movie Clip",
-        type=MovieClip,
         options=set(),
     )
 

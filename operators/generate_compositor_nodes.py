@@ -5,7 +5,7 @@ from bpy.types import ID, Camera, Context, MovieClip, NodeTree, Operator
 
 from ..bpy_register import bpy_register
 from ..properties import OWRecorderProperties, OWRecorderReferenceProperties
-from ..utils import NodeBuilder, PostfixNodeBuilder, arrange_nodes, get_depth_video_path, get_id_type
+from ..utils import NodeBuilder, PostfixNodeBuilder, arrange_nodes, get_camera_depth_footage_path, get_id_type
 
 
 @bpy_register
@@ -22,22 +22,22 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
         reference_props = OWRecorderReferenceProperties.from_context(context)
         recorder_props = OWRecorderProperties.from_context(context)
 
-        if reference_props.background_movie_clip is None:
+        if reference_props.main_color_movie_clip is None:
             bpy.ops.ow_recorder.load_camera_background()
 
         if recorder_props.record_depth:
-            depth_video_path = get_depth_video_path(context)
-            if reference_props.depth_movie_clip is None:
+            depth_video_path = get_camera_depth_footage_path(context, 0)
+            if reference_props.main_depth_movie_clip is None:
                 if not path.isfile(depth_video_path):
                     self.report({"ERROR"}, "recorded depth footage not found")
                     return {"CANCELLED"}
             else:
-                bpy.data.movieclips.remove(reference_props.depth_movie_clip, do_unlink=True)
+                bpy.data.movieclips.remove(reference_props.main_depth_movie_clip, do_unlink=True)
 
             depth_movie_clip: MovieClip = bpy.data.movieclips.load(depth_video_path)
             depth_movie_clip.name = f"Outer Wilds {scene.name} depth"
             depth_movie_clip.frame_start = scene.frame_start
-            reference_props.depth_movie_clip = depth_movie_clip
+            reference_props.main_depth_movie_clip = depth_movie_clip
 
         ow_compositor_node_tree_name = f"Outer Wilds {scene.name} Compositor"
         ow_compositor_node_tree: NodeTree = bpy.data.node_groups.new(
@@ -94,9 +94,9 @@ class OW_RECORDER_OT_generate_compositor_nodes(Operator):
 
                     z_combine_node.defer_connect(1, group_input_node, depth_pass_input.name)
 
-                    with z_combine_node.build_input(2, bpy.types.CompositorNodeMovieClip) as background_movie_node:
-                        background_movie_node.set_main_output("Image")
-                        background_movie_node.set_attr("clip", reference_props.background_movie_clip)
+                    with z_combine_node.build_input(2, bpy.types.CompositorNodeMovieClip) as color_movie_node:
+                        color_movie_node.set_main_output("Image")
+                        color_movie_node.set_attr("clip", reference_props.main_color_movie_clip)
 
                     with PostfixNodeBuilder(
                         ow_compositor_node_tree, "far far near / 1 - raw_depth * 1 + /".split()

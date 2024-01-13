@@ -38,9 +38,9 @@ class OW_RECORDER_PT_reference_props(Panel):
 
         for prop_name in (
             "ground_body",
-            "background_movie_clip",
+            "main_color_movie_clip",
+            "main_depth_movie_clip",
             "hdri_image",
-            "depth_movie_clip",
             "hdri_node_tree",
             "compositor_node_tree",
         ):
