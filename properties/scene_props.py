@@ -15,7 +15,7 @@ class SceneProperties(PropertyGroup):
 
     origin_position: FloatVectorProperty(
         name="Origin Position",
-        description="Position of the scene origin",
+        description="Position of the scene origin (in Unity coordinate system)",
         subtype="XYZ",
         size=3,
         default=(0, 0, 0),
@@ -24,7 +24,7 @@ class SceneProperties(PropertyGroup):
 
     origin_rotation: FloatVectorProperty(
         name="Origin Rotation",
-        description="Rotation of the scene origin",
+        description="Rotation of the scene origin (in Unity coordinate system)",
         subtype="QUATERNION",
         size=4,
         default=(1, 0, 0, 0),
