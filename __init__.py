@@ -7,26 +7,31 @@ bl_info = {
     "category": "Compositing",
 }
 
-import bpy
-from .bpy_register import BPY_CLASSES_TO_REGISTER, BPY_PROPERTIES_TO_REGISTER
+import importlib
+import sys
 
-from . import preferences as _
-from . import properties as _
-from . import panels as _
-from . import operators as _
+import bpy
 
 
 def register():
+    reload_addon()
+
+    # from . import preferences as _
+    # from . import operators as _
+    from . import panels as _
+    from . import properties as _
+    from .bpy_register import CLASSES_TO_REGISTER, PROPERTIES_TO_REGISTER
+
     registered_classes: set[type] = set()
-    for cls in BPY_CLASSES_TO_REGISTER:
+    for cls in CLASSES_TO_REGISTER:
         if cls in registered_classes:
             continue
 
         bpy.utils.register_class(cls)
         registered_classes.add(cls)
 
-        if cls in BPY_PROPERTIES_TO_REGISTER:
-            registered_property = BPY_PROPERTIES_TO_REGISTER[cls]
+        if cls in PROPERTIES_TO_REGISTER:
+            registered_property = PROPERTIES_TO_REGISTER[cls]
             setattr(
                 registered_property.id_type,
                 registered_property.property_name,
@@ -35,9 +40,23 @@ def register():
 
 
 def unregister():
-    for cls in BPY_CLASSES_TO_REGISTER:
+    from .bpy_register import CLASSES_TO_REGISTER, PROPERTIES_TO_REGISTER
+
+    for cls in CLASSES_TO_REGISTER:
+        if cls in PROPERTIES_TO_REGISTER:
+            registered_property = PROPERTIES_TO_REGISTER[cls]
+            delattr(registered_property.id_type, registered_property.property_name)
+
         bpy.utils.unregister_class(cls)
+
+
+def reload_addon():
+    module_prefix = f"{__name__}."
+    for name, submodule in sys.modules.copy().items():
+        if name.startswith(module_prefix):
+            importlib.reload(submodule)
 
 
 if __name__ == "__main__":
     register()
+
