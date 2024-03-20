@@ -5,4 +5,5 @@ line-length = 120
 venvPath = '.'
 venv = 'venv'
 typeCheckingMode = 'off'
+reportInvalidTypeForm = false
 reportMissingModuleSource = 'none'
