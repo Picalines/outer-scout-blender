@@ -1,5 +1,5 @@
 from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty, PointerProperty, StringProperty
-from bpy.types import Context, NodeTree, PropertyGroup, Scene, Image
+from bpy.types import Context, Image, NodeTree, PropertyGroup, Scene
 
 from ..bpy_register import bpy_register_property
 
@@ -14,11 +14,21 @@ class SceneProperties(PropertyGroup):
     )
 
     origin_position: FloatVectorProperty(
-        name="Origin Position", description="Position of the scene origin", size=3, default=(0, 0, 0), options=set()
+        name="Origin Position",
+        description="Position of the scene origin",
+        subtype="XYZ",
+        size=3,
+        default=(0, 0, 0),
+        options=set(),
     )
 
     origin_rotation: FloatVectorProperty(
-        name="Origin Rotation", description="Rotation of the scene origin", size=4, default=(0, 0, 0, 1), options=set()
+        name="Origin Rotation",
+        description="Rotation of the scene origin",
+        subtype="QUATERNION",
+        size=4,
+        default=(1, 0, 0, 0),
+        options=set(),
     )
 
     time_scale: FloatProperty(
@@ -56,4 +66,7 @@ class SceneProperties(PropertyGroup):
     @staticmethod
     def from_context(context: Context) -> "SceneProperties":
         return context.scene.outer_scout_scene
+
+    def is_scene_created(self) -> bool:
+        return self.origin_parent != ""
 
