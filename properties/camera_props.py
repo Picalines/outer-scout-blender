@@ -29,14 +29,12 @@ class CameraProperties(PropertyGroup):
     color_movie_clip: PointerProperty(
         name="Color Movie Clip",
         type=MovieClip,
-        default=None,
         options=set(),
     )
 
     depth_movie_clip: PointerProperty(
         name="Depth Movie Clip",
         type=MovieClip,
-        default=None,
         options=set(),
     )
 
