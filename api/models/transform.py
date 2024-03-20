@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from math import radians
-from typing import Self, TypedDict
+from typing import TypedDict
 
 from mathutils import Matrix, Quaternion, Vector
 
@@ -39,7 +39,7 @@ class Transform:
     scale: Vector
 
     @staticmethod
-    def from_json(json: TransformJson) -> Self:
+    def from_json(json: TransformJson) -> "Transform":
         return Transform(
             position=Vector(json["position"] or (0, 0, 0)),
             rotation=Quaternion(json["rotation"] or (0, 0, 0, 1)),
@@ -47,17 +47,17 @@ class Transform:
         )
 
     @staticmethod
-    def from_matrix(matrix: Matrix) -> Self:
+    def from_matrix(matrix: Matrix) -> "Transform":
         return Transform(*matrix.decompose())
 
-    def unity_to_blender(self) -> Self:
+    def unity_to_blender(self) -> "Transform":
         return Transform(
             position=unity_vector_to_blender(self.position),
             rotation=unity_quaternion_to_blender(self.rotation),
             scale=unity_vector_to_blender(self.scale),
         )
 
-    def blender_to_unity(self) -> Self:
+    def blender_to_unity(self) -> "Transform":
         return Transform(
             position=blender_vector_to_unity(self.position),
             rotation=blender_quaternion_to_unity(self.rotation),
