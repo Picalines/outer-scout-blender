@@ -32,7 +32,7 @@ class OWRecorderPreferences(AddonPreferences):
     ignored_objects: StringProperty(
         name="Ignored objects",
         description="Addon will ignore game objects that include one of these parts in their names",
-        default="proxy,effect,fog,shockLayer,atmosphere,fadeBubble,whiteHoleSingularity",
+        default="proxy,effect,fog,shockLayer,atmosphere,fadeBubble,whiteHoleSingularity,normals",
     )
 
     @staticmethod
