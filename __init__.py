@@ -1,11 +1,9 @@
 bl_info = {
-    "name": "outer-wilds-scene-recorder-blender",
-    "author": "Picalines",
-    "description": "",
-    "blender": (4, 0, 0),
+    "name": "outer-scout-blender",
+    "author": "picalines",
+    "description": "A cinematic toolbox for Outer Wilds & Blender",
+    "blender": (4, 1, 0),
     "version": (0, 1, 0),
-    "location": "View3D > Outer Wilds Recorder > ...",
-    "warning": "",
     "category": "Compositing",
 }
 
