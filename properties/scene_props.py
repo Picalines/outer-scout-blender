@@ -1,16 +1,24 @@
-from bpy.types import PropertyGroup, Scene, Context
-from bpy.props import BoolProperty, StringProperty, FloatProperty, FloatVectorProperty
+from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty, PointerProperty, StringProperty
+from bpy.types import Context, NodeTree, PropertyGroup, Scene, Image
 
 from ..bpy_register import bpy_register_property
 
 
-@bpy_register_property(Scene, "ow_recorder_scene_props")
-class OWRecorderSceneProperties(PropertyGroup):
-    ground_body_name: StringProperty(
-        name="Ground body name",
-        description="Outer Wilds ground body name independent of scene object",
+@bpy_register_property(Scene, "outer_scout_scene")
+class SceneProperties(PropertyGroup):
+    origin_parent: StringProperty(
+        name="Scene Origin Parent",
+        description="Outer Wilds GameObject that the origin is attached to",
         default="",
         options=set(),
+    )
+
+    origin_position: FloatVectorProperty(
+        name="Origin Position", description="Position of the scene origin", size=3, default=(0, 0, 0), options=set()
+    )
+
+    origin_rotation: FloatVectorProperty(
+        name="Origin Rotation", description="Rotation of the scene origin", size=4, default=(0, 0, 0, 1), options=set()
     )
 
     time_scale: FloatProperty(
@@ -21,28 +29,31 @@ class OWRecorderSceneProperties(PropertyGroup):
         options={"ANIMATABLE"},
     )
 
-    has_saved_warp: BoolProperty(
-        name="Has saved warp",
-        description="True whenever you've saved some location to warp to",
-        default=False,
+    hide_player_model: BoolProperty(
+        name="Hide player model",
+        default=True,
         options=set(),
     )
 
-    warp_ground_body: StringProperty(
-        name="Warp ground body",
-        description="Ground body to warp to",
-        default="",
+    hdri_node_group: PointerProperty(
+        name="HDRI Node Group",
+        type=NodeTree,
         options=set(),
     )
 
-    warp_transform: FloatVectorProperty(
-        name="Warp transform",
-        description="Custom warp transform. Use this to save scene location",
-        size=10,  # (*pos, *rot, *scale)
-        default=(0,) * 10,
+    compositor_node_group: PointerProperty(
+        name="Compositor Background & Depth Node Group",
+        type=NodeTree,
+        options=set(),
+    )
+
+    hdri_image: PointerProperty(
+        name="HDRI Image",
+        type=Image,
         options=set(),
     )
 
     @staticmethod
-    def from_context(context: Context) -> "OWRecorderSceneProperties":
-        return context.scene.ow_recorder_scene_props
+    def from_context(context: Context) -> "SceneProperties":
+        return context.scene.outer_scout_scene
+

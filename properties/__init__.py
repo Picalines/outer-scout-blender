@@ -1,3 +1,5 @@
-from .recorder_props import *
+from .camera_props import *
+from .object_props import *
+from .recording_props import *
 from .scene_props import *
-from .reference_props import *
+
