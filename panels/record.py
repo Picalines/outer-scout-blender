@@ -2,7 +2,7 @@ from bpy.types import Panel
 
 from ..bpy_register import bpy_register
 from ..operators import OW_RECORDER_OT_load_camera_background, OW_RECORDER_OT_record
-from ..properties import OWRecorderProperties, OWRecorderReferenceProperties
+from ..properties import RecordingProperties, OWRecorderReferenceProperties
 
 
 @bpy_register
@@ -25,7 +25,7 @@ class OW_RECORDER_PT_recorder(Panel):
         )
 
     def draw(self, context):
-        recorder_props = OWRecorderProperties.from_context(context)
+        recorder_props = RecordingProperties.from_context(context)
 
         self.layout.enabled = not recorder_props.is_recording
 
@@ -69,7 +69,7 @@ class OW_RECORDER_PT_recorder_editor_settings(Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        recorder_props = OWRecorderProperties.from_context(context)
+        recorder_props = RecordingProperties.from_context(context)
         self.layout.enabled = not recorder_props.is_recording
 
         self.layout.prop(recorder_props, "animation_chunk_size")

@@ -4,7 +4,7 @@ from ..bpy_register import bpy_register
 from ..operators.load_ground_body import OW_RECORDER_OT_load_ground_body
 from ..operators.move_ground_to_origin import OW_RECORDER_OT_move_ground_to_origin
 from ..operators.set_ground_body_visible import OW_RECORDER_OT_set_ground_body_visible
-from ..properties import OWRecorderReferenceProperties, OWRecorderSceneProperties
+from ..properties import OWRecorderReferenceProperties, SceneProperties
 
 
 @bpy_register
@@ -18,7 +18,7 @@ class OW_RECORDER_PT_ground_body(Panel):
 
     def draw(self, context):
         reference_props = OWRecorderReferenceProperties.from_context(context)
-        scene_props = OWRecorderSceneProperties.from_context(context)
+        scene_props = SceneProperties.from_context(context)
 
         current_ground_body: Object = reference_props.ground_body
         has_ground_body = current_ground_body is not None
