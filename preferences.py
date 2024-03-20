@@ -12,7 +12,7 @@ class OWRecorderPreferences(AddonPreferences):
         name="API port",
         description="Addon communicates with the SceneRecorder mod through localhost at this port.\n"
         + "Should be same as in the mod settings",
-        default=5000,
+        default=2209,
     )
 
     ow_bodies_folder: StringProperty(
