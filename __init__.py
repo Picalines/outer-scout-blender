@@ -16,7 +16,6 @@ import bpy
 def register():
     reload_addon()
 
-    # from . import preferences as _
     # from . import operators as _
     from . import panels as _
     from . import properties as _
