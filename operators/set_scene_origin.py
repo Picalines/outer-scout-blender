@@ -48,11 +48,11 @@ def search_origin_parent(_self, _context, _edit_text):
 
 
 @bpy_register
-class CreateSceneOperator(Operator):
-    """Creates an Outer Scout scene"""
+class SetSceneOriginOperator(Operator):
+    """Sets the Outer Scout scene origin location"""
 
-    bl_idname = "outer_scout.create_scene"
-    bl_label = "Create Scene"
+    bl_idname = "outer_scout.set_origin"
+    bl_label = "Set Scene Origin"
 
     detect_origin_parent: BoolProperty(
         name="Detect current planet",
@@ -112,7 +112,7 @@ class CreateSceneOperator(Operator):
                     self.report({"ERROR"}, "failed to get player location")
                     return {"CANCELLED"}
 
-                player_transform = Transform.from_json(player_body_object["transform"]).unity_to_blender()
+                player_transform = Transform.from_json(player_body_object["transform"])
                 origin_position = tuple(player_transform.position)
                 origin_rotation = tuple(player_transform.rotation)
 
@@ -120,8 +120,9 @@ class CreateSceneOperator(Operator):
                 probe_object = api_client.get_object("Probe_Body", origin=origin_parent)
                 if not probe_object:
                     self.report({"ERROR"}, "failed to get scout location")
+                    return {"CANCELLED"}
 
-                probe_transform = Transform.from_json(probe_object["transform"]).unity_to_blender()
+                probe_transform = Transform.from_json(probe_object["transform"])
                 origin_position = tuple(probe_transform.position)
                 origin_rotation = tuple(probe_transform.rotation)
 
@@ -129,6 +130,8 @@ class CreateSceneOperator(Operator):
         scene_properties.origin_parent = origin_parent
         scene_properties.origin_position = origin_position
         scene_properties.origin_rotation = origin_rotation
+
+        context.area.tag_redraw()
 
         return {"FINISHED"}
 

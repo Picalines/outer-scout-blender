@@ -1,8 +1,7 @@
 from bpy.types import Panel
 
-from ..operators import CreateSceneOperator
-
 from ..bpy_register import bpy_register
+from ..operators import SetSceneOriginOperator, WarpPlayerOperator
 from ..properties import SceneProperties
 
 
@@ -13,23 +12,36 @@ class ScenePanel(Panel):
     bl_region_type = "WINDOW"
     bl_label = "Outer Scout"
     bl_context = "scene"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        properties = SceneProperties.from_context(context)
+        scene_props = SceneProperties.from_context(context)
 
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = True
 
-        if not properties.is_scene_created():
-            layout.operator(CreateSceneOperator.bl_idname)
-            return
+        has_origin = scene_props.has_origin
 
-        layout.prop(properties, "origin_parent")
+        if has_origin:
+            header, panel = layout.panel(f"{self.bl_idname}.origin", default_closed=True)
+            header.label(text=f"Origin: {scene_props.origin_parent}")
+            if panel:
+                column = layout.column()
+                column.enabled = False
+                column.prop(scene_props, "origin_parent")
+                column.prop(scene_props, "origin_position")
+                column.prop(scene_props, "origin_rotation")
 
-        header, panel = layout.panel(f"{self.bl_idname}.origin", default_closed=True)
-        header.label(text="Origin Transform")
-        if panel:
-            layout.prop(properties, "origin_position")
-            layout.prop(properties, "origin_rotation")
+        set_origin_props = layout.operator(
+            SetSceneOriginOperator.bl_idname,
+            text=("Set Origin" if has_origin else "Create Scene"),
+            icon=("OBJECT_ORIGIN" if has_origin else "WORLD"),
+        )
+
+        if has_origin:
+            set_origin_props.detect_origin_parent = False
+            set_origin_props.origin_parent = scene_props.origin_parent
+
+            layout.operator(operator=WarpPlayerOperator.bl_idname, text="Warp To Origin", icon="ORIENTATION_PARENT")
 
