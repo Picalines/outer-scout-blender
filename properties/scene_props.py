@@ -1,5 +1,5 @@
 from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty, PointerProperty, StringProperty
-from bpy.types import Context, Image, NodeTree, PropertyGroup, Scene
+from bpy.types import Context, Image, NodeTree, Object, PropertyGroup, Scene
 
 from ..bpy_register import bpy_register_property
 
@@ -45,6 +45,8 @@ class SceneProperties(PropertyGroup):
         options=set(),
     )
 
+    ground_body: PointerProperty(name="Ground Body", type=Object, options=set())
+
     hdri_node_group: PointerProperty(
         name="HDRI Node Group",
         type=NodeTree,
@@ -74,4 +76,8 @@ class SceneProperties(PropertyGroup):
     @property
     def has_origin(self) -> bool:
         return self.origin_parent != ""
+
+    @property
+    def has_ground_body(self) -> bool:
+        return self.ground_body is not None
 

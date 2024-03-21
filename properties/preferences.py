@@ -47,6 +47,7 @@ class OuterScoutPreferences(AddonPreferences):
         self.layout.prop(self, "ow_assets_folder")
         self.layout.prop(self, "ignored_objects")
 
+    @property
     def are_valid(self) -> bool:
         return bool(self.ow_bodies_folder) and bool(self.ow_assets_folder)
 
