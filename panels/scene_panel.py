@@ -16,24 +16,17 @@ class ScenePanel(Panel):
 
     def draw(self, context):
         scene_props = SceneProperties.from_context(context)
+        is_scene_created = scene_props.is_scene_created
+        has_origin = scene_props.has_origin
 
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = True
 
-        has_origin = scene_props.has_origin
+        origin_row = layout.row()
 
-        if has_origin:
-            header, panel = layout.panel(f"{self.bl_idname}.origin", default_closed=True)
-            header.label(text=f"Origin: {scene_props.origin_parent}")
-            if panel:
-                column = layout.column()
-                column.enabled = False
-                column.prop(scene_props, "origin_parent")
-                column.prop(scene_props, "origin_position")
-                column.prop(scene_props, "origin_rotation")
-
-        set_origin_props = layout.operator(
+        set_origin_column = origin_row.column()
+        set_origin_props = set_origin_column.operator(
             SetSceneOriginOperator.bl_idname,
             text=("Set Origin" if has_origin else "Create Scene"),
             icon=("OBJECT_ORIGIN" if has_origin else "WORLD"),
@@ -43,10 +36,10 @@ class ScenePanel(Panel):
             set_origin_props.detect_origin_parent = False
             set_origin_props.origin_parent = scene_props.origin_parent
 
-            warp_row = layout.row()
-            warp_row.operator_context = "EXEC_DEFAULT"
+            warp_column = origin_row.column()
+            warp_column.operator_context = "EXEC_DEFAULT"
 
-            warp_props = warp_row.operator(
+            warp_props = warp_column.operator(
                 operator=WarpPlayerOperator.bl_idname, text="Warp To Origin", icon="ARMATURE_DATA"
             )
 
@@ -61,4 +54,20 @@ class ScenePanel(Panel):
             import_body_row.operator(
                 ImportBodyOperator.bl_idname, text=f"Import {scene_props.origin_parent}", icon="WORLD"
             )
+
+        if is_scene_created:
+            animation_header, anim_panel = layout.panel(f"{self.bl_idname}.animation", default_closed=False)
+            animation_header.label(text="Animation")
+            if anim_panel:
+                anim_panel.prop(scene_props, "time_scale")
+
+        if has_origin:
+            transform_header, transform_panel = layout.panel(f"{self.bl_idname}.origin", default_closed=True)
+            transform_header.label(text="Origin Transform")
+            if transform_panel:
+                transform_column = transform_panel.column()
+                transform_column.enabled = False
+                transform_column.prop(scene_props, "origin_parent")
+                transform_column.prop(scene_props, "origin_position")
+                transform_column.prop(scene_props, "origin_rotation")
 
