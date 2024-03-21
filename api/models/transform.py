@@ -1,37 +1,28 @@
 from dataclasses import dataclass
+from math import radians
 from typing import TypedDict
 
-from bpy_extras.io_utils import axis_conversion
 from mathutils import Matrix, Quaternion, Vector
-
-UNITY_TO_BLENDER = axis_conversion(from_forward="-Z", from_up="Y", to_forward="Y", to_up="Z")
-BLENDER_TO_UNITY = axis_conversion(from_forward="Y", from_up="Z", to_forward="-Z", to_up="Y")
-
-
-def unity_transform_to_blender(unity_matrix: Matrix) -> Matrix:
-    return UNITY_TO_BLENDER.to_4x4() @ unity_matrix
-
-
-def blender_transform_to_unity(blender_matrix: Matrix) -> Matrix:
-    return BLENDER_TO_UNITY.to_4x4() @ blender_matrix
 
 
 def unity_vector_to_blender(unity_vector: Vector | tuple[float, float, float]) -> Vector:
-    return UNITY_TO_BLENDER @ Vector(unity_vector)
+    x, y, z = Vector(unity_vector)
+    return Vector((z, y, x))
 
 
 def unity_quaternion_to_blender(unity_quaternion: Quaternion | tuple[float, float, float, float]) -> Quaternion:
-    w, x, y, z = unity_quaternion
-    return UNITY_TO_BLENDER.to_quaternion() @ Quaternion((w, x, y, z))
+    x, y, z, w = unity_quaternion
+    return Quaternion((-w, z, y, x)) @ Quaternion((0, 1, 0), radians(90))
 
 
 def blender_vector_to_unity(blender_vector: Vector | tuple[float, float, float]) -> Vector:
-    return BLENDER_TO_UNITY @ Vector(blender_vector)
+    x, y, z = Vector(blender_vector)
+    return Vector((z, y, x))
 
 
 def blender_quaternion_to_unity(blender_quaternion: Quaternion | tuple[float, float, float, float]) -> Quaternion:
-    x, y, z, w = BLENDER_TO_UNITY.to_quaternion() @ blender_quaternion
-    return Quaternion((x, y, z, w))
+    w, x, y, z = Quaternion(blender_quaternion)
+    return Quaternion((z, w, x, y)) @ Quaternion((0, 1, 0), radians(-90))
 
 
 class TransformJson(TypedDict, total=False):
@@ -79,4 +70,7 @@ class Transform:
             "rotation": tuple(self.rotation),
             "scale": tuple(self.scale),
         }
+
+    def to_matrix(self) -> Matrix:
+        return Matrix.LocRotScale(self.position, self.rotation, self.scale)
 
