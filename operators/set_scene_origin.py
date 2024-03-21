@@ -1,3 +1,4 @@
+import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy.types import Operator
 
@@ -132,6 +133,9 @@ class SetSceneOriginOperator(Operator):
         scene_properties.origin_rotation = origin_rotation
 
         context.area.tag_redraw()
+
+        if scene_properties.has_ground_body:
+            bpy.ops.outer_scout.align_ground_body()
 
         return {"FINISHED"}
 

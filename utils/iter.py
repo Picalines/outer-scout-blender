@@ -1,4 +1,4 @@
-from typing import Any, Generator, Generic, Iterable, Sequence, TypeVar
+from typing import Any, Generator, Generic, Iterable, TypeVar
 
 TItem = TypeVar("TItem")
 
@@ -8,11 +8,6 @@ def iter_with_prev(iterable: Iterable[TItem]) -> Generator[tuple[TItem | None, T
     for item in iterable:
         yield (prev_item, item)
         prev_item = item
-
-
-def left_slices(seq: Sequence[TItem]) -> Generator[Sequence[TItem], Any, None]:
-    for i in range(1, len(seq) + 1):
-        yield seq[slice(i)]
 
 
 TYield = TypeVar("TYield")

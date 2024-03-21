@@ -1,3 +1,5 @@
+from math import radians
+
 from bpy.props import EnumProperty
 from bpy.types import Operator
 from mathutils import Matrix
@@ -49,7 +51,7 @@ class WarpPlayerOperator(Operator):
             case "CURSOR":
                 cursor = context.scene.cursor
                 cursor_matrix = Matrix(cursor.matrix)
-                warp_matrix @= cursor_matrix
+                warp_matrix @= Matrix.Rotation(radians(-90), 4, (1, 0, 0)) @ cursor_matrix
 
         warp_position = blender_vector_to_unity(warp_matrix.to_translation())
         warp_rotation = blender_quaternion_to_unity(warp_matrix.to_quaternion())

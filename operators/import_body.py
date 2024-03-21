@@ -10,7 +10,6 @@ from bpy.types import Object, Operator
 from ..api import APIClient
 from ..bpy_register import bpy_register
 from ..properties import OuterScoutPreferences, SceneProperties
-from ..utils import left_slices
 
 
 @bpy_register
@@ -130,6 +129,8 @@ class ImportBodyOperator(Operator):
             sector_collection_instance.hide_render = True
             sector_collection_instance.hide_select = True
             sector_collection_instance.hide_set(state=is_body_hidden)
+
+        bpy.ops.outer_scout.align_ground_body()
 
         return {"FINISHED"}
 
