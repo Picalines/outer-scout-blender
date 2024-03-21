@@ -51,7 +51,20 @@ class WarpPlayerOperator(Operator):
             case "CURSOR":
                 cursor = context.scene.cursor
                 cursor_matrix = Matrix(cursor.matrix)
-                warp_matrix @= Matrix.Rotation(radians(-90), 4, (1, 0, 0)) @ cursor_matrix
+
+                tool = context.workspace.tools.from_space_view3d_mode("OBJECT")
+                cursor3d_props = tool.operator_properties("view3d.cursor3d")
+
+                if cursor3d_props.use_depth and cursor3d_props.orientation == "GEOM":
+                    cursor_matrix @= Matrix.Translation((0, 0, 1.5))
+
+                warp_matrix @= (
+                    Matrix.Rotation(radians(-90), 4, (1, 0, 0))
+                    @ cursor_matrix
+                    @ Matrix.Rotation(radians(90), 4, (1, 0, 0))
+                )
+
+        warp_matrix @= Matrix.Rotation(radians(180), 4, (0, 1, 0))
 
         warp_position = blender_vector_to_unity(warp_matrix.to_translation())
         warp_rotation = blender_quaternion_to_unity(warp_matrix.to_quaternion())
