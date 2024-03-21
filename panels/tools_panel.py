@@ -2,32 +2,39 @@ import bpy
 from bpy.types import Context, Panel, SpaceView3D
 
 from ..bpy_register import bpy_register
-from ..operators import OW_RECORDER_OT_save_warp_transform, OW_RECORDER_OT_synchronize, OW_RECORDER_OT_warp
-from ..properties import OWRecorderReferenceProperties
+from ..operators import WarpPlayerOperator
+from ..properties import SceneProperties
 
 
 @bpy_register
-class OW_RECORDER_PT_tools(Panel):
-    bl_idname = "OW_RECORDER_PT_tools"
+class ToolsPanel(Panel):
+    bl_idname = "VIEW3D_PT_outer_scout_tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Outer Wilds Recorder"
+    bl_category = "Outer Scout"
     bl_label = "Tools"
     bl_order = 0
 
     @classmethod
     def poll(cls, context) -> bool:
-        reference_props = OWRecorderReferenceProperties.from_context(context)
-        return bool(reference_props.ground_body)
+        return SceneProperties.from_context(context).is_scene_created
 
     def draw(self, context):
         self._draw_sync(context)
 
-        row = self.layout.row()
-        row.operator(operator=OW_RECORDER_OT_warp.bl_idname, text="Warp", icon="ORIENTATION_PARENT")
-        row.operator(operator=OW_RECORDER_OT_save_warp_transform.bl_idname, text="Save", icon="CURRENT_FILE")
+        layout = self.layout
+        warp_row = layout.row()
+        warp_row.operator_context = "EXEC_DEFAULT"
+
+        warp_props = warp_row.operator(
+            operator=WarpPlayerOperator.bl_idname, text="Warp to Cursor", icon="ARMATURE_DATA"
+        )
+
+        warp_props.destination = "CURSOR"
 
     def _draw_sync(self, context: Context):
+        return  # TODO: implement synchronize operator
+
         space: SpaceView3D = context.space_data
 
         active_object = bpy.context.active_object

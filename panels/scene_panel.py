@@ -43,5 +43,12 @@ class ScenePanel(Panel):
             set_origin_props.detect_origin_parent = False
             set_origin_props.origin_parent = scene_props.origin_parent
 
-            layout.operator(operator=WarpPlayerOperator.bl_idname, text="Warp To Origin", icon="ORIENTATION_PARENT")
+            warp_row = layout.row()
+            warp_row.operator_context = "EXEC_DEFAULT"
+
+            warp_props = warp_row.operator(
+                operator=WarpPlayerOperator.bl_idname, text="Warp To Origin", icon="ARMATURE_DATA"
+            )
+
+            warp_props.destination = "ORIGIN"
 
