@@ -5,7 +5,7 @@ from mathutils import Quaternion, Vector
 
 from ..properties import OuterScoutPreferences
 from .http import Request, Response
-from .models import ApiVersionJson, GroundBodyJson, ObjectJson
+from .models import ApiVersionJson, GroundBodyJson, ObjectJson, ObjectMeshJson, PlayerSectorListJson
 
 ACCEPTED_API_VERSION = (0, 1)
 
@@ -49,9 +49,17 @@ class APIClient:
         response = self._get(f"objects/{name}", query={"origin": origin})
         return response.typed_json(ObjectJson) if response.is_ok() else None
 
+    def get_object_mesh(self, name: str) -> ObjectMeshJson | None:
+        response = self._get(f"objects/{name}/mesh")
+        return response.typed_json(ObjectMeshJson) if response.is_ok() else None
+
     def get_ground_body(self) -> GroundBodyJson | None:
         response = self._get("player/ground-body")
         return response.typed_json(GroundBodyJson) if response.is_ok() else None
+
+    def get_player_sectors(self) -> PlayerSectorListJson | None:
+        response = self._get("player/sectors")
+        return response.typed_json(PlayerSectorListJson) if response.is_ok() else None
 
     def warp_player(self, *, ground_body: str, local_position: Vector, local_rotation: Quaternion) -> bool:
         response = self._post(
