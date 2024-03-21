@@ -1,6 +1,7 @@
 from typing import Any
 
 from bpy.types import Context
+from mathutils import Quaternion, Vector
 
 from ..properties import OuterScoutPreferences
 from .http import Request, Response
@@ -47,6 +48,20 @@ class APIClient:
     def get_ground_body(self) -> GroundBodyJson | None:
         response = self._get("player/ground-body")
         return response.typed_json(GroundBodyJson) if response.is_ok() else None
+
+    def warp_player(self, *, ground_body: str, local_position: Vector, local_rotation: Quaternion) -> bool:
+        response = self._post(
+            "player/warp",
+            data={
+                "groundBody": ground_body,
+                "transform": {
+                    "position": tuple(local_position),
+                    "rotation": tuple(local_rotation),
+                },
+            },
+        )
+
+        return response.is_ok()
 
     def _get_response(
         self,
