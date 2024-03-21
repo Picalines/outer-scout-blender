@@ -1,7 +1,7 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..operators import SetSceneOriginOperator, WarpPlayerOperator
+from ..operators import ImportBodyOperator, SetSceneOriginOperator, WarpPlayerOperator
 from ..properties import SceneProperties
 
 
@@ -51,4 +51,14 @@ class ScenePanel(Panel):
             )
 
             warp_props.destination = "ORIGIN"
+
+        has_ground_body = scene_props.has_ground_body
+
+        if has_origin and not has_ground_body:
+            import_body_row = layout.row()
+            import_body_row.operator_context = "INVOKE_DEFAULT"
+
+            import_body_row.operator(
+                ImportBodyOperator.bl_idname, text=f"Import {scene_props.origin_parent}", icon="WORLD"
+            )
 
