@@ -67,6 +67,11 @@ class SceneProperties(PropertyGroup):
     def from_context(context: Context) -> "SceneProperties":
         return context.scene.outer_scout_scene
 
+    @property
     def is_scene_created(self) -> bool:
+        return self.origin_parent != ""
+
+    @property
+    def has_origin(self) -> bool:
         return self.origin_parent != ""
 
