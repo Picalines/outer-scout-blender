@@ -39,7 +39,11 @@ class APIClient:
 
     def assert_compatability(self):
         if not self.is_api_supported():
-            raise AssertionError("current Outer Scout version is not supported")
+            raise AssertionError(
+                "current Outer Scout version is not supported"
+                if self.api_version is not None
+                else "failed to connect to the Outer Scout API"
+            )
 
     def get_object(self, name: str, *, origin: str | None = None) -> ObjectJson | None:
         response = self._get(f"objects/{name}", query={"origin": origin})
