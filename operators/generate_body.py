@@ -1,3 +1,4 @@
+from math import radians
 from pathlib import Path
 
 import bpy
@@ -5,7 +6,7 @@ from bpy.props import StringProperty
 from bpy.types import Object, Operator
 from mathutils import Matrix
 
-from ..api import APIClient, Transform, unity_matrix_to_blender
+from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import OuterScoutPreferences
 from ..utils import get_child_by_path, iter_parents
@@ -65,6 +66,8 @@ class GenerateBodyOperator(Operator):
             if imported_obj.type != "EMPTY":
                 imported_objs[asset_path] = imported_obj
 
+        bpy.ops.object.select_all(action="SELECT")
+        bpy.ops.object.transform_apply()
         bpy.ops.object.select_all(action="DESELECT")
 
         body_fbx_path = str(body_fbx_path)
@@ -103,6 +106,10 @@ class GenerateBodyOperator(Operator):
 
         identity_transform = Matrix.Identity(4)
 
+        # TODO: something to do with importing options...
+        add_transform_plain = Matrix.Rotation(radians(180), 4, "Z") @ Matrix.Rotation(radians(90), 4, "X")
+        add_transform_streamed = Matrix.Rotation(radians(180), 4, "Z")
+
         for sector_index, sector_info in enumerate(body_mesh_json["sectors"]):
             sector_path = sector_info["path"].removeprefix(body_mesh_json["body"]["path"]).removeprefix("/")
             self._log("INFO", f"* sector '{sector_path}' [{sector_index + 1}/{sectors_count}]")
@@ -137,7 +144,7 @@ class GenerateBodyOperator(Operator):
 
                 fbx_child.parent = None
                 fbx_child.matrix_parent_inverse = identity_transform
-                fbx_child.matrix_world = unity_matrix_to_blender(unity_transform.to_matrix())
+                fbx_child.matrix_world = unity_transform.to_right_matrix() @ add_transform_plain
 
             self._log("INFO", f'placing streamed meshes ({len(sector_info["streamedMeshes"])} objects)')
 
@@ -161,7 +168,7 @@ class GenerateBodyOperator(Operator):
 
                 obj_copy.parent = None
                 obj_copy.matrix_parent_inverse = identity_transform
-                obj_copy.matrix_world = unity_matrix_to_blender(unity_transform.to_matrix())
+                obj_copy.matrix_world = unity_transform.to_right_matrix() @ add_transform_streamed
 
             self._log("INFO", "deleting empties")
             for empty in [e for e in sector_collection.objects if e.type == "EMPTY"]:

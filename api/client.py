@@ -1,11 +1,10 @@
 from typing import Any
 
 from bpy.types import Context
-from mathutils import Quaternion, Vector
 
 from ..properties import OuterScoutPreferences
 from .http import Request, Response
-from .models import ApiVersionJson, GroundBodyJson, ObjectJson, ObjectMeshJson, PlayerSectorListJson
+from .models import ApiVersionJson, GroundBodyJson, ObjectJson, ObjectMeshJson, PlayerSectorListJson, Transform
 
 ACCEPTED_API_VERSION = (0, 1)
 
@@ -61,16 +60,13 @@ class APIClient:
         response = self._get("player/sectors")
         return response.typed_json(PlayerSectorListJson) if response.is_ok() else None
 
-    def warp_player(self, *, ground_body: str, local_position: Vector, local_rotation: Quaternion) -> bool:
+    def warp_player(self, *, ground_body: str, local_transform: Transform) -> bool:
+        transform_json = local_transform.to_json()
+        del transform_json["scale"]
+
         response = self._post(
             "player/warp",
-            data={
-                "groundBody": ground_body,
-                "transform": {
-                    "position": tuple(local_position),
-                    "rotation": tuple(local_rotation),
-                },
-            },
+            data={"groundBody": ground_body, "transform": transform_json},
         )
 
         return response.is_ok()

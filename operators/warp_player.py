@@ -1,10 +1,8 @@
-from math import radians
-
 from bpy.props import EnumProperty
 from bpy.types import Operator
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Matrix
 
-from ..api import APIClient, blender_matrix_to_unity, unity_matrix_to_blender
+from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import SceneProperties
 
@@ -35,9 +33,7 @@ class WarpPlayerOperator(Operator):
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
 
-        warp_matrix = unity_matrix_to_blender(
-            Matrix.LocRotScale(Vector(scene_props.origin_position), Quaternion(scene_props.origin_rotation), None)
-        )
+        warp_matrix = Transform.from_matrix(scene_props.origin_matrix).to_right_matrix()
 
         match self.destination:
             case "ORIGIN":
@@ -52,22 +48,11 @@ class WarpPlayerOperator(Operator):
                 if cursor3d_props.use_depth and cursor3d_props.orientation == "GEOM":
                     cursor_matrix @= Matrix.Translation((0, 0, 1.5))
 
-                warp_matrix @= (
-                    Matrix.Rotation(radians(-90), 4, (1, 0, 0))
-                    @ cursor_matrix
-                    @ Matrix.Rotation(radians(90), 4, (1, 0, 0))
-                )
-
-        warp_matrix = blender_matrix_to_unity(warp_matrix)
-        warp_position = warp_matrix.to_translation()
-        warp_rotation = warp_matrix.to_quaternion()
-        (w, x, y, z) = warp_rotation
-        warp_rotation = (x, y, z, w)
+                warp_matrix @= cursor_matrix
 
         success = api_client.warp_player(
             ground_body=scene_props.origin_parent,
-            local_position=warp_position,
-            local_rotation=warp_rotation,
+            local_transform=Transform.from_matrix(warp_matrix).to_left(),
         )
 
         if not success:

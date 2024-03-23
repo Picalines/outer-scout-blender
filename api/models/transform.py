@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from math import radians
 from typing import TypedDict
 
 from mathutils import Matrix, Quaternion, Vector
@@ -15,17 +14,13 @@ RIGHT_HANDED_TO_LEFT = Matrix(
 
 LEFT_HANDED_TO_RIGHT = RIGHT_HANDED_TO_LEFT.inverted()
 
-UNITY_TO_BLENDER_ROTATION = Matrix.Rotation(radians(-90), 4, "X") @ Matrix.Rotation(radians(180), 4, "Z")
 
-BLENDER_TO_UNITY_ROTATION = UNITY_TO_BLENDER_ROTATION.inverted()
-
-
-def unity_matrix_to_blender(unity_matrix: Matrix):
-    return LEFT_HANDED_TO_RIGHT @ unity_matrix @ RIGHT_HANDED_TO_LEFT @ UNITY_TO_BLENDER_ROTATION
+def left_matrix_to_right(unity_matrix: Matrix):
+    return LEFT_HANDED_TO_RIGHT @ unity_matrix @ RIGHT_HANDED_TO_LEFT
 
 
-def blender_matrix_to_unity(blender_matrix: Matrix):
-    return RIGHT_HANDED_TO_LEFT @ blender_matrix @ LEFT_HANDED_TO_RIGHT @ BLENDER_TO_UNITY_ROTATION
+def right_matrix_to_left(blender_matrix: Matrix):
+    return RIGHT_HANDED_TO_LEFT @ blender_matrix @ LEFT_HANDED_TO_RIGHT
 
 
 class TransformJson(TypedDict, total=False):
@@ -55,12 +50,25 @@ class Transform:
         return Transform(*matrix.decompose())
 
     def to_json(self) -> TransformJson:
+        rw, rx, ry, rz = self.rotation
         return {
             "position": tuple(self.position),
-            "rotation": tuple(self.rotation),
+            "rotation": (rx, ry, rz, rw),
             "scale": tuple(self.scale),
         }
 
     def to_matrix(self) -> Matrix:
         return Matrix.LocRotScale(self.position, self.rotation, self.scale)
+
+    def to_left_matrix(self) -> Matrix:
+        return right_matrix_to_left(self.to_matrix())
+
+    def to_right_matrix(self) -> Matrix:
+        return left_matrix_to_right(self.to_matrix())
+
+    def to_left(self) -> "Transform":
+        return Transform.from_matrix(self.to_left_matrix())
+
+    def to_right(self) -> "Transform":
+        return Transform.from_matrix(self.to_right_matrix())
 

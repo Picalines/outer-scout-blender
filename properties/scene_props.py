@@ -1,5 +1,6 @@
 from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty, PointerProperty, StringProperty
 from bpy.types import Context, Image, NodeTree, Object, PropertyGroup, Scene
+from mathutils import Matrix, Quaternion, Vector
 
 from ..bpy_register import bpy_register_property
 
@@ -80,4 +81,8 @@ class SceneProperties(PropertyGroup):
     @property
     def has_ground_body(self) -> bool:
         return self.ground_body is not None
+
+    @property
+    def origin_matrix(self) -> Matrix:
+        return Matrix.LocRotScale(Vector(self.origin_position), Quaternion(self.origin_rotation), None)
 
