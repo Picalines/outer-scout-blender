@@ -133,6 +133,9 @@ class SetSceneOriginOperator(Operator):
         scene_properties.origin_rotation = origin_rotation
 
         context.area.tag_redraw()
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
 
         if scene_properties.has_ground_body:
             bpy.ops.outer_scout.align_ground_body()
