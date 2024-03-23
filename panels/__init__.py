@@ -1,3 +1,3 @@
 from .scene_panel import *
-from .tools_panel import *
+from .view_panel import *
 
