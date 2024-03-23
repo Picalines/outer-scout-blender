@@ -1,9 +1,9 @@
 from math import radians
 
 from bpy.types import Operator
-from mathutils import Matrix
+from mathutils import Matrix, Quaternion, Vector
 
-from ..api import unity_quaternion_to_blender, unity_vector_to_blender
+from ..api import unity_matrix_to_blender
 from ..bpy_register import bpy_register
 from ..properties.scene_props import SceneProperties
 
@@ -24,9 +24,8 @@ class AlignGroundBodyOperator(Operator):
         scene_props = SceneProperties.from_context(context)
         ground_body = scene_props.ground_body
 
-        origin_matrix = (
-            Matrix.Translation(unity_vector_to_blender(scene_props.origin_position))
-            @ unity_quaternion_to_blender(scene_props.origin_rotation).to_matrix().to_4x4()
+        origin_matrix = unity_matrix_to_blender(
+            Matrix.LocRotScale(Vector(scene_props.origin_position), Quaternion(scene_props.origin_rotation), None)
         )
 
         ground_body.matrix_world = Matrix.Rotation(radians(90), 4, (1, 0, 0)) @ origin_matrix.inverted()

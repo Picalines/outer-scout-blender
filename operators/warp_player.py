@@ -2,15 +2,9 @@ from math import radians
 
 from bpy.props import EnumProperty
 from bpy.types import Operator
-from mathutils import Matrix
+from mathutils import Matrix, Quaternion, Vector
 
-from ..api import (
-    APIClient,
-    blender_quaternion_to_unity,
-    blender_vector_to_unity,
-    unity_quaternion_to_blender,
-    unity_vector_to_blender,
-)
+from ..api import APIClient, blender_matrix_to_unity, unity_matrix_to_blender
 from ..bpy_register import bpy_register
 from ..properties import SceneProperties
 
@@ -41,8 +35,8 @@ class WarpPlayerOperator(Operator):
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
 
-        warp_matrix = Matrix.Translation(unity_vector_to_blender(scene_props.origin_position)) @ Matrix.LocRotScale(
-            None, unity_quaternion_to_blender(scene_props.origin_rotation), None
+        warp_matrix = unity_matrix_to_blender(
+            Matrix.LocRotScale(Vector(scene_props.origin_position), Quaternion(scene_props.origin_rotation), None)
         )
 
         match self.destination:
@@ -64,10 +58,11 @@ class WarpPlayerOperator(Operator):
                     @ Matrix.Rotation(radians(90), 4, (1, 0, 0))
                 )
 
-        warp_matrix @= Matrix.Rotation(radians(180), 4, (0, 1, 0))
-
-        warp_position = blender_vector_to_unity(warp_matrix.to_translation())
-        warp_rotation = blender_quaternion_to_unity(warp_matrix.to_quaternion())
+        warp_matrix = blender_matrix_to_unity(warp_matrix)
+        warp_position = warp_matrix.to_translation()
+        warp_rotation = warp_matrix.to_quaternion()
+        (w, x, y, z) = warp_rotation
+        warp_rotation = (x, y, z, w)
 
         success = api_client.warp_player(
             ground_body=scene_props.origin_parent,

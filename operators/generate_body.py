@@ -5,7 +5,7 @@ from bpy.props import StringProperty
 from bpy.types import Object, Operator
 from mathutils import Matrix
 
-from ..api import APIClient, Transform
+from ..api import APIClient, Transform, unity_matrix_to_blender
 from ..bpy_register import bpy_register
 from ..properties import OuterScoutPreferences
 from ..utils import get_child_by_path, iter_parents
@@ -69,7 +69,8 @@ class GenerateBodyOperator(Operator):
 
         body_fbx_path = str(body_fbx_path)
         self._log("INFO", f"importing {body_fbx_path}")
-        if bpy.ops.import_scene.fbx(filepath=body_fbx_path) != {"FINISHED"}:
+        fbx_import_result = bpy.ops.import_scene.fbx(filepath=body_fbx_path)
+        if fbx_import_result != {"FINISHED"}:
             self._log("ERROR", f"failed to import ground body fbx: {body_fbx_path}")
             return {"CANCELLED"}
 
@@ -100,8 +101,10 @@ class GenerateBodyOperator(Operator):
 
         sector_indices_text.write("{\n")
 
+        identity_transform = Matrix.Identity(4)
+
         for sector_index, sector_info in enumerate(body_mesh_json["sectors"]):
-            sector_path = sector_info['path'].removeprefix(body_mesh_json['body']['path']).removeprefix('/')
+            sector_path = sector_info["path"].removeprefix(body_mesh_json["body"]["path"]).removeprefix("/")
             self._log("INFO", f"* sector '{sector_path}' [{sector_index + 1}/{sectors_count}]")
 
             sector_indices_text.write(f'    "{sector_path}": {sector_index}')
@@ -114,8 +117,6 @@ class GenerateBodyOperator(Operator):
             body_collection.children.link(sector_collection)
 
             self._log("INFO", f'placing plain meshes ({len(sector_info["plainMeshes"])} objects)')
-
-            identity = Matrix.Identity(4)
 
             for plain_mesh_json in sector_info["plainMeshes"]:
                 mesh_path = plain_mesh_json["path"].split("/")[1:]
@@ -135,8 +136,8 @@ class GenerateBodyOperator(Operator):
                 fbx_child["unity_is_streamed"] = False
 
                 fbx_child.parent = None
-                fbx_child.matrix_parent_inverse = identity
-                fbx_child.matrix_world = unity_transform.unity_to_blender().to_matrix()
+                fbx_child.matrix_parent_inverse = identity_transform
+                fbx_child.matrix_world = unity_matrix_to_blender(unity_transform.to_matrix())
 
             self._log("INFO", f'placing streamed meshes ({len(sector_info["streamedMeshes"])} objects)')
 
@@ -159,8 +160,8 @@ class GenerateBodyOperator(Operator):
                 obj_copy["unity_is_streamed"] = True
 
                 obj_copy.parent = None
-                obj_copy.matrix_parent_inverse = identity
-                obj_copy.matrix_world = unity_transform.unity_to_blender().to_matrix()
+                obj_copy.matrix_parent_inverse = identity_transform
+                obj_copy.matrix_world = unity_matrix_to_blender(unity_transform.to_matrix())
 
             self._log("INFO", "deleting empties")
             for empty in [e for e in sector_collection.objects if e.type == "EMPTY"]:
