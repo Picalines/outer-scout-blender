@@ -105,7 +105,7 @@ class SetSceneOriginOperator(Operator):
         match self.origin_location:
             case "CENTER":
                 origin_position = (0, 0, 0)
-                origin_rotation = (1, 0, 0, 0)
+                origin_rotation = (0, 0, 0, 1)
 
             case "PLAYER_FEET":
                 player_body_object = api_client.get_object("Player_Body", origin=origin_parent)
