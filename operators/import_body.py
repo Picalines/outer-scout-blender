@@ -9,6 +9,7 @@ from bpy.types import Object, Operator
 
 from ..api import APIClient
 from ..bpy_register import bpy_register
+from ..operators import GenerateBodyBackgroundOperator
 from ..properties import OuterScoutPreferences, SceneProperties
 
 
@@ -58,7 +59,7 @@ class ImportBodyOperator(Operator):
 
         if not body_project_path.exists():
             # TODO: make button in preferences menu?
-            return_code = self._generate_body_file_in_new_instance(body_name)
+            return_code = self._generate_body_in_background(body_name)
             if not (return_code == 0 and body_project_path.exists()):
                 self.report({"ERROR"}, "could not generate body .blend file")
                 return {"CANCELLED"}
@@ -137,9 +138,9 @@ class ImportBodyOperator(Operator):
 
         return {"FINISHED"}
 
-    def _generate_body_file_in_new_instance(self, body_name: str) -> int:
-        python_expr = f"import sys, bpy; bpy.ops.outer_scout.generate_body_background(body_name='{body_name}')"
-
+    def _generate_body_in_background(self, body_name: str) -> int:
+        operator = GenerateBodyBackgroundOperator.bl_idname
+        python_expr = f"import sys, bpy; bpy.ops.{operator}(body_name='{body_name}')"
         cmd = f'"{bpy.app.binary_path}" -noaudio --background --log-level -1 --python-expr "{python_expr}"'
 
         process = subprocess.run(cmd, shell=False, creationflags=subprocess.CREATE_NEW_CONSOLE)
