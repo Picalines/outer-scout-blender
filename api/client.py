@@ -4,7 +4,18 @@ from bpy.types import Context
 
 from ..properties import OuterScoutPreferences
 from .http import Request, Response
-from .models import ApiVersionJson, GroundBodyJson, ObjectJson, ObjectMeshJson, PlayerSectorListJson, Transform
+from .models import (
+    ApiVersionJson,
+    GenericError,
+    GroundBodyJson,
+    ObjectJson,
+    ObjectMeshJson,
+    PlayerSectorListJson,
+    PostRecordingJson,
+    PostSceneJson,
+    RecordingStatusJson,
+    Transform,
+)
 
 ACCEPTED_API_VERSION = (0, 1)
 
@@ -23,7 +34,7 @@ class APIClient:
 
     def get_api_version(self) -> ApiVersionJson | None:
         response = self._get("api/version", assert_compat=False)
-        return response.typed_json(ApiVersionJson) if response.is_ok() else None
+        return response.typed_json(ApiVersionJson) if response.is_success else None
 
     def is_api_supported(self) -> bool:
         if self.api_version is None:
@@ -44,21 +55,33 @@ class APIClient:
                 else "failed to connect to the Outer Scout API"
             )
 
+    def post_scene(self, scene: PostSceneJson) -> GenericError | None:
+        response = self._post("scene", data=scene)
+        return None if response.is_success else response.generic_error()
+
+    def post_scene_recording(self, recording: PostRecordingJson) -> GenericError | None:
+        response = self._post("scene/recording", data=recording)
+        return None if response.is_success else response.generic_error()
+
+    def get_recording_status(self) -> RecordingStatusJson | None:
+        response = self._get("scene/recording/status")
+        return response.typed_json(RecordingStatusJson) if response.is_success else None
+
     def get_object(self, name: str, *, origin: str | None = None) -> ObjectJson | None:
         response = self._get(f"objects/{name}", query={"origin": origin})
-        return response.typed_json(ObjectJson) if response.is_ok() else None
+        return response.typed_json(ObjectJson) if response.is_success else None
 
     def get_object_mesh(self, name: str) -> ObjectMeshJson | None:
         response = self._get(f"objects/{name}/mesh")
-        return response.typed_json(ObjectMeshJson) if response.is_ok() else None
+        return response.typed_json(ObjectMeshJson) if response.is_success else None
 
     def get_ground_body(self) -> GroundBodyJson | None:
         response = self._get("player/ground-body")
-        return response.typed_json(GroundBodyJson) if response.is_ok() else None
+        return response.typed_json(GroundBodyJson) if response.is_success else None
 
     def get_player_sectors(self) -> PlayerSectorListJson | None:
         response = self._get("player/sectors")
-        return response.typed_json(PlayerSectorListJson) if response.is_ok() else None
+        return response.typed_json(PlayerSectorListJson) if response.is_success else None
 
     def warp_player(self, *, ground_body: str, local_transform: Transform) -> bool:
         transform_json = local_transform.to_json()
@@ -69,7 +92,7 @@ class APIClient:
             data={"groundBody": ground_body, "transform": transform_json},
         )
 
-        return response.is_ok()
+        return response.is_success
 
     def _get_response(
         self,
@@ -86,7 +109,7 @@ class APIClient:
         request = Request(url=self.base_url + route, method=method, data=data, query_params=query)
 
         response = request.send()
-        if response and not response.is_ok():
+        if response and not response.is_success:
             self._system_log(f"{response.status} at {method} '{route}': {response.body}")
 
         return response or Response("", -1)
