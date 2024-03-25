@@ -6,3 +6,7 @@ class ApiVersionJson(TypedDict):
     minor: int
     major: int
 
+
+class GenericError(TypedDict):
+    error: str
+
