@@ -63,6 +63,7 @@ class Request:
         except urllib.error.HTTPError as http_error:
             return Response(
                 status=http_error.code,
+                content_type=http_error.headers.get_content_type(),
                 body=http_error.read().decode(http_error.headers.get_content_charset("utf-8")),
             )
 
