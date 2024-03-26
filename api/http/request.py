@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from http import HTTPStatus
-from typing import Any, Generator, Literal
+from typing import Any, Literal
 from urllib.request import Request as UrllibRequest
 
 from .response import Response
@@ -29,44 +29,15 @@ class Request:
             with urllib.request.urlopen(http_request) as http_response:
                 return Response(
                     status=http_response.status,
+                    content_type=http_response.headers.get_content_type(),
                     body=http_response.read().decode(http_response.headers.get_content_charset("utf-8")),
                 )
-
         except urllib.error.HTTPError as http_error:
             return Response(
                 status=HTTPStatus(http_error.code),
-                body=http_error.read().decode(http_error.headers.get_content_charset("utf-8")),
-            )
-
-        except OSError as os_error:
-            print(os_error)
-
-        return None
-
-    def send_async(self, *, join_body=False) -> Generator[str, None, Response | None]:
-        http_request = self._to_urllib_request()
-
-        try:
-            lines = []
-
-            with urllib.request.urlopen(http_request) as http_response:
-                charset = http_response.headers.get_content_charset("utf-8")
-                for line in http_response:
-                    decoded_line = line.decode(charset)
-                    yield decoded_line
-
-                    if join_body:
-                        lines.append(decoded_line)
-
-            return Response(status=http_response.status, body="\n".join(lines))
-
-        except urllib.error.HTTPError as http_error:
-            return Response(
-                status=http_error.code,
                 content_type=http_error.headers.get_content_type(),
                 body=http_error.read().decode(http_error.headers.get_content_charset("utf-8")),
             )
-
         except OSError as os_error:
             print(os_error)
 
