@@ -1,6 +1,6 @@
 from typing import Generator
 
-from bpy.types import Context, Event, Operator
+from bpy.types import Context, Event, Operator, Timer
 
 from ..utils import GeneratorWithState
 
@@ -8,6 +8,7 @@ from ..utils import GeneratorWithState
 class AsyncOperator(Operator):
     _async_generator: GeneratorWithState[set[str], None, set[str]]
     _events_to_await: set[str]
+    _timer: Timer | None
 
     def _run_async(self, context: Context) -> Generator[set[str], None, set[str]]:
         pass
@@ -18,20 +19,28 @@ class AsyncOperator(Operator):
     def _ended(self, context: Context):
         pass
 
-    def _poll_async_generator(self, context: Context) -> set[str]:
+    def _add_timer(self, context: Context, time_step: float):
+        self._timer = context.window_manager.event_timer_add(time_step, window=context.window)
+
+    def __poll_async_generator(self, context: Context) -> set[str]:
         next(self._async_generator, None)
 
         if self._async_generator.stopped:
+            self.__remove_timer(context)
             self._ended(context)
             return self._async_generator.returned
 
         self._events_to_await = self._async_generator.last_yielded
         return {"RUNNING_MODAL"}
 
+    def __remove_timer(self, context: Context):
+        if self._timer is not None:
+            context.window_manager.event_timer_remove(self._timer)
+
     def invoke(self, context: Context, _):
         self._async_generator = GeneratorWithState(self._run_async(context))
 
-        first_result = self._poll_async_generator(context)
+        first_result = self.__poll_async_generator(context)
 
         if first_result == {"RUNNING_MODAL"}:
             context.window_manager.modal_handler_add(self)
@@ -44,5 +53,5 @@ class AsyncOperator(Operator):
 
         self._after_event(context, event)
 
-        return self._poll_async_generator(context)
+        return self.__poll_async_generator(context)
 
