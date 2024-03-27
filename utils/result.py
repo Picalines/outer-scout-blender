@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Callable, Generic, Never, NoReturn, ParamSpec, TypeVar
 
 T = TypeVar("T")
@@ -90,6 +91,16 @@ class Result(Generic[T, E]):
             return wrapper
 
         return decorator
+
+    @contextmanager
+    @staticmethod
+    def do_catch(exception_type: type[BaseException] = Exception):
+        try:
+            yield
+        except BaseException as exception:
+            if not isinstance(exception, exception_type):
+                raise
+            Result.do_error(exception)
 
     def __repr__(self) -> str:
         if self.is_ok:
