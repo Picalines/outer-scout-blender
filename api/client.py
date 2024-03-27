@@ -1,8 +1,9 @@
-from typing import Any
+from typing import Any, Never
 
 from bpy.types import Context
 
 from ..properties import OuterScoutPreferences
+from ..utils import Result
 from .http import Request, Response
 from .models import (
     ApiVersionJson,
@@ -32,13 +33,12 @@ class APIClient:
     def from_context(context: Context) -> "APIClient":
         return APIClient(OuterScoutPreferences.from_context(context))
 
-    def get_api_version(self) -> ApiVersionJson | None:
-        response = self._get("api/version", assert_compat=False)
-        return response.typed_json(ApiVersionJson) if response.is_success else None
+    def get_api_version(self) -> Result[ApiVersionJson, str]:
+        return self._get("api/version", assert_compat=False).bind(self._parse_json_response)
 
     def is_api_supported(self) -> bool:
         if self.api_version is None:
-            api_version = self.get_api_version()
+            api_version = self.get_api_version().unwrap_or(None)
             if api_version:
                 self.api_version = (api_version["major"], api_version["minor"])
 
@@ -55,45 +55,33 @@ class APIClient:
                 else "failed to connect to the Outer Scout API"
             )
 
-    def post_scene(self, scene: PostSceneJson) -> GenericError | None:
-        response = self._post("scene", data=scene)
-        return None if response.is_success else response.generic_error()
+    def post_scene(self, scene: PostSceneJson) -> Result[Never, str]:
+        return self._post("scene", data=scene)
 
-    def post_scene_recording(self, recording: PostRecordingJson) -> GenericError | None:
-        response = self._post("scene/recording", data=recording)
-        return None if response.is_success else response.generic_error()
+    def post_scene_recording(self, recording: PostRecordingJson) -> Result[Never, str]:
+        return self._post("scene/recording", data=recording)
 
-    def get_recording_status(self) -> RecordingStatusJson | None:
-        response = self._get("scene/recording/status")
-        return response.typed_json(RecordingStatusJson) if response.is_success else None
+    def get_recording_status(self) -> Result[RecordingStatusJson, str]:
+        return self._get("scene/recording/status").bind(self._parse_json_response)
 
-    def get_object(self, name: str, *, origin: str | None = None) -> ObjectJson | None:
-        response = self._get(f"objects/{name}", query={"origin": origin})
-        return response.typed_json(ObjectJson) if response.is_success else None
+    def get_object(self, name: str, *, origin: str | None = None) -> Result[ObjectJson, str]:
+        return self._get(f"objects/{name}", query={"origin": origin}).bind(self._parse_json_response)
 
-    def get_object_mesh(self, name: str) -> ObjectMeshJson | None:
-        response = self._get(f"objects/{name}/mesh")
-        return response.typed_json(ObjectMeshJson) if response.is_success else None
+    def get_object_mesh(self, name: str) -> Result[ObjectMeshJson, str]:
+        return self._get(f"objects/{name}/mesh").bind(self._parse_json_response)
 
-    def get_ground_body(self) -> GroundBodyJson | None:
-        response = self._get("player/ground-body")
-        return response.typed_json(GroundBodyJson) if response.is_success else None
+    def get_ground_body(self) -> Result[GroundBodyJson, str]:
+        return self._get("player/ground-body").bind(self._parse_json_response)
 
-    def get_player_sectors(self) -> PlayerSectorListJson | None:
-        response = self._get("player/sectors")
-        return response.typed_json(PlayerSectorListJson) if response.is_success else None
+    def get_player_sectors(self) -> Result[PlayerSectorListJson, str]:
+        return self._get("player/sectors").bind(self._parse_json_response)
 
-    def warp_player(self, *, ground_body: str, local_transform: Transform) -> bool:
+    def warp_player(self, *, ground_body: str, local_transform: Transform) -> Result[Never, str]:
         transform_json = local_transform.to_json()
         del transform_json["scale"]
+        return self._post("player/warp", data={"groundBody": ground_body, "transform": transform_json})
 
-        response = self._post(
-            "player/warp",
-            data={"groundBody": ground_body, "transform": transform_json},
-        )
-
-        return response.is_success
-
+    @Result.do(error=str)
     def _get_response(
         self,
         *,
@@ -109,20 +97,25 @@ class APIClient:
         request = Request(url=self.base_url + route, method=method, data=data, query_params=query)
 
         response = request.send()
-        if response and not response.is_success:
-            self._system_log(f"{response.status} at {method} '{route}': {response.body}")
 
-        return response or Response("", -1)
+        error_prefix = "Outer Scout API error: "
 
-    def _get(self, route: str, query: dict[str, str] | None = None, *, assert_compat=True) -> Response:
+        if not response.is_success:
+            generic_error = response.json(GenericError).map_error(lambda _: error_prefix + response.body).then()
+            Result.do_error(error_prefix + generic_error["error"] if "error" in generic_error else response.body)
+
+        return response
+
+    @staticmethod
+    def _parse_json_response(response: Response) -> Result[object, str]:
+        return response.json().map_error(lambda e: f"API internal json error: {e}")
+
+    def _get(self, route: str, query: dict[str, str] | None = None, *, assert_compat=True):
         return self._get_response(route=route, method="GET", query=query, assert_compat=assert_compat)
 
-    def _post(self, route: str, data: Any, query: dict[str, str] | None = None) -> Response:
+    def _post(self, route: str, data: Any, query: dict[str, str] | None = None):
         return self._get_response(route=route, method="POST", data=data, query=query)
 
-    def _put(self, route: str, data: Any | None = None, query: dict[str, str] | None = None) -> Response:
+    def _put(self, route: str, data: Any | None = None, query: dict[str, str] | None = None):
         return self._get_response(route=route, method="PUT", data=data, query=query)
-
-    def _system_log(self, message: str):
-        print(f"outer-scout-blender API: {message}")
 
