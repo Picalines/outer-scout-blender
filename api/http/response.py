@@ -1,13 +1,15 @@
 import json
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import Any, Type, TypeVar
+from typing import TypeVar
 
-from ..models import GenericError
+from ...utils import Result
 
 T = TypeVar("T")
 
 HTTP_SUCCESS_RANGE = range(200, 300)
+
+NOT_JSON_ERROR = ValueError("http response is not json")
 
 
 @dataclass(frozen=True)
@@ -28,24 +30,11 @@ class Response:
     def is_json(self) -> bool:
         return "json" in self.content_type
 
-    def generic_error(self) -> GenericError | None:
-        if self.is_success:
-            return None
-
+    def json(self, _: type[T] = object) -> Result[T, Exception]:
         if not self.is_json:
-            return {"error": self.body}
-
+            return Result.error(NOT_JSON_ERROR)
         try:
-            return self.typed_json(GenericError)
-        except:
-            return {"error": self.body}
-
-    def json(self) -> Any:
-        if self.content_type != "application/json":
-            raise ValueError("http response is not json")
-        return json.loads(self.body)
-
-    def typed_json(self, model_type: Type[T]) -> T:
-        model: model_type = self.json()
-        return model
+            return Result.ok(json.loads(self.body))
+        except Exception as e:
+            return Result.error(e)
 
