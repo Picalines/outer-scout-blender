@@ -5,6 +5,7 @@ from mathutils import Matrix
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import SceneProperties
+from ..utils import operator_do_execute
 
 
 @bpy_register
@@ -29,6 +30,7 @@ class WarpPlayerOperator(Operator):
 
         return is_origin_set
 
+    @operator_do_execute
     def execute(self, context):
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
@@ -50,14 +52,7 @@ class WarpPlayerOperator(Operator):
 
                 warp_matrix @= cursor_matrix
 
-        success = api_client.warp_player(
-            ground_body=scene_props.origin_parent,
-            local_transform=Transform.from_matrix(warp_matrix).to_left(),
-        )
-
-        if not success:
-            self.report({"ERROR"}, "failed to warp to saved location")
-            return {"CANCELLED"}
-
-        return {"FINISHED"}
+        api_client.warp_player(
+            ground_body=scene_props.origin_parent, local_transform=Transform.from_matrix(warp_matrix).to_left()
+        ).then()
 

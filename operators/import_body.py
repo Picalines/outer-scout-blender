@@ -11,6 +11,7 @@ from ..api import APIClient
 from ..bpy_register import bpy_register
 from ..operators import GenerateBodyBackgroundOperator
 from ..properties import OuterScoutPreferences, SceneProperties
+from ..utils import operator_do_execute
 
 
 @bpy_register
@@ -43,6 +44,7 @@ class ImportBodyOperator(Operator):
 
         layout.prop(self, "sector_loading_mode")
 
+    @operator_do_execute
     def execute(self, context):
         preferences = OuterScoutPreferences.from_context(context)
         if not preferences.are_valid:
@@ -51,7 +53,7 @@ class ImportBodyOperator(Operator):
             return {"CANCELLED"}
 
         scene_props = SceneProperties.from_context(context)
-        api_client = APIClient(preferences)
+        api_client = APIClient.from_context(context)
 
         body_name = scene_props.origin_parent
 
@@ -76,10 +78,7 @@ class ImportBodyOperator(Operator):
         if self.sector_loading_mode == "ALL":
             sector_indices = sector_list.values()
         else:
-            player_sectors = api_client.get_player_sectors()
-            if player_sectors is None:
-                self.report({"ERROR"}, "could not get current sector path from API")
-                return {"CANCELLED"}
+            player_sectors = api_client.get_player_sectors().then()
 
             sector_indices = (
                 sector_index
@@ -135,8 +134,6 @@ class ImportBodyOperator(Operator):
             sector_collection_instance.hide_set(state=is_body_hidden)
 
         bpy.ops.outer_scout.align_ground_body()
-
-        return {"FINISHED"}
 
     def _generate_body_in_background(self, body_name: str) -> int:
         operator = GenerateBodyBackgroundOperator.bl_idname

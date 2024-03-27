@@ -9,7 +9,7 @@ from mathutils import Matrix
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import OuterScoutPreferences
-from ..utils import get_child_by_path, iter_parents
+from ..utils import get_child_by_path, iter_parents, operator_do_execute
 
 
 @bpy_register
@@ -21,6 +21,7 @@ class GenerateBodyOperator(Operator):
 
     body_name: StringProperty(name="Ground Body")
 
+    @operator_do_execute
     def execute(self, context):
         preferences = OuterScoutPreferences.from_context(context)
         if not preferences.are_valid:
@@ -29,7 +30,6 @@ class GenerateBodyOperator(Operator):
 
         ow_assets_folder, ow_bodies_folder = map(Path, (preferences.ow_assets_folder, preferences.ow_bodies_folder))
 
-        api_client = APIClient(preferences)
         body_name = self.body_name
         body_name_abbr = self._body_name_abbreviation(body_name)
 
@@ -41,10 +41,8 @@ class GenerateBodyOperator(Operator):
         self._log("INFO", f"generating {body_name} object...")
         self._log("INFO", f"fetching {body_name} assets list")
 
-        body_mesh_json = api_client.get_object_mesh(body_name)
-        if body_mesh_json is None:
-            self._log("ERROR", f"failed to get ground body meshes")
-            return {"CENCELLED"}
+        api_client = APIClient.from_context(context)
+        body_mesh_json = api_client.get_object_mesh(body_name).then()
 
         imported_objs: dict[str, Object | None] = {
             streamed_mesh["path"]: None
@@ -188,7 +186,6 @@ class GenerateBodyOperator(Operator):
         bpy.ops.object.delete()
 
         self._log("INFO", "finished")
-        return {"FINISHED"}
 
     def _body_name_abbreviation(self, ground_body_name: str) -> str:
         ground_body_name = ground_body_name.removesuffix("_Body")

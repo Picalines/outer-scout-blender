@@ -5,6 +5,7 @@ from bpy.types import Operator
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties.scene_props import SceneProperties
+from ..utils import operator_do_execute
 
 ORIGIN_PARENT_SUGGESTIONS = {
     "Player": "Player_Body",
@@ -87,16 +88,12 @@ class SetSceneOriginOperator(Operator):
     def invoke(self, context, _):
         return context.window_manager.invoke_props_dialog(self)
 
+    @operator_do_execute
     def execute(self, context):
         api_client = APIClient.from_context(context)
 
         if self.detect_origin_parent:
-            ground_body = api_client.get_ground_body()
-            if ground_body is None:
-                self.report({"ERROR"}, "failed to get current ground body")
-                return {"CANCELLED"}
-
-            origin_parent = ground_body["name"]
+            origin_parent = api_client.get_ground_body().then()["name"]
         elif self.origin_parent in ORIGIN_PARENT_SUGGESTIONS:
             origin_parent = ORIGIN_PARENT_SUGGESTIONS[self.origin_parent]
         else:
@@ -108,20 +105,14 @@ class SetSceneOriginOperator(Operator):
                 origin_rotation = (0, 0, 0, 1)
 
             case "PLAYER_FEET":
-                player_body_object = api_client.get_object("Player_Body", origin=origin_parent)
-                if not player_body_object:
-                    self.report({"ERROR"}, "failed to get player location")
-                    return {"CANCELLED"}
+                player_body_object = api_client.get_object("Player_Body", origin=origin_parent).then()
 
                 player_transform = Transform.from_json(player_body_object["transform"])
                 origin_position = tuple(player_transform.position)
                 origin_rotation = tuple(player_transform.rotation)
 
             case "SURVEYOR_PROBE":
-                probe_object = api_client.get_object("Probe_Body", origin=origin_parent)
-                if not probe_object:
-                    self.report({"ERROR"}, "failed to get scout location")
-                    return {"CANCELLED"}
+                probe_object = api_client.get_object("Probe_Body", origin=origin_parent).then()
 
                 probe_transform = Transform.from_json(probe_object["transform"])
                 origin_position = tuple(probe_transform.position)
@@ -134,11 +125,9 @@ class SetSceneOriginOperator(Operator):
 
         context.area.tag_redraw()
         for area in context.screen.areas:
-            if area.type == 'VIEW_3D':
+            if area.type == "VIEW_3D":
                 area.tag_redraw()
 
         if scene_properties.has_ground_body:
             bpy.ops.outer_scout.align_ground_body()
-
-        return {"FINISHED"}
 
