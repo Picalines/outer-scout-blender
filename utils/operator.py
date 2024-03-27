@@ -9,7 +9,7 @@ TArgs = ParamSpec("TArgs")
 OperatorResult: TypeAlias = set[str]
 
 
-def operator_do_execute(func: Callable[[Operator, Context], object]) -> Callable[[Operator, Context], OperatorResult]:
+def operator_do(func: Callable[[Operator, Context], object]) -> Callable[[Operator, Context], OperatorResult]:
     def wrapper(operator: Operator, context: Context):
         try:
             return_value = func(operator, context)

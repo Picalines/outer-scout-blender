@@ -3,7 +3,7 @@ from bpy.types import Operator
 from ..api import Transform
 from ..bpy_register import bpy_register
 from ..properties.scene_props import SceneProperties
-from ..utils import operator_do_execute
+from ..utils import operator_do
 
 
 @bpy_register
@@ -18,7 +18,7 @@ class AlignGroundBodyOperator(Operator):
         scene_props = SceneProperties.from_context(context)
         return scene_props.has_origin and scene_props.has_ground_body
 
-    @operator_do_execute
+    @operator_do
     def execute(self, context):
         scene_props = SceneProperties.from_context(context)
         ground_body = scene_props.ground_body

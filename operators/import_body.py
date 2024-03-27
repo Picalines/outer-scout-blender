@@ -11,7 +11,7 @@ from ..api import APIClient
 from ..bpy_register import bpy_register
 from ..operators import GenerateBodyBackgroundOperator
 from ..properties import OuterScoutPreferences, SceneProperties
-from ..utils import operator_do_execute
+from ..utils import operator_do
 
 
 @bpy_register
@@ -44,7 +44,7 @@ class ImportBodyOperator(Operator):
 
         layout.prop(self, "sector_loading_mode")
 
-    @operator_do_execute
+    @operator_do
     def execute(self, context):
         preferences = OuterScoutPreferences.from_context(context)
         if not preferences.are_valid:

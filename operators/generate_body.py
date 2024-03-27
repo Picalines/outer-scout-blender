@@ -9,7 +9,7 @@ from mathutils import Matrix
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import OuterScoutPreferences
-from ..utils import get_child_by_path, iter_parents, operator_do_execute
+from ..utils import get_child_by_path, iter_parents, operator_do
 
 
 @bpy_register
@@ -21,7 +21,7 @@ class GenerateBodyOperator(Operator):
 
     body_name: StringProperty(name="Ground Body")
 
-    @operator_do_execute
+    @operator_do
     def execute(self, context):
         preferences = OuterScoutPreferences.from_context(context)
         if not preferences.are_valid:

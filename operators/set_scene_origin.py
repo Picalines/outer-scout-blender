@@ -5,7 +5,7 @@ from bpy.types import Operator
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties.scene_props import SceneProperties
-from ..utils import operator_do_execute
+from ..utils import operator_do
 
 ORIGIN_PARENT_SUGGESTIONS = {
     "Player": "Player_Body",
@@ -88,7 +88,7 @@ class SetSceneOriginOperator(Operator):
     def invoke(self, context, _):
         return context.window_manager.invoke_props_dialog(self)
 
-    @operator_do_execute
+    @operator_do
     def execute(self, context):
         api_client = APIClient.from_context(context)
 

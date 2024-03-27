@@ -5,7 +5,7 @@ from mathutils import Matrix
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import SceneProperties
-from ..utils import operator_do_execute
+from ..utils import operator_do
 
 
 @bpy_register
@@ -30,7 +30,7 @@ class WarpPlayerOperator(Operator):
 
         return is_origin_set
 
-    @operator_do_execute
+    @operator_do
     def execute(self, context):
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
