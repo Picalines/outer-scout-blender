@@ -29,16 +29,12 @@ class RecordingProperties(PropertyGroup):
         options=set(),
     )
 
-    is_recording: BoolProperty(
+    in_progress: BoolProperty(
         default=False,
         options=set(),
     )
 
-    stage_description: StringProperty(
-        options=set(),
-    )
-
-    stage_progress: FloatProperty(
+    progress: FloatProperty(
         default=0,
         min=0,
         max=1,
