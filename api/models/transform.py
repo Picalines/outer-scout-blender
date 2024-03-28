@@ -49,14 +49,18 @@ class Transform:
     def from_matrix(matrix: Matrix) -> "Transform":
         return Transform(*matrix.decompose())
 
-    def to_json(self, *, parent: str | None = None) -> TransformJson:
-        rw, rx, ry, rz = self.rotation
+    def to_json(self, *, position=True, rotation=True, scale=True, parent: str | None = None) -> TransformJson:
+        json: TransformJson = {}
 
-        json: TransformJson = {
-            "position": tuple(self.position),
-            "rotation": (rx, ry, rz, rw),
-            "scale": tuple(self.scale),
-        }
+        if position:
+            json["position"] = tuple(self.position)
+
+        if rotation:
+            rw, rx, ry, rz = self.rotation
+            json["rotation"] = (rx, ry, rz, rw)
+
+        if scale:
+            json["scale"] = tuple(self.scale)
 
         if parent is not None:
             json["parent"] = parent

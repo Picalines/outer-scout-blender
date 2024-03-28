@@ -77,9 +77,9 @@ class APIClient:
         return self._get("player/sectors").bind(self._parse_json_response)
 
     def warp_player(self, *, ground_body: str, local_transform: Transform) -> Result[Never, str]:
-        transform_json = local_transform.to_json()
-        del transform_json["scale"]
-        return self._post("player/warp", data={"groundBody": ground_body, "transform": transform_json})
+        return self._post(
+            "player/warp", data={"groundBody": ground_body, "transform": local_transform.to_json(scale=False)}
+        )
 
     @Result.do(error=str)
     def _get_response(
