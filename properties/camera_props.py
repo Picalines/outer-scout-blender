@@ -6,16 +6,15 @@ from ..bpy_register import bpy_register_property
 
 @bpy_register_property(Camera, "outer_scout_camera")
 class CameraProperties(PropertyGroup):
-    outer_scout_type = (
-        EnumProperty(
-            name="Outer Scout Type",
-            default="",
-            items=[
-                ("", "None", ""),
-                ("perspective", "Perspective", ""),
-                ("equirectangular", "Equirectangular", "Equirectangular camera used to record HDRI"),
-            ],
-        ),
+    outer_scout_type: EnumProperty(
+        name="Outer Scout Type",
+        default="none",
+        items=[
+            ("none", "None", ""),
+            ("perspective", "Perspective", ""),
+            ("equirectangular", "Equirectangular", "Equirectangular camera used to record HDRI"),
+        ],
+        options=set(),
     )
 
     equirect_face_size: IntProperty(
