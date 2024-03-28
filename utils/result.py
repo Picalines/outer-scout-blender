@@ -1,4 +1,6 @@
 from contextlib import contextmanager
+from functools import wraps
+from inspect import isgeneratorfunction
 from typing import Callable, Generic, Never, NoReturn, ParamSpec, TypeVar
 
 T = TypeVar("T")
@@ -68,25 +70,41 @@ class Result(Generic[T, E]):
     def bind(self, func: "Callable[[T], Result[UT, UE]]") -> "Result[UT, E | UE]":
         return func(self.__value) if self.is_ok else self
 
-    @staticmethod
-    def do_error(value: UT) -> NoReturn:
-        raise ResultDoError(value)
-
     def then(self) -> T:
         if not self.is_ok:
             self.do_error(self.__error)
         return self.__value
 
+    @staticmethod
+    def do_error(value: UT) -> NoReturn:
+        raise ResultDoError(value)
+
+    @staticmethod
     def do(*, error: type[UE] = object) -> "Callable[[Callable[TArgs, UT]], Callable[TArgs, Result[UT, UE]]]":
         def decorator(func):
-            def wrapper(*args, **kwargs):
-                try:
-                    return_value = func(*args, **kwargs)
-                except ResultDoError as do_error:
-                    return_value = Result.error(do_error.value)
-                if not isinstance(return_value, Result):
-                    return_value = Result.ok(return_value)
-                return return_value
+            if isgeneratorfunction(func):
+
+                @wraps(func)
+                def wrapper(*args, **kwargs):
+                    try:
+                        return_value = yield from func(*args, **kwargs)
+                    except ResultDoError as do_error:
+                        return_value = Result.error(do_error.value)
+                    if not isinstance(return_value, Result):
+                        return_value = Result.ok(return_value)
+                    return return_value
+
+            else:
+
+                @wraps(func)
+                def wrapper(*args, **kwargs):
+                    try:
+                        return_value = func(*args, **kwargs)
+                    except ResultDoError as do_error:
+                        return_value = Result.error(do_error.value)
+                    if not isinstance(return_value, Result):
+                        return_value = Result.ok(return_value)
+                    return return_value
 
             return wrapper
 
