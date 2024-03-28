@@ -8,11 +8,11 @@ from ..bpy_register import bpy_register_property
 class CameraProperties(PropertyGroup):
     outer_scout_type: EnumProperty(
         name="Outer Scout Type",
-        default="none",
+        default="NONE",
         items=[
-            ("none", "None", ""),
-            ("perspective", "Perspective", ""),
-            ("equirectangular", "Equirectangular", "Equirectangular camera used to record HDRI"),
+            ("NONE", "None", ""),
+            ("PERSPECTIVE", "Perspective", ""),
+            ("EQUIRECTANGULAR", "Equirectangular", "Equirectangular camera used to record HDRI"),
         ],
         options=set(),
     )

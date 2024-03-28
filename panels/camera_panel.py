@@ -31,17 +31,18 @@ class CameraPanel(Panel):
             return
 
         match camera_props.outer_scout_type:
-            case "perspective":
+            case "PERSPECTIVE":
                 layout.prop(camera_props, "color_recording_path")
                 layout.prop(camera_props, "depth_recording_path")
-            case "equirectangular":
+            case "EQUIRECTANGULAR":
                 layout.prop(camera_props, "color_recording_path", text="Recording Path")
                 layout.prop(camera_props, "equirect_face_size", text="Face Size")
 
         clip_header, clip_panel = layout.panel(f"{self.__class__.__name__}.clips", default_closed=True)
         clip_header.label(text="Movie Clips")
-        clip_panel.enabled = False
         if clip_panel:
+            clip_panel.enabled = False
             clip_panel.prop(camera_props, "color_movie_clip")
             clip_panel.prop(camera_props, "depth_movie_clip")
+
 
