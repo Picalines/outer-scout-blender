@@ -11,7 +11,7 @@ from ..api import APIClient
 from ..bpy_register import bpy_register
 from ..operators import GenerateBodyBackgroundOperator
 from ..properties import OuterScoutPreferences, SceneProperties
-from ..utils import operator_do
+from ..utils import Result, operator_do
 
 
 @bpy_register
@@ -49,8 +49,7 @@ class ImportBodyOperator(Operator):
         preferences = OuterScoutPreferences.from_context(context)
         if not preferences.are_valid:
             # TODO: call operator to fill preferences?
-            self.report({"ERROR"}, "plugin preferences are not valid")
-            return {"CANCELLED"}
+            Result.do_error("plugin preferences are not valid")
 
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
@@ -63,15 +62,13 @@ class ImportBodyOperator(Operator):
             # TODO: make button in preferences menu?
             return_code = self._generate_body_in_background(body_name)
             if not (return_code == 0 and body_project_path.exists()):
-                self.report({"ERROR"}, "could not generate body .blend file")
-                return {"CANCELLED"}
+                Result.do_error("could not generate body .blend file")
 
         sectors_list_text_name = f"{body_name} sectors"
         if sectors_list_text_name not in bpy.data.texts:
             link_status = self._link(body_project_path, "Text", sectors_list_text_name)
             if link_status != {"FINISHED"}:
-                self.report({"ERROR"}, "could not link body sector list text")
-                return {"CANCELLED"}
+                Result.do_error("could not link body sector list text")
 
         sector_list: dict[str, int] = json.loads(bpy.data.texts[sectors_list_text_name].as_string())
 
@@ -99,8 +96,7 @@ class ImportBodyOperator(Operator):
 
             link_status = self._link(body_project_path, "Collection", sector_collection_name)
             if link_status != {"FINISHED"}:
-                self.report({"ERROR"}, f"could not link {sector_collection_name}")
-                return {"CANCELLED"}
+                Result.do_error(f"could not link {sector_collection_name}")
 
             sector_collection_instances.append(bpy.context.active_object)
 
