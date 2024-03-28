@@ -1,11 +1,26 @@
-import bpy
-from bpy.types import Context, Event, Object
+from math import radians
 
-from ..api import APIClient, PostRecordingJson, PostSceneJson, Transform
+import bpy
+from bpy.path import abspath, clean_name
+from bpy.types import Camera, Context, Event, Object
+from mathutils import Matrix
+
+from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
-from ..properties import RecordingProperties, SceneProperties
-from ..utils import GeneratorWithState
+from ..properties import CameraProperties, RecordingProperties, SceneProperties
+from ..utils import Result, operator_do
 from .async_operator import AsyncOperator
+
+
+def get_camera_gate_fit(context: Context, camera: Camera):
+    match camera.sensor_fit:
+        case "AUTO":
+            render = context.scene.render
+            return "horizontal" if render.resolution_x > render.resolution_y else "vertical"
+        case "VERTICAL":
+            return "vertical"
+        case "HORIZONTAL":
+            return "horizontal"
 
 
 @bpy_register
@@ -24,36 +39,131 @@ class RecordOperator(AsyncOperator):
         scene_props = SceneProperties.from_context(context)
         return scene_props.is_scene_created
 
-    def _run_async(self, context: Context):
-        api_client = APIClient.from_context(context)
-
-        recording_status = api_client.get_recording_status()
-
-        if recording_status["inProgress"]:
-            self.report({"ERROR"}, "recording is in progress")
-            return {"CANCELLED"}
-
-        scene = context.scene
-        was_on_frame = scene.frame_current
+    @operator_do
+    def _run_async(self, context):
         recording_props = RecordingProperties.from_context(context)
+
+        if recording_props.in_progress:
+            Result.do_error("recording is in progress")
+
         scene_props = SceneProperties.from_context(context)
-        frame_count = scene.frame_end - scene.frame_start + 1
+        api_client = APIClient.from_context(context)
+        scene = context.scene
 
-        scene_json: PostSceneJson = {
-            "origin": Transform.from_matrix(scene_props.origin_matrix).to_json(parent=scene_props.origin_parent),
-            "hidePlayerModel": scene_props.hide_player_model,
-        }
+        api_client.post_scene(
+            {
+                "origin": Transform.from_matrix(scene_props.origin_matrix).to_json(parent=scene_props.origin_parent),
+                "hidePlayerModel": scene_props.hide_player_model,
+            }
+        ).then()
 
-        if scene_creation_error := api_client.post_scene(scene_json):
-            self.report({"ERROR"}, scene_creation_error["error"])
-            return {"CANCELLED"}
+        self._create_cameras(context, api_client).then()
+
+        # send animation data
+
+        # self._send_keyframes(context, api_client).then()
+
+        # record
+
+        api_client.post_scene_recording(
+            {
+                "startFrame": scene.frame_start,
+                "endFrame": scene.frame_end,
+                "frameRate": scene.render.fps,
+            }
+        ).then()
+
+        recording_props.progress = 0
+        recording_props.in_progress = True
 
         self._add_timer(context, recording_props.modal_timer_delay)
 
-        recording_props.stage_progress = 0
-        recording_props.is_recording = True
+        frame_count = scene.frame_end - scene.frame_start + 1
 
-        # send animation data
+        while recording_props.in_progress:
+            recording_status = api_client.get_recording_status().then()
+
+            recording_props.in_progress = recording_status["inProgress"]
+            recording_props.progress = recording_status["framesRecorded"] / frame_count
+            context.area.tag_redraw()
+
+            yield {"TIMER"}
+
+        recording_props.in_progress = False
+
+        self.report({"INFO"}, "recording finished")
+
+    @Result.do()
+    def _create_cameras(self, context: Context, api_client: APIClient):
+        scene = context.scene
+        cameras: list[tuple[Object, Camera]] = [
+            (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
+        ]
+
+        for object, camera in cameras:
+            camera_props = CameraProperties.of_camera(camera)
+            if camera_props.outer_scout_type == "NONE":
+                continue
+
+            object_name = clean_name(camera.name)
+
+            camera_transform = Transform.from_matrix(object.matrix_world @ Matrix.Rotation(radians(-90), 4, "X"))
+
+            api_client.post_object(name=object_name, transform=camera_transform.to_left()).then()
+
+            match camera_props.outer_scout_type:
+                case "PERSPECTIVE":
+                    camera.lens_unit = "MILLIMETERS"
+                    api_client.post_perspective_camera(
+                        object_name,
+                        {
+                            "gateFit": get_camera_gate_fit(context, camera),
+                            "resolution": {"width": scene.render.resolution_x, "height": scene.render.resolution_y},
+                            "perspective": {
+                                "focalLength": camera.lens,
+                                "sensorSize": (camera.sensor_width, camera.sensor_height),
+                                "lensShift": (camera.shift_x, camera.shift_y),
+                                "nearClipPlane": camera.clip_start,
+                                "farClipPlane": camera.clip_end,
+                            },
+                        },
+                    ).then()
+
+                case "EQUIRECTANGULAR":
+                    api_client.post_equirect_camera(
+                        object_name, {"faceResolution": camera_props.equirect_face_size}
+                    ).then()
+
+                case not_implemented_camera_type:
+                    raise NotImplementedError(f"camera of type {not_implemented_camera_type} is not implemented")
+
+            if camera_props.is_recording_color:
+                api_client.post_texture_recorder(
+                    object_name,
+                    {
+                        "property": "camera.renderTexture.color",
+                        "outputPath": abspath(camera_props.color_recording_path),
+                        "format": "mp4",
+                        "constantRateFactor": 18,  # TODO: expose property
+                    },
+                ).then()
+
+            if camera_props.is_recording_depth:
+                api_client.post_texture_recorder(
+                    object_name,
+                    {
+                        "property": "camera.renderTexture.depth",
+                        "outputPath": abspath(camera_props.depth_recording_path),
+                        "format": "mp4",
+                        "constantRateFactor": 18,  # TODO: expose property
+                    },
+                ).then()
+
+    @Result.do()
+    def _send_keyframes(self, context: Context, api_client: APIClient):
+        scene = context.scene
+        was_on_frame = scene.frame_current
+        frame_count = scene.frame_end - scene.frame_start + 1
 
         ground_body: Object = ref_props.ground_body
         hdri_pivot: Object = ref_props.hdri_pivot
@@ -123,42 +233,6 @@ class RecordOperator(AsyncOperator):
             yield {"TIMER"}
 
         scene.frame_set(frame=was_on_frame)
-
-        # record
-
-        recording_json: PostRecordingJson = {
-            "startFrame": scene.frame_start,
-            "endFrame": scene.frame_end,
-            "frameRate": scene.render.fps,
-        }
-
-        if not api_client.set_recorder_enabled(True):
-            self.report({"ERROR"}, "failed to start recording")
-            return {"CANCELLED"}
-
-        recording_props.stage_description = "Recording"
-
-        frames_recorded = GeneratorWithState(api_client.get_frames_recorded_async())
-
-        for prev_count, current_count in iter_with_prev(frames_recorded):
-            recording_props.stage_progress = current_count / frame_count
-
-            if prev_count != current_count:
-                recording_status = api_client.get_recorder_status()
-                if not recording_status["enabled"]:
-                    break
-
-            yield {"TIMER"}
-
-        if frames_recorded.returned == False:
-            self.report({"ERROR"}, "failed to receive recorded frames count")
-            return {"CANCELLED"}
-
-        # end
-
-        self.report({"INFO"}, "Outer Wilds render finished")
-
-        return {"FINISHED"}
 
     def _after_event(self, context: Context, _: Event):
         context.area.tag_redraw()
