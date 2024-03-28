@@ -1,6 +1,6 @@
 from functools import wraps
 from inspect import isgeneratorfunction
-from traceback import format_exc
+from traceback import format_exception
 from typing import Callable, TypeAlias
 
 from bpy.types import Context, Operator
@@ -27,7 +27,7 @@ def operator_do(
                 status = result.unwrap()
                 return status if status is not None else {"FINISHED"}
             except Exception as exception:
-                operator.report({"ERROR"}, format_exc(exception))
+                operator.report({"ERROR"}, "".join(format_exception(exception)))
                 return {"CANCELLED"}
 
     else:
@@ -42,7 +42,7 @@ def operator_do(
                 status = result.unwrap()
                 return status if status is not None else {"FINISHED"}
             except Exception as exception:
-                operator.report({"ERROR"}, format_exc(exception))
+                operator.report({"ERROR"}, "".join(format_exception(exception)))
                 return {"CANCELLED"}
 
     return wrapper
