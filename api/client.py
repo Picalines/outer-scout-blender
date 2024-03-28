@@ -7,15 +7,20 @@ from ..utils import Result
 from .http import Request, Response
 from .models import (
     ApiVersionJson,
+    ColorTextureRecorderJson,
+    EquirectCameraJson,
     GenericError,
+    GetCameraJson,
     GroundBodyJson,
     ObjectJson,
     ObjectMeshJson,
+    PerspectiveCameraJson,
     PlayerSectorListJson,
     PostRecordingJson,
     PostSceneJson,
     RecordingStatusJson,
     Transform,
+    TransformRecorderJson,
 )
 
 ACCEPTED_API_VERSION = (0, 1)
@@ -67,8 +72,26 @@ class APIClient:
     def get_object(self, name: str, *, origin: str | None = None) -> Result[ObjectJson, str]:
         return self._get(f"objects/{name}", query={"origin": origin}).bind(self._parse_json_response)
 
+    def post_object(self, *, name: str, transform: Transform | None = None, parent: str | None = None):
+        return self._post("objects", data={"name": name, "transform": transform.to_json(parent=parent)})
+
     def get_object_mesh(self, name: str) -> Result[ObjectMeshJson, str]:
         return self._get(f"objects/{name}/mesh").bind(self._parse_json_response)
+
+    def get_camera(self, object_name: str) -> Result[GetCameraJson, str]:
+        return self._get(f"objects/{object_name}/camera").bind(self._parse_json_response)
+
+    def post_perspective_camera(self, object_name: str, json: PerspectiveCameraJson):
+        return self._post(f"objects/{object_name}/camera", data={**json, "type": "perspective"})
+
+    def post_equirect_camera(self, object_name: str, json: EquirectCameraJson):
+        return self._post(f"objects/{object_name}/camera", data={**json, "type": "equirectangular"})
+
+    def post_texture_recorder(self, object_name: str, json: ColorTextureRecorderJson):
+        return self._post(f"objects/{object_name}/recorders", data=json)
+
+    def post_transform_recorder(self, object_name: str, json: TransformRecorderJson):
+        return self._post(f"objects/{object_name}/recorders", data={**json, "property": "transform"})
 
     def get_ground_body(self) -> Result[GroundBodyJson, str]:
         return self._get("player/ground-body").bind(self._parse_json_response)
