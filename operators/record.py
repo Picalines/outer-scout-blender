@@ -78,6 +78,8 @@ class RecordOperator(AsyncOperator):
 
         self.report({"INFO"}, "recording finished")
 
+        api_client.delete_scene().then()
+
     @Result.do()
     def _create_cameras(self, context: Context, api_client: APIClient):
         scene = context.scene

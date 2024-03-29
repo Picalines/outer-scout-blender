@@ -64,6 +64,9 @@ class APIClient:
     def post_scene(self, scene: PostSceneJson) -> Result[Never, str]:
         return self._post("scene", data=scene)
 
+    def delete_scene(self) -> Result[Never, str]:
+        return self._delete("scene")
+
     def post_scene_recording(self, recording: PostRecordingJson) -> Result[Never, str]:
         return self._post("scene/recording", data=recording)
 
@@ -145,4 +148,7 @@ class APIClient:
 
     def _put(self, route: str, data: Any | None = None, query: dict[str, str] | None = None):
         return self._get_response(route=route, method="PUT", data=data, query=query)
+
+    def _delete(self, route: str, data: Any | None = None, query: dict[str, str] | None = None):
+        return self._get_response(route=route, method="DELETE", data=data, query=query)
 
