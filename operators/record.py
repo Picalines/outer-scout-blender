@@ -8,7 +8,7 @@ from mathutils import Matrix
 from ..api import LEFT_HANDED_TO_RIGHT, RIGHT_HANDED_TO_LEFT, APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import CameraProperties, RecordingProperties, SceneProperties
-from ..utils import Result, operator_do
+from ..utils import Result, defer, operator_do, with_defers
 from .async_operator import AsyncOperator
 
 
@@ -81,13 +81,16 @@ class RecordOperator(AsyncOperator):
         api_client.delete_scene().then()
 
     @Result.do()
+    @with_defers
     def _create_cameras(self, context: Context, api_client: APIClient):
         scene = context.scene
         cameras: list[tuple[Object, Camera]] = [
             (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
         ]
 
+        was_on_frame = scene.frame_current
         scene.frame_set(scene.frame_start)
+        defer(lambda: scene.frame_set(was_on_frame))
 
         for object, camera in cameras:
             camera_props = CameraProperties.of_camera(camera)
@@ -149,6 +152,7 @@ class RecordOperator(AsyncOperator):
                 ).then()
 
     @Result.do()
+    @with_defers
     def _send_camera_keyframes(self, context: Context, api_client: APIClient):
         scene = context.scene
         scene_frame_range = range(scene.frame_start, scene.frame_end + 1)
@@ -183,78 +187,77 @@ class RecordOperator(AsyncOperator):
         camera_rotation_empty.matrix_world = Matrix.Rotation(radians(-90), 4, "X")
         camera_rotation_empty.name = "outer_scout.camera_rotation"
 
-        try:
-            for camera_object, camera in cameras:
-                camera_props = CameraProperties.of_camera(camera)
-                if camera_props.outer_scout_type == "NONE":
-                    continue
+        defer(lambda: bpy.data.objects.remove(left_to_right_empty, do_unlink=True))
+        defer(lambda: bpy.data.objects.remove(camera_rotation_empty, do_unlink=True))
 
-                object_name = get_camera_api_name(camera)
+        for camera_object, camera in cameras:
+            camera_props = CameraProperties.of_camera(camera)
+            if camera_props.outer_scout_type == "NONE":
+                continue
 
-                bpy.ops.object.select_all(action="DESELECT")
-                bpy.ops.object.empty_add()
-                camera_track_empty: Object = context.active_object
-                camera_track_empty.name = f"outer_scout.{object_name}.track"
-                camera_track_empty.rotation_mode = "QUATERNION"
+            object_name = get_camera_api_name(camera)
 
-                # idea is to implement right_matrix_to_left using the Blender constraints
-                # and also add X rotation to the camera
-                camera_track_empty.matrix_world = RIGHT_HANDED_TO_LEFT
-                add_copy_transform_constraint(camera_track_empty, camera_object, mix_mode="AFTER_FULL")
-                add_copy_transform_constraint(camera_track_empty, camera_rotation_empty, mix_mode="AFTER_FULL")
-                add_copy_transform_constraint(camera_track_empty, left_to_right_empty, mix_mode="AFTER_FULL")
+            bpy.ops.object.select_all(action="DESELECT")
+            bpy.ops.object.empty_add()
+            camera_track_empty: Object = context.active_object
 
-                for camera_prop, camera_prop_path in camera_props_to_track[camera_props.outer_scout_type].items():
-                    camera_track_empty[camera_prop] = 0.0
-                    add_single_prop_copy_driver(
-                        camera_track_empty,
-                        f'["{camera_prop}"]',
-                        target_id_type="CAMERA",
-                        target_id=camera,
-                        target_data_path=camera_prop_path,
-                    )
+            defer(lambda: bpy.data.objects.remove(camera_track_empty, do_unlink=True))
 
-                bpy.ops.nla.bake(
-                    frame_start=scene.frame_start,
-                    frame_end=scene.frame_end,
-                    step=1,
-                    only_selected=True,
-                    visual_keying=True,
-                    clear_constraints=True,
-                    clean_curves=True,
-                    bake_types={"OBJECT"},
-                    channel_types={"LOCATION", "ROTATION", "SCALE", "PROPS"},
+            camera_track_empty.name = f"outer_scout.{object_name}.track"
+            camera_track_empty.rotation_mode = "QUATERNION"
+
+            # idea is to implement right_matrix_to_left using the Blender constraints
+            # and also add X rotation to the camera
+            camera_track_empty.matrix_world = RIGHT_HANDED_TO_LEFT
+            add_copy_transform_constraint(camera_track_empty, camera_object, mix_mode="AFTER_FULL")
+            add_copy_transform_constraint(camera_track_empty, camera_rotation_empty, mix_mode="AFTER_FULL")
+            add_copy_transform_constraint(camera_track_empty, left_to_right_empty, mix_mode="AFTER_FULL")
+
+            for camera_prop, camera_prop_path in camera_props_to_track[camera_props.outer_scout_type].items():
+                camera_track_empty[camera_prop] = 0.0
+                add_single_prop_copy_driver(
+                    camera_track_empty,
+                    f'["{camera_prop}"]',
+                    target_id_type="CAMERA",
+                    target_id=camera,
+                    target_data_path=camera_prop_path,
                 )
 
-                track_action = camera_track_empty.animation_data.action
+            bpy.ops.nla.bake(
+                frame_start=scene.frame_start,
+                frame_end=scene.frame_end,
+                step=1,
+                only_selected=True,
+                visual_keying=True,
+                clear_constraints=True,
+                clean_curves=True,
+                bake_types={"OBJECT"},
+                channel_types={"LOCATION", "ROTATION", "SCALE", "PROPS"},
+            )
 
-                animation_properties_json = {}
+            track_action = camera_track_empty.animation_data.action
+            defer(lambda: bpy.data.actions.remove(track_action, do_unlink=True))
 
-                for fcurve in track_action.fcurves:
-                    fcurve: FCurve
+            animation_properties_json = {}
 
-                    match fcurve.data_path:
-                        case "location":
-                            outer_scout_property = "transform.position." + vector_index_to_axis[fcurve.array_index]
-                        case "rotation_quaternion":
-                            outer_scout_property = "transform.rotation." + quaternion_index_to_axis[fcurve.array_index]
-                        case "scale":
-                            outer_scout_property = "transform.scale." + vector_index_to_axis[fcurve.array_index]
-                        case custom_data_path:
-                            outer_scout_property = custom_data_path[2:-2]
+            for fcurve in track_action.fcurves:
+                fcurve: FCurve
 
-                    animation_properties_json[outer_scout_property] = {
-                        "keyframes": {frame: {"value": fcurve.evaluate(frame)} for frame in scene_frame_range}
-                    }
+                match fcurve.data_path:
+                    case "location":
+                        outer_scout_property = "transform.position." + vector_index_to_axis[fcurve.array_index]
+                    case "rotation_quaternion":
+                        outer_scout_property = "transform.rotation." + quaternion_index_to_axis[fcurve.array_index]
+                    case "scale":
+                        outer_scout_property = "transform.scale." + vector_index_to_axis[fcurve.array_index]
+                    case custom_data_path:
+                        outer_scout_property = custom_data_path[2:-2]
 
-                try:
-                    api_client.put_keyframes(object_name, {"properties": animation_properties_json}).then()
-                finally:
-                    bpy.data.actions.remove(track_action, do_unlink=True)
-                    bpy.data.objects.remove(camera_track_empty, do_unlink=True)
-        finally:
-            bpy.data.objects.remove(left_to_right_empty, do_unlink=True)
-            bpy.data.objects.remove(camera_rotation_empty, do_unlink=True)
+                animation_properties_json[outer_scout_property] = {
+                    "keyframes": {frame: {"value": fcurve.evaluate(frame)} for frame in scene_frame_range}
+                }
+
+            api_client.put_keyframes(object_name, {"properties": animation_properties_json}).then()
 
     def _after_event(self, context: Context, _: Event):
         context.area.tag_redraw()
