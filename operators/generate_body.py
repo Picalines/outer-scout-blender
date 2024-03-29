@@ -1,3 +1,4 @@
+from collections import Counter
 from math import radians
 from pathlib import Path
 
@@ -42,17 +43,24 @@ class GenerateBodyOperator(Operator):
         self._log("INFO", f"fetching {body_name} assets list")
 
         api_client = APIClient.from_context(context)
-        body_mesh_json = api_client.get_object_mesh(body_name).then()
+        body_mesh_json = api_client.get_object_mesh(
+            body_name,
+            ignore_paths=preferences.import_ignore_paths.split(","),
+            ignore_layers=preferences.import_ignore_layers.split(","),
+            case_sensitive=False,
+        ).then()
 
-        imported_objs: dict[str, Object | None] = {
-            streamed_mesh["path"]: None
-            for sector in body_mesh_json["sectors"]
-            for streamed_mesh in sector["streamedMeshes"]
+        streamed_asset_paths = Counter(
+            streamed_mesh["path"] for sector in body_mesh_json["sectors"] for streamed_mesh in sector["streamedMeshes"]
+        )
+
+        imported_objs: dict[str, tuple[Object | None, int]] = {
+            asset_path: (None, asset_uses_count) for asset_path, asset_uses_count in streamed_asset_paths.items()
         }
 
         self._log("INFO", f"importing {len(imported_objs)} .obj files of streamed assets")
 
-        for asset_path in imported_objs:
+        for asset_path, (_, asset_uses_count) in imported_objs.items():
             try:
                 obj_path = str(ow_assets_folder.joinpath(asset_path.removesuffix(".asset") + ".obj"))
                 bpy.ops.wm.obj_import(filepath=obj_path)
@@ -62,7 +70,7 @@ class GenerateBodyOperator(Operator):
 
             imported_obj = bpy.data.objects[context.view_layer.objects.active.name]
             if imported_obj.type != "EMPTY":
-                imported_objs[asset_path] = imported_obj
+                imported_objs[asset_path] = (imported_obj, asset_uses_count)
 
         bpy.ops.object.select_all(action="SELECT")
         bpy.ops.object.transform_apply()
@@ -79,19 +87,15 @@ class GenerateBodyOperator(Operator):
         fbx_body_object.name += "_fbx"
 
         self._log("INFO", f"deleting {body_name} parents")
-        for parent in list(iter_parents(fbx_body_object)):
-            bpy.data.objects.remove(parent, do_unlink=True)
+        bpy.data.batch_remove(list(iter_parents(fbx_body_object)))
 
         self._log("INFO", f"clearing {len(bpy.data.materials)} materials")
-        for material in bpy.data.materials:
-            bpy.data.materials.remove(material, do_unlink=True)
+        bpy.data.batch_remove(bpy.data.materials)
 
         self._log("INFO", f"clearing {len(bpy.data.images)} images")
-        for image in bpy.data.images:
-            bpy.data.images.remove(image, do_unlink=True)
+        bpy.data.batch_remove(bpy.data.images)
 
         self._log("INFO", "loading sectors")
-
         sectors_count = len(body_mesh_json["sectors"])
 
         body_collection = bpy.data.collections.new(body_name)
@@ -135,6 +139,8 @@ class GenerateBodyOperator(Operator):
                 sector_collection.objects.link(fbx_child)
 
                 fbx_child.name = f"{body_name_abbr}.{fbx_child.name}"
+                if fbx_child.data and fbx_child.data.id_type == "MESH":
+                    fbx_child.data.name = fbx_child.name
 
                 unity_transform = Transform.from_json(plain_mesh_json["transform"])
                 fbx_child["unity_path"] = plain_mesh_json["path"]
@@ -151,14 +157,23 @@ class GenerateBodyOperator(Operator):
                 if asset_path not in imported_objs:
                     continue
 
-                imported_obj = imported_objs[asset_path]
-                if not imported_obj:
+                imported_obj, asset_uses_count = imported_objs[asset_path]
+                if imported_obj is None:
                     continue
 
                 obj_copy = imported_obj.copy()
                 sector_collection.objects.link(obj_copy)
 
+                asset_uses_count -= 1
+                if asset_uses_count <= 0:
+                    bpy.data.objects.remove(imported_obj, do_unlink=True)
+                    imported_objs[asset_path] = (None, 0)
+                else:
+                    imported_objs[asset_path] = (imported_obj, asset_uses_count)
+
                 obj_copy.name = f"{body_name_abbr}.{obj_copy.name}"
+                if obj_copy.data and obj_copy.data.id_type == "MESH":
+                    obj_copy.data.name = obj_copy.name
 
                 unity_transform = Transform.from_json(streamed_mesh_json["transform"])
                 obj_copy["unity_path"] = asset_path
@@ -169,23 +184,17 @@ class GenerateBodyOperator(Operator):
                 obj_copy.matrix_world = unity_transform.to_right_matrix() @ add_transform_streamed
 
             self._log("INFO", "deleting empties")
-            for empty in [e for e in sector_collection.objects if e.type == "EMPTY"]:
-                bpy.data.objects.remove(empty, do_unlink=True)
+            bpy.data.batch_remove([e for e in sector_collection.objects if e.type == "EMPTY"])
 
         sector_indices_text.write("}")
 
-        self._log("INFO", f"deleting ignored objects")
-
-        bpy.ops.object.select_all(action="DESELECT")
-        for obj in context.scene.collection.objects:
-            obj.select_set(True)
-
-        for ignored_object_pattern in preferences.ignored_objects.split(","):
-            bpy.ops.object.select_pattern(pattern=f"*{ignored_object_pattern}*", case_sensitive=False, extend=True)
-
-        bpy.ops.object.delete()
+        objects_to_delete = context.scene.collection.objects
+        num_of_objects_to_delete = len(objects_to_delete)
+        self._log("INFO", f"deleting {num_of_objects_to_delete} scene objects")
+        bpy.data.batch_remove(objects_to_delete)
 
         self._log("INFO", "finished")
+        bpy.ops.object.select_all(action="DESELECT")
 
     def _body_name_abbreviation(self, ground_body_name: str) -> str:
         ground_body_name = ground_body_name.removesuffix("_Body")

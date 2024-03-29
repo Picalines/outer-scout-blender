@@ -79,8 +79,17 @@ class APIClient:
     def post_object(self, *, name: str, transform: Transform | None = None, parent: str | None = None):
         return self._post("objects", data={"name": name, "transform": transform.to_json(parent=parent)})
 
-    def get_object_mesh(self, name: str) -> Result[ObjectMeshJson, str]:
-        return self._get(f"objects/{name}/mesh").bind(self._parse_json_response)
+    def get_object_mesh(
+        self, name: str, *, ignore_paths: list[str], ignore_layers: list[str], case_sensitive: bool
+    ) -> Result[ObjectMeshJson, str]:
+        return self._get(
+            f"objects/{name}/mesh",
+            query={
+                "ignorePaths": ",".join(ignore_paths),
+                "ignoreLayers": ",".join(ignore_layers),
+                "caseSensitive": str(case_sensitive).lower(),
+            },
+        ).bind(self._parse_json_response)
 
     def get_camera(self, object_name: str) -> Result[GetCameraJson, str]:
         return self._get(f"objects/{object_name}/camera").bind(self._parse_json_response)

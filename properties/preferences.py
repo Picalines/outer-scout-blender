@@ -12,8 +12,7 @@ class OuterScoutPreferences(AddonPreferences):
 
     api_port: IntProperty(
         name="API port",
-        description="Add-on communicates with the Outer Scout mod through localhost at this port.\n"
-        + "Should be same as in the mod settings",
+        description="Add-on communicates with the Outer Scout mod through localhost at this port. Should be same as in the mod settings",
         default=2209,
     )
 
@@ -29,10 +28,16 @@ class OuterScoutPreferences(AddonPreferences):
         subtype="DIR_PATH",
     )
 
-    ignored_objects: StringProperty(
-        name="Ignored objects",
-        description="Addon will ignore game objects that include one of these parts in their names",
-        default="proxy,effect,fog,shockLayer,atmosphere,fadeBubble,whiteHoleSingularity,normals",
+    import_ignore_paths: StringProperty(
+        name="Ignore Paths",
+        description="The list is separated by commas. If the path to the asset contains at least one substring from the list, the asset is skipped ",
+        default=":,proxy,effect,fog,decal,shockLayer,atmosphere,fadeBubble,whiteHoleSingularity,normals,darknessPlane,targetPlane,lightbeam,stencil",
+    )
+
+    import_ignore_layers: StringProperty(
+        name="Ignore Layers",
+        description="The list is separated by commas. If the asset is located on one of the Unity layers from the list, it is skipped",
+        default="DreamSimulation",
     )
 
     @staticmethod
@@ -45,7 +50,8 @@ class OuterScoutPreferences(AddonPreferences):
         self.layout.prop(self, "api_port")
         self.layout.prop(self, "ow_bodies_folder")
         self.layout.prop(self, "ow_assets_folder")
-        self.layout.prop(self, "ignored_objects")
+        self.layout.prop(self, "import_ignore_paths")
+        self.layout.prop(self, "import_ignore_layers")
 
     @property
     def are_valid(self) -> bool:
