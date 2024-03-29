@@ -15,7 +15,7 @@ class CameraPanel(Panel):
 
     @classmethod
     def poll(cls, context) -> bool:
-        return context.active_object.data.id_type == "CAMERA" and SceneProperties.from_context(context).is_scene_created
+        return context.active_object.data and context.active_object.data.id_type == "CAMERA" and SceneProperties.from_context(context).is_scene_created
 
     def draw(self, context):
         layout = self.layout
