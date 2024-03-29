@@ -29,6 +29,7 @@ class RecordOperator(AsyncOperator):
         return scene_props.is_scene_created
 
     @operator_do
+    @with_defers
     def _run_async(self, context):
         recording_props = RecordingProperties.from_context(context)
 
@@ -60,6 +61,7 @@ class RecordOperator(AsyncOperator):
 
         recording_props.progress = 0
         recording_props.in_progress = True
+        defer(setattr, recording_props, "in_progress", False)
 
         self._add_timer(context, recording_props.modal_timer_delay)
 
@@ -74,11 +76,9 @@ class RecordOperator(AsyncOperator):
 
             yield {"TIMER"}
 
-        recording_props.in_progress = False
-
-        self.report({"INFO"}, "recording finished")
-
         api_client.delete_scene().then()
+
+        self._reimport_camera_recordings(context)
 
     @Result.do()
     @with_defers
@@ -201,7 +201,7 @@ class RecordOperator(AsyncOperator):
             bpy.ops.object.empty_add()
             camera_track_empty: Object = context.active_object
 
-            defer(lambda: bpy.data.objects.remove(camera_track_empty, do_unlink=True))
+            defer(lambda e: bpy.data.objects.remove(e, do_unlink=True), camera_track_empty)
 
             camera_track_empty.name = f"outer_scout.{object_name}.track"
             camera_track_empty.rotation_mode = "QUATERNION"
@@ -236,7 +236,7 @@ class RecordOperator(AsyncOperator):
             )
 
             track_action = camera_track_empty.animation_data.action
-            defer(lambda: bpy.data.actions.remove(track_action, do_unlink=True))
+            defer(lambda a: bpy.data.actions.remove(a, do_unlink=True), track_action)
 
             animation_properties_json = {}
 
@@ -259,12 +259,22 @@ class RecordOperator(AsyncOperator):
 
             api_client.put_keyframes(object_name, {"properties": animation_properties_json}).then()
 
+    def _reimport_camera_recordings(self, context: Context):
+        scene = context.scene
+        cameras: list[tuple[Object, Camera]] = [
+            (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
+        ]
+
+        for camera_object, camera in cameras:
+            camera_props = CameraProperties.of_camera(camera)
+            if not camera_props.is_used_in_scene:
+                continue
+
+            with context.temp_override(active_object=camera_object):
+                bpy.ops.outer_scout.import_camera_recording()
+
     def _after_event(self, context: Context, _: Event):
         context.area.tag_redraw()
-
-    def _get_transform_local_to(self, parent: Object, child: Object) -> Transform:
-        local_matrix = parent.matrix_world.inverted() @ child.matrix_world
-        return Transform.from_matrix(local_matrix)
 
 
 def get_camera_api_name(camera: Camera):
