@@ -1,6 +1,7 @@
 from bpy.types import Camera, Panel
 
 from ..bpy_register import bpy_register
+from ..operators import ImportCameraRecordingOperator
 from ..properties import CameraProperties, SceneProperties
 
 
@@ -43,6 +44,8 @@ class CameraPanel(Panel):
             case "EQUIRECTANGULAR":
                 layout.prop(camera_props, "color_recording_path", text="Recording Path")
                 layout.prop(camera_props, "equirect_face_size", text="Face Size")
+
+        layout.operator(ImportCameraRecordingOperator.bl_idname, icon="FILE_MOVIE")
 
         clip_header, clip_panel = layout.panel(f"{self.__class__.__name__}.clips", default_closed=True)
         clip_header.label(text="Movie Clips")
