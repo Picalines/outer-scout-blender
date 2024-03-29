@@ -94,7 +94,7 @@ class RecordOperator(AsyncOperator):
 
         for object, camera in cameras:
             camera_props = CameraProperties.of_camera(camera)
-            if camera_props.outer_scout_type == "NONE":
+            if not camera_props.is_used_in_scene:
                 continue
 
             object_name = get_camera_api_name(camera)
@@ -129,7 +129,7 @@ class RecordOperator(AsyncOperator):
                 case not_implemented_camera_type:
                     raise NotImplementedError(f"camera of type {not_implemented_camera_type} is not implemented")
 
-            if camera_props.is_recording_color:
+            if camera_props.has_color_recording_path:
                 api_client.post_texture_recorder(
                     object_name,
                     {
@@ -140,7 +140,7 @@ class RecordOperator(AsyncOperator):
                     },
                 ).then()
 
-            if camera_props.is_recording_depth:
+            if camera_props.has_depth_recording_path:
                 api_client.post_texture_recorder(
                     object_name,
                     {
@@ -192,7 +192,7 @@ class RecordOperator(AsyncOperator):
 
         for camera_object, camera in cameras:
             camera_props = CameraProperties.of_camera(camera)
-            if camera_props.outer_scout_type == "NONE":
+            if not camera_props.is_used_in_scene:
                 continue
 
             object_name = get_camera_api_name(camera)

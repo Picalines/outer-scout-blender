@@ -15,7 +15,11 @@ class CameraPanel(Panel):
 
     @classmethod
     def poll(cls, context) -> bool:
-        return context.active_object.data and context.active_object.data.id_type == "CAMERA" and SceneProperties.from_context(context).is_scene_created
+        return (
+            context.active_object.data
+            and context.active_object.data.id_type == "CAMERA"
+            and SceneProperties.from_context(context).is_scene_created
+        )
 
     def draw(self, context):
         layout = self.layout
@@ -27,8 +31,10 @@ class CameraPanel(Panel):
 
         layout.prop(camera_props, "outer_scout_type")
 
-        if camera_props.outer_scout_type == "None":
+        if camera_props.outer_scout_type == "NONE":
             return
+
+        layout.prop(camera_props, "is_recording_enabled")
 
         match camera_props.outer_scout_type:
             case "PERSPECTIVE":
@@ -44,5 +50,4 @@ class CameraPanel(Panel):
             clip_panel.enabled = False
             clip_panel.prop(camera_props, "color_movie_clip")
             clip_panel.prop(camera_props, "depth_movie_clip")
-
 

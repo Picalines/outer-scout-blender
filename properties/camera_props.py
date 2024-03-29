@@ -1,4 +1,4 @@
-from bpy.props import EnumProperty, IntProperty, PointerProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty, StringProperty
 from bpy.types import Camera, MovieClip, PropertyGroup
 
 from ..bpy_register import bpy_register_property
@@ -16,6 +16,8 @@ class CameraProperties(PropertyGroup):
         ],
         options=set(),
     )
+
+    is_recording_enabled: BoolProperty(name="Recording Enabled", default=True)
 
     equirect_face_size: IntProperty(
         name="Equirectangular Face Size",
@@ -56,10 +58,14 @@ class CameraProperties(PropertyGroup):
         return camera.outer_scout_camera
 
     @property
-    def is_recording_color(self) -> bool:
+    def is_used_in_scene(self) -> bool:
+        return self.outer_scout_type != "NONE" and self.is_recording_enabled
+
+    @property
+    def has_color_recording_path(self) -> bool:
         return self.color_recording_path != ""
 
     @property
-    def is_recording_depth(self) -> bool:
+    def has_depth_recording_path(self) -> bool:
         return self.outer_scout_type != "equirectangular" and self.depth_recording_path != ""
 
