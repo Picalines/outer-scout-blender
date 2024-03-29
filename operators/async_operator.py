@@ -38,6 +38,7 @@ class AsyncOperator(Operator):
             context.window_manager.event_timer_remove(self._timer)
 
     def invoke(self, context: Context, _):
+        self._timer = None
         self._async_generator = GeneratorWithState(self._run_async(context))
 
         first_result = self.__poll_async_generator(context)
