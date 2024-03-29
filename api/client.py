@@ -18,6 +18,7 @@ from .models import (
     PlayerSectorListJson,
     PostRecordingJson,
     PostSceneJson,
+    PutKeyframesJson,
     RecordingStatusJson,
     Transform,
     TransformRecorderJson,
@@ -92,6 +93,9 @@ class APIClient:
 
     def post_transform_recorder(self, object_name: str, json: TransformRecorderJson):
         return self._post(f"objects/{object_name}/recorders", data={**json, "property": "transform"})
+
+    def put_keyframes(self, object_name: str, json: PutKeyframesJson):
+        return self._put(f"objects/{object_name}/keyframes", data=json)
 
     def get_ground_body(self) -> Result[GroundBodyJson, str]:
         return self._get("player/ground-body").bind(self._parse_json_response)

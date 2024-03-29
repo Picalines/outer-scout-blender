@@ -15,12 +15,12 @@ RIGHT_HANDED_TO_LEFT = Matrix(
 LEFT_HANDED_TO_RIGHT = RIGHT_HANDED_TO_LEFT.inverted()
 
 
-def left_matrix_to_right(unity_matrix: Matrix):
-    return LEFT_HANDED_TO_RIGHT @ unity_matrix @ RIGHT_HANDED_TO_LEFT
+def left_matrix_to_right(left_matrix: Matrix):
+    return LEFT_HANDED_TO_RIGHT @ left_matrix @ RIGHT_HANDED_TO_LEFT
 
 
-def right_matrix_to_left(blender_matrix: Matrix):
-    return RIGHT_HANDED_TO_LEFT @ blender_matrix @ LEFT_HANDED_TO_RIGHT
+def right_matrix_to_left(right_matrix: Matrix):
+    return RIGHT_HANDED_TO_LEFT @ right_matrix @ LEFT_HANDED_TO_RIGHT
 
 
 class TransformJson(TypedDict, total=False):

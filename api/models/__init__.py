@@ -1,3 +1,4 @@
+from .animation import *
 from .api import *
 from .camera import *
 from .ground_body import *
