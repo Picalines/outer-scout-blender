@@ -106,7 +106,10 @@ class APIClient:
     def post_transform_recorder(self, object_name: str, json: TransformRecorderJson):
         return self._post(f"objects/{object_name}/recorders", data={**json, "property": "transform"})
 
-    def put_keyframes(self, object_name: str, json: PutKeyframesJson):
+    def put_scene_keyframes(self, json: PutKeyframesJson):
+        return self._put(f"scene/keyframes", data=json)
+
+    def put_object_keyframes(self, object_name: str, json: PutKeyframesJson):
         return self._put(f"objects/{object_name}/keyframes", data=json)
 
     def get_ground_body(self) -> Result[GroundBodyJson, str]:
