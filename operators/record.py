@@ -6,6 +6,7 @@ from typing import Callable
 import bpy
 from bpy.path import abspath, clean_name
 from bpy.types import ID, Camera, Context, Event, FCurve, Object
+from bpy_extras.anim_utils import BakeOptions, bake_action
 from mathutils import Matrix
 
 from ..api import LEFT_HANDED_TO_RIGHT, RIGHT_HANDED_TO_LEFT, APIClient, Transform
@@ -169,8 +170,6 @@ class RecordOperator(AsyncOperator):
         ground_inverse_empty = add_temp_empty(context, "outer_scout.ground_inverse")
         generate_inverted_transform_drivers(ground_inverse_empty, scene_props.ground_body)
 
-        bpy.ops.object.select_all(action="DESELECT")
-
         origin_empty = add_temp_empty(context, "outer_scout.scene.origin", matrix_world=RIGHT_HANDED_TO_LEFT)
         add_multiply_transform_constraint(origin_empty, ground_inverse_empty)
         add_multiply_transform_constraint(origin_empty, left_to_right_empty)
@@ -187,17 +186,26 @@ class RecordOperator(AsyncOperator):
                 target_data_path=scene_prop_path,
             )
 
-        bpy.ops.nla.bake(
-            frame_start=scene.frame_start,
-            frame_end=scene.frame_end,
-            only_selected=True,
-            visual_keying=True,
-            clear_constraints=True,
-            bake_types={"OBJECT"},
-            channel_types={"LOCATION", "ROTATION", "PROPS"},
+        track_action = bake_action(
+            origin_empty,
+            action=None,
+            frames=scene_frame_range,
+            bake_options=BakeOptions(
+                only_selected=True,
+                do_pose=False,
+                do_object=True,
+                do_visual_keying=True,
+                do_constraint_clear=True,
+                do_parents_clear=True,
+                do_clean=True,
+                do_location=True,
+                do_rotation=True,
+                do_scale=False,
+                do_bbone=False,
+                do_custom_props=True,
+            ),
         )
 
-        track_action = origin_empty.animation_data.action
         defer(bpy.data.actions.remove, track_action, do_unlink=True)
 
         vector_index_to_axis = {0: "x", 1: "y", 2: "z", 3: "w"}
@@ -265,7 +273,6 @@ class RecordOperator(AsyncOperator):
 
             object_name = get_camera_api_name(camera)
 
-            bpy.ops.object.select_all(action="DESELECT")
             camera_empty = add_temp_empty(
                 context, f"outer_scout.camera.{object_name}", matrix_world=RIGHT_HANDED_TO_LEFT
             )
@@ -287,17 +294,26 @@ class RecordOperator(AsyncOperator):
                         target_data_path=camera_prop_path,
                     )
 
-            bpy.ops.nla.bake(
-                frame_start=scene.frame_start,
-                frame_end=scene.frame_end,
-                only_selected=True,
-                visual_keying=True,
-                clear_constraints=True,
-                bake_types={"OBJECT"},
-                channel_types={"LOCATION", "ROTATION", "PROPS"},
+            track_action = bake_action(
+                camera_empty,
+                action=None,
+                frames=scene_frame_range,
+                bake_options=BakeOptions(
+                    only_selected=True,
+                    do_pose=False,
+                    do_object=True,
+                    do_visual_keying=True,
+                    do_constraint_clear=True,
+                    do_parents_clear=True,
+                    do_clean=True,
+                    do_location=True,
+                    do_rotation=True,
+                    do_scale=False,
+                    do_bbone=False,
+                    do_custom_props=True,
+                ),
             )
 
-            track_action = camera_empty.animation_data.action
             defer(bpy.data.actions.remove, track_action, do_unlink=True)
 
             animation_properties_json = {}
