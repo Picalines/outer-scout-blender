@@ -33,7 +33,7 @@ class ImportBodyOperator(Operator):
     @classmethod
     def poll(cls, context) -> bool:
         scene_props = SceneProperties.from_context(context)
-        return scene_props.has_origin and not scene_props.has_ground_body
+        return scene_props.has_origin
 
     def invoke(self, context, _):
         return context.window_manager.invoke_props_dialog(self)
@@ -100,9 +100,12 @@ class ImportBodyOperator(Operator):
 
             sector_collection_instances.append(bpy.context.active_object)
 
-        body_object = bpy.data.objects.new(body_name, None)
-        scene_props.ground_body = body_object
-        context.scene.collection.objects.link(body_object)
+        if (body_object := scene_props.ground_body) is None:
+            body_object = bpy.data.objects.new(body_name, None)
+            context.scene.collection.objects.link(body_object)
+            scene_props.ground_body = body_object
+
+            bpy.ops.outer_scout.align_ground_body(target_origin="SCENE_ORIGIN")
 
         body_object.empty_display_size = 3
         body_object.empty_display_type = "PLAIN_AXES"
@@ -125,9 +128,7 @@ class ImportBodyOperator(Operator):
 
             sector_collection_instance.hide_render = True
             sector_collection_instance.hide_select = True
-            sector_collection_instance.hide_set(state=is_body_hidden)
-
-        bpy.ops.outer_scout.align_ground_body()
+            sector_collection_instance.hide_set(is_body_hidden)
 
     def _generate_body_in_background(self, body_name: str) -> int:
         operator = GenerateBodyBackgroundOperator.bl_idname

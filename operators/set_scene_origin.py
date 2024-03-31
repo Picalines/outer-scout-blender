@@ -1,4 +1,3 @@
-import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy.types import Operator
 
@@ -72,7 +71,11 @@ class SetSceneOriginOperator(Operator):
 
     origin_location: EnumProperty(
         name="Origin Location",
-        items=[("CENTER", "Center", ""), ("PLAYER_FEET", "Player", ""), ("SURVEYOR_PROBE", "Scout", "")],
+        items=[
+            ("BODY_CENTER", "Body Center", ""),
+            ("PLAYER_FEET", "Player", ""),
+            ("SURVEYOR_PROBE", "Scout", ""),
+        ],
     )
 
     def draw(self, _) -> None:
@@ -100,7 +103,7 @@ class SetSceneOriginOperator(Operator):
             origin_parent = self.origin_parent
 
         match self.origin_location:
-            case "CENTER":
+            case "BODY_CENTER":
                 origin_position = (0, 0, 0)
                 origin_rotation = (0, 0, 0, 1)
 
@@ -118,16 +121,13 @@ class SetSceneOriginOperator(Operator):
                 origin_position = tuple(probe_transform.position)
                 origin_rotation = tuple(probe_transform.rotation)
 
-        scene_properties = SceneProperties.from_context(context)
-        scene_properties.origin_parent = origin_parent
-        scene_properties.origin_position = origin_position
-        scene_properties.origin_rotation = origin_rotation
+        scene_props = SceneProperties.from_context(context)
+        scene_props.origin_parent = origin_parent
+        scene_props.origin_position = origin_position
+        scene_props.origin_rotation = origin_rotation
 
         context.area.tag_redraw()
         for area in context.screen.areas:
             if area.type == "VIEW_3D":
                 area.tag_redraw()
-
-        if scene_properties.has_ground_body:
-            bpy.ops.outer_scout.align_ground_body()
 

@@ -1,7 +1,7 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..operators import ImportBodyOperator, SetSceneOriginOperator, WarpPlayerOperator
+from ..operators import AlignGroundBodyOperator, ImportBodyOperator, SetSceneOriginOperator, WarpPlayerOperator
 from ..properties import SceneProperties
 
 
@@ -18,6 +18,7 @@ class ScenePanel(Panel):
         scene_props = SceneProperties.from_context(context)
         is_scene_created = scene_props.is_scene_created
         has_origin = scene_props.has_origin
+        has_ground_body = scene_props.has_ground_body
 
         layout = self.layout
         layout.use_property_split = True
@@ -29,30 +30,39 @@ class ScenePanel(Panel):
         set_origin_props = set_origin_column.operator(
             SetSceneOriginOperator.bl_idname,
             text=("Set Origin" if has_origin else "Create Scene"),
-            icon=("OBJECT_ORIGIN" if has_origin else "WORLD"),
+            icon=("ORIENTATION_LOCAL" if has_origin else "WORLD"),
         )
 
         if has_origin:
             set_origin_props.detect_origin_parent = False
             set_origin_props.origin_parent = scene_props.origin_parent
 
-            warp_column = origin_row.column()
-            warp_column.operator_context = "EXEC_DEFAULT"
+            align_body_column = origin_row.column()
+            align_body_column.operator_context = "EXEC_DEFAULT"
+            align_props = align_body_column.operator(
+                AlignGroundBodyOperator.bl_idname, text="Align ground to origin", icon="OBJECT_ORIGIN"
+            )
+            align_props.target_origin = "SCENE_ORIGIN"
 
-            warp_props = warp_column.operator(
+            warp_row = layout.row()
+            warp_row.operator_context = "EXEC_DEFAULT"
+
+            warp_props = warp_row.operator(
                 operator=WarpPlayerOperator.bl_idname, text="Warp To Origin", icon="ARMATURE_DATA"
             )
-
             warp_props.destination = "ORIGIN"
 
-        has_ground_body = scene_props.has_ground_body
-
-        if has_origin and not has_ground_body:
             import_body_row = layout.row()
             import_body_row.operator_context = "INVOKE_DEFAULT"
 
             import_body_row.operator(
-                ImportBodyOperator.bl_idname, text=f"Import {scene_props.origin_parent}", icon="WORLD"
+                ImportBodyOperator.bl_idname,
+                text=(
+                    f"Add {scene_props.origin_parent} sectors"
+                    if has_ground_body
+                    else f"Import {scene_props.origin_parent}"
+                ),
+                icon="WORLD",
             )
 
         if is_scene_created:

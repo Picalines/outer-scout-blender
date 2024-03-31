@@ -2,7 +2,7 @@ import bpy
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..operators import ToggleGroundBodyOperator, WarpPlayerOperator
+from ..operators import AlignGroundBodyOperator, ToggleGroundBodyOperator, WarpPlayerOperator
 from ..properties import SceneProperties
 
 
@@ -36,10 +36,15 @@ class ViewPanel(Panel):
 
         warp_row = layout.row()
         warp_row.operator_context = "EXEC_DEFAULT"
-        warp_props = warp_row.operator(
-            operator=WarpPlayerOperator.bl_idname, text="Warp to Cursor", icon="ARMATURE_DATA"
-        )
+        warp_props = warp_row.operator(WarpPlayerOperator.bl_idname, text="Warp to Cursor", icon="ARMATURE_DATA")
         warp_props.destination = "CURSOR"
+
+        align_body_row = layout.row()
+        align_body_row.operator_context = "EXEC_DEFAULT"
+        align_body_props = align_body_row.operator(
+            AlignGroundBodyOperator.bl_idname, text="Align ground to Cursor", icon="WORLD"
+        )
+        align_body_props.target_origin = "CURSOR"
 
         return  # TODO: implement synchronize operator
 
