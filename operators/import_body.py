@@ -107,8 +107,6 @@ class ImportBodyOperator(Operator):
         body_object.empty_display_size = 3
         body_object.empty_display_type = "PLAIN_AXES"
         body_object.hide_render = True
-        body_object.lock_location = (True,) * 3
-        body_object.lock_rotation = (True,) * 3
         body_object.lock_scale = (True,) * 3
 
         is_body_hidden = body_object.hide_get()
