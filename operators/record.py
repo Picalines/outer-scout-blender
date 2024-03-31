@@ -216,9 +216,6 @@ class RecordOperator(AsyncOperator):
                 case "rotation_quaternion":
                     outer_scout_property = "transform.rotation." + quaternion_index_to_axis[fcurve.array_index]
                     animation_properties_json = origin_animation_properties_json
-                case "scale":
-                    outer_scout_property = "transform.scale." + vector_index_to_axis[fcurve.array_index]
-                    animation_properties_json = origin_animation_properties_json
                 case custom_data_path:
                     outer_scout_property = custom_data_path[2:-2]
                     animation_properties_json = scene_animation_properties_json
@@ -313,8 +310,6 @@ class RecordOperator(AsyncOperator):
                         outer_scout_property = "transform.position." + vector_index_to_axis[fcurve.array_index]
                     case "rotation_quaternion":
                         outer_scout_property = "transform.rotation." + quaternion_index_to_axis[fcurve.array_index]
-                    case "scale":
-                        outer_scout_property = "transform.scale." + vector_index_to_axis[fcurve.array_index]
                     case custom_data_path:
                         outer_scout_property = custom_data_path[2:-2]
 
