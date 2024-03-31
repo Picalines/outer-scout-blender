@@ -1,8 +1,11 @@
+from functools import partial
 from math import radians
+from operator import delitem
+from typing import Callable
 
 import bpy
 from bpy.path import abspath, clean_name
-from bpy.types import ID, Camera, Context, CopyTransformsConstraint, Event, FCurve, Object
+from bpy.types import ID, Camera, Context, Event, FCurve, Object
 from mathutils import Matrix
 
 from ..api import LEFT_HANDED_TO_RIGHT, RIGHT_HANDED_TO_LEFT, APIClient, Transform
@@ -47,7 +50,12 @@ class RecordOperator(AsyncOperator):
             }
         ).then()
 
+        was_on_frame = scene.frame_current
+        defer(scene.frame_set, was_on_frame)
+
         self._create_cameras(context, api_client).then()
+
+        self._send_scene_keyframes(context, api_client).then()
 
         self._send_camera_keyframes(context, api_client).then()
 
@@ -88,9 +96,7 @@ class RecordOperator(AsyncOperator):
             (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
         ]
 
-        was_on_frame = scene.frame_current
         scene.frame_set(scene.frame_start)
-        defer(lambda: scene.frame_set(was_on_frame))
 
         for object, camera in cameras:
             camera_props = CameraProperties.of_camera(camera)
@@ -153,6 +159,79 @@ class RecordOperator(AsyncOperator):
 
     @Result.do()
     @with_defers
+    def _send_scene_keyframes(self, context: Context, api_client: APIClient):
+        scene = context.scene
+        scene_frame_range = range(scene.frame_start, scene.frame_end + 1)
+        scene_props = SceneProperties.from_context(context)
+
+        left_to_right_empty = add_temp_empty(context, "outer_scout.left_to_right", matrix_world=LEFT_HANDED_TO_RIGHT)
+
+        ground_inverse_empty = add_temp_empty(context, "outer_scout.ground_inverse")
+        generate_inverted_transform_drivers(ground_inverse_empty, scene_props.ground_body)
+
+        bpy.ops.object.select_all(action="DESELECT")
+
+        origin_empty = add_temp_empty(context, "outer_scout.scene.origin", matrix_world=RIGHT_HANDED_TO_LEFT)
+        add_multiply_transform_constraint(origin_empty, ground_inverse_empty)
+        add_multiply_transform_constraint(origin_empty, left_to_right_empty)
+
+        scene_props_to_track = {"time.scale": "outer_scout_scene.time_scale"}
+
+        for scene_prop, scene_prop_path in scene_props_to_track.items():
+            origin_empty[scene_prop] = 0.0
+            add_single_prop_driver(
+                origin_empty,
+                f'["{scene_prop}"]',
+                target_id_type="SCENE",
+                target_id=scene,
+                target_data_path=scene_prop_path,
+            )
+
+        bpy.ops.nla.bake(
+            frame_start=scene.frame_start,
+            frame_end=scene.frame_end,
+            only_selected=True,
+            visual_keying=True,
+            clear_constraints=True,
+            bake_types={"OBJECT"},
+            channel_types={"LOCATION", "ROTATION", "PROPS"},
+        )
+
+        track_action = origin_empty.animation_data.action
+        defer(bpy.data.actions.remove, track_action, do_unlink=True)
+
+        vector_index_to_axis = {0: "x", 1: "y", 2: "z", 3: "w"}
+        quaternion_index_to_axis = {0: "w", 1: "x", 2: "y", 3: "z"}
+
+        scene_animation_properties_json = {}
+        origin_animation_properties_json = {}
+
+        for fcurve in track_action.fcurves:
+            fcurve: FCurve
+
+            match fcurve.data_path:
+                case "location":
+                    outer_scout_property = "transform.position." + vector_index_to_axis[fcurve.array_index]
+                    animation_properties_json = origin_animation_properties_json
+                case "rotation_quaternion":
+                    outer_scout_property = "transform.rotation." + quaternion_index_to_axis[fcurve.array_index]
+                    animation_properties_json = origin_animation_properties_json
+                case "scale":
+                    outer_scout_property = "transform.scale." + vector_index_to_axis[fcurve.array_index]
+                    animation_properties_json = origin_animation_properties_json
+                case custom_data_path:
+                    outer_scout_property = custom_data_path[2:-2]
+                    animation_properties_json = scene_animation_properties_json
+
+            animation_properties_json[outer_scout_property] = {
+                "keyframes": {frame: {"value": fcurve.evaluate(frame)} for frame in scene_frame_range}
+            }
+
+        api_client.put_scene_keyframes({"properties": scene_animation_properties_json}).then()
+        api_client.put_object_keyframes("scene.origin", {"properties": origin_animation_properties_json}).then()
+
+    @Result.do()
+    @with_defers
     def _send_camera_keyframes(self, context: Context, api_client: APIClient):
         scene = context.scene
         scene_frame_range = range(scene.frame_start, scene.frame_end + 1)
@@ -174,21 +253,13 @@ class RecordOperator(AsyncOperator):
                 "camera.perspective.nearClipPlane": "clip_start",
                 "camera.perspective.farClipPlane": "clip_end",
             },
-            "EQUIRECTANGULAR": {},
         }
 
-        bpy.ops.object.empty_add()
-        left_to_right_empty: Object = context.active_object
-        left_to_right_empty.matrix_world = LEFT_HANDED_TO_RIGHT
-        left_to_right_empty.name = "outer_scout.left_to_right_empty"
+        left_to_right_empty = add_temp_empty(context, "outer_scout.left_to_right", matrix_world=LEFT_HANDED_TO_RIGHT)
 
-        bpy.ops.object.empty_add()
-        camera_rotation_empty: Object = context.active_object
-        camera_rotation_empty.matrix_world = Matrix.Rotation(radians(-90), 4, "X")
-        camera_rotation_empty.name = "outer_scout.camera_rotation"
-
-        defer(lambda: bpy.data.objects.remove(left_to_right_empty, do_unlink=True))
-        defer(lambda: bpy.data.objects.remove(camera_rotation_empty, do_unlink=True))
+        camera_rotation_empty = add_temp_empty(
+            context, "outer_scout.camera_rotation", matrix_world=Matrix.Rotation(radians(-90), 4, "X")
+        )
 
         for camera_object, camera in cameras:
             camera_props = CameraProperties.of_camera(camera)
@@ -198,45 +269,39 @@ class RecordOperator(AsyncOperator):
             object_name = get_camera_api_name(camera)
 
             bpy.ops.object.select_all(action="DESELECT")
-            bpy.ops.object.empty_add()
-            camera_track_empty: Object = context.active_object
-
-            defer(lambda e: bpy.data.objects.remove(e, do_unlink=True), camera_track_empty)
-
-            camera_track_empty.name = f"outer_scout.{object_name}.track"
-            camera_track_empty.rotation_mode = "QUATERNION"
+            camera_empty = add_temp_empty(
+                context, f"outer_scout.camera.{object_name}", matrix_world=RIGHT_HANDED_TO_LEFT
+            )
 
             # idea is to implement right_matrix_to_left using the Blender constraints
             # and also add X rotation to the camera
-            camera_track_empty.matrix_world = RIGHT_HANDED_TO_LEFT
-            add_copy_transform_constraint(camera_track_empty, camera_object, mix_mode="AFTER_FULL")
-            add_copy_transform_constraint(camera_track_empty, camera_rotation_empty, mix_mode="AFTER_FULL")
-            add_copy_transform_constraint(camera_track_empty, left_to_right_empty, mix_mode="AFTER_FULL")
+            add_multiply_transform_constraint(camera_empty, camera_object)
+            add_multiply_transform_constraint(camera_empty, camera_rotation_empty)
+            add_multiply_transform_constraint(camera_empty, left_to_right_empty)
 
-            for camera_prop, camera_prop_path in camera_props_to_track[camera_props.outer_scout_type].items():
-                camera_track_empty[camera_prop] = 0.0
-                add_single_prop_copy_driver(
-                    camera_track_empty,
-                    f'["{camera_prop}"]',
-                    target_id_type="CAMERA",
-                    target_id=camera,
-                    target_data_path=camera_prop_path,
-                )
+            if camera_props.outer_scout_type in camera_props_to_track:
+                for camera_prop, camera_prop_path in camera_props_to_track[camera_props.outer_scout_type].items():
+                    camera_empty[camera_prop] = 0.0
+                    add_single_prop_driver(
+                        camera_empty,
+                        f'["{camera_prop}"]',
+                        target_id_type="CAMERA",
+                        target_id=camera,
+                        target_data_path=camera_prop_path,
+                    )
 
             bpy.ops.nla.bake(
                 frame_start=scene.frame_start,
                 frame_end=scene.frame_end,
-                step=1,
                 only_selected=True,
                 visual_keying=True,
                 clear_constraints=True,
-                clean_curves=True,
                 bake_types={"OBJECT"},
-                channel_types={"LOCATION", "ROTATION", "SCALE", "PROPS"},
+                channel_types={"LOCATION", "ROTATION", "PROPS"},
             )
 
-            track_action = camera_track_empty.animation_data.action
-            defer(lambda a: bpy.data.actions.remove(a, do_unlink=True), track_action)
+            track_action = camera_empty.animation_data.action
+            defer(bpy.data.actions.remove, track_action, do_unlink=True)
 
             animation_properties_json = {}
 
@@ -257,7 +322,7 @@ class RecordOperator(AsyncOperator):
                     "keyframes": {frame: {"value": fcurve.evaluate(frame)} for frame in scene_frame_range}
                 }
 
-            api_client.put_keyframes(object_name, {"properties": animation_properties_json}).then()
+            api_client.put_object_keyframes(object_name, {"properties": animation_properties_json}).then()
 
     def _reimport_camera_recordings(self, context: Context):
         scene = context.scene
@@ -292,8 +357,20 @@ def get_camera_gate_fit(context: Context, camera: Camera):
             return "horizontal"
 
 
-def add_copy_transform_constraint(object: Object, target: Object, *, mix_mode: str):
-    constraint: CopyTransformsConstraint = object.constraints.new("COPY_TRANSFORMS")
+def add_temp_empty(
+    context: Context, name: str, *, rotation_mode="QUATERNION", matrix_world: Matrix | None = None
+) -> Object:
+    bpy.ops.object.empty_add()
+    empty: Object = context.active_object
+    empty.name = name
+    empty.rotation_mode = rotation_mode
+    empty.matrix_world = matrix_world or Matrix.Identity(4)
+    defer(bpy.data.objects.remove, empty, do_unlink=True)
+    return empty
+
+
+def add_transform_mix_constraint(object: Object, target: Object, *, mix_mode: str, type: str):
+    constraint = object.constraints.new(type)
 
     constraint.target = target
     constraint.mix_mode = mix_mode
@@ -301,7 +378,10 @@ def add_copy_transform_constraint(object: Object, target: Object, *, mix_mode: s
     return constraint
 
 
-def add_single_prop_copy_driver(
+add_multiply_transform_constraint = partial(add_transform_mix_constraint, type="COPY_TRANSFORMS", mix_mode="AFTER_FULL")
+
+
+def add_single_prop_driver(
     object: Object,
     data_path: str,
     *,
@@ -310,6 +390,7 @@ def add_single_prop_copy_driver(
     target_data_path: str,
     array_index=-1,
     var_name="v",
+    expression: str | None = None,
 ):
     driver = object.driver_add(data_path, array_index).driver
 
@@ -319,7 +400,52 @@ def add_single_prop_copy_driver(
     driver_var.targets[0].id_type = target_id_type
     driver_var.targets[0].id = target_id
     driver_var.targets[0].data_path = target_data_path
-    driver.expression = driver_var.name
+    driver.expression = expression or driver_var.name
 
     return driver
+
+
+def generate_inverted_transform_drivers(object: Object, matrix_source: Object):
+    inverted_loc_func_name = temp_driver_namespace_func("inverted_loc", lambda m: m.inverted().to_translation())
+    inverted_rot_func_name = temp_driver_namespace_func("inverted_rot", lambda m: m.inverted().to_quaternion())
+
+    matrix_var_name = "m"
+    inverted_loc_expr = lambda i: f"{inverted_loc_func_name}({matrix_var_name})[{i}]"
+    inverted_rot_expr = lambda i: f"{inverted_rot_func_name}({matrix_var_name})[{i}]"
+
+    for loc_i in range(3):
+        add_single_prop_driver(
+            object,
+            "location",
+            array_index=loc_i,
+            target_id_type="OBJECT",
+            target_id=matrix_source,
+            target_data_path="matrix_world",
+            var_name=matrix_var_name,
+            expression=inverted_loc_expr(loc_i),
+        )
+
+    for rot_i in range(4):
+        add_single_prop_driver(
+            object,
+            "rotation_quaternion",
+            array_index=rot_i,
+            target_id_type="OBJECT",
+            target_id=matrix_source,
+            target_data_path="matrix_world",
+            var_name=matrix_var_name,
+            expression=inverted_rot_expr(rot_i),
+        )
+
+
+def temp_driver_namespace_func(prefix: str, func: Callable, postfix="_"):
+    func_name = prefix
+
+    while func_name in bpy.app.driver_namespace:
+        func_name += postfix
+
+    bpy.app.driver_namespace[func_name] = func
+    defer(delitem, bpy.app.driver_namespace, func_name)
+
+    return func_name
 
