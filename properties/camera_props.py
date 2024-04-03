@@ -1,5 +1,5 @@
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty, StringProperty
-from bpy.types import Camera, MovieClip, PropertyGroup
+from bpy.types import Camera, MovieClip, PropertyGroup, NodeTree, Image
 
 from ..bpy_register import bpy_register_property
 
@@ -50,6 +50,18 @@ class CameraProperties(PropertyGroup):
     depth_movie_clip: PointerProperty(
         name="Depth Movie Clip",
         type=MovieClip,
+        options=set(),
+    )
+
+    hdri_image: PointerProperty(
+        name="HDRI Image",
+        type=Image,
+        options=set(),
+    )
+
+    hdri_node_group: PointerProperty(
+        name="HDRI Node Group",
+        type=NodeTree,
         options=set(),
     )
 

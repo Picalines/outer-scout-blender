@@ -5,14 +5,14 @@ from typing import Callable
 
 import bpy
 from bpy.path import abspath, clean_name
-from bpy.types import ID, Camera, Context, Event, FCurve, Object
+from bpy.types import Camera, Context, Event, FCurve, Object
 from bpy_extras.anim_utils import BakeOptions, bake_action
 from mathutils import Matrix
 
 from ..api import LEFT_HANDED_TO_RIGHT, RIGHT_HANDED_TO_LEFT, APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import CameraProperties, RecordingProperties, SceneProperties
-from ..utils import Result, defer, operator_do, with_defers
+from ..utils import Result, add_single_prop_driver, defer, operator_do, with_defers
 from .async_operator import AsyncOperator
 
 
@@ -348,6 +348,8 @@ class RecordOperator(AsyncOperator):
 
             with context.temp_override(active_object=camera_object):
                 bpy.ops.outer_scout.import_camera_recording()
+                if camera_props.hdri_node_group:
+                    bpy.ops.outer_scout.generate_hdri_nodes()
 
     def _after_event(self, context: Context, _: Event):
         context.area.tag_redraw()
@@ -390,30 +392,6 @@ def add_transform_mix_constraint(object: Object, target: Object, *, mix_mode: st
 
 
 add_multiply_transform_constraint = partial(add_transform_mix_constraint, type="COPY_TRANSFORMS", mix_mode="AFTER_FULL")
-
-
-def add_single_prop_driver(
-    object: Object,
-    data_path: str,
-    *,
-    target_id_type: str,
-    target_id: ID,
-    target_data_path: str,
-    array_index=-1,
-    var_name="v",
-    expression: str | None = None,
-):
-    driver = object.driver_add(data_path, array_index).driver
-
-    driver_var = driver.variables.new()
-    driver_var.name = var_name
-    driver_var.type = "SINGLE_PROP"
-    driver_var.targets[0].id_type = target_id_type
-    driver_var.targets[0].id = target_id
-    driver_var.targets[0].data_path = target_data_path
-    driver.expression = expression or driver_var.name
-
-    return driver
 
 
 def generate_inverted_transform_drivers(object: Object, matrix_source: Object):

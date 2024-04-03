@@ -1,5 +1,5 @@
 from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty, PointerProperty, StringProperty
-from bpy.types import Context, Image, NodeTree, Object, PropertyGroup, Scene
+from bpy.types import Context, NodeTree, Object, PropertyGroup, Scene
 from mathutils import Matrix, Quaternion, Vector
 
 from ..bpy_register import bpy_register_property
@@ -48,21 +48,9 @@ class SceneProperties(PropertyGroup):
 
     ground_body: PointerProperty(name="Ground Body", type=Object, options=set())
 
-    hdri_node_group: PointerProperty(
-        name="HDRI Node Group",
-        type=NodeTree,
-        options=set(),
-    )
-
     compositor_node_group: PointerProperty(
         name="Compositor Background & Depth Node Group",
         type=NodeTree,
-        options=set(),
-    )
-
-    hdri_image: PointerProperty(
-        name="HDRI Image",
-        type=Image,
         options=set(),
     )
 

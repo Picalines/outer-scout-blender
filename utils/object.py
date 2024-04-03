@@ -1,9 +1,8 @@
-from typing import Iterable
 import re
+from typing import Iterable
 
 import bpy
 from bpy.types import Object
-
 
 DUPLICATE_OBJECT_NAME_REGEX = re.compile(r"(.*?)\.\d+")
 
@@ -49,3 +48,4 @@ def iter_parents(object: Object):
         if object is None:
             break
         yield object
+

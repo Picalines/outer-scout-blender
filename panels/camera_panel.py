@@ -1,7 +1,7 @@
 from bpy.types import Camera, Panel
 
 from ..bpy_register import bpy_register
-from ..operators import ImportCameraRecordingOperator
+from ..operators import GenerateHDRINodesOperator, ImportCameraRecordingOperator
 from ..properties import CameraProperties, SceneProperties
 
 
@@ -45,12 +45,18 @@ class CameraPanel(Panel):
                 layout.prop(camera_props, "color_recording_path", text="Recording Path")
                 layout.prop(camera_props, "equirect_face_size", text="Face Size")
 
-        layout.operator(ImportCameraRecordingOperator.bl_idname, icon="FILE_MOVIE")
+        import_bg_row = layout.row()
+        import_bg_row.operator(ImportCameraRecordingOperator.bl_idname, icon="FILE_MOVIE")
 
-        clip_header, clip_panel = layout.panel(f"{self.__class__.__name__}.clips", default_closed=True)
-        clip_header.label(text="Movie Clips")
-        if clip_panel:
-            clip_panel.enabled = False
-            clip_panel.prop(camera_props, "color_movie_clip")
-            clip_panel.prop(camera_props, "depth_movie_clip")
+        if camera_props.outer_scout_type == "EQUIRECTANGULAR":
+            hdri_row = layout.row()
+            hdri_row.operator(GenerateHDRINodesOperator.bl_idname, icon="NODE_MATERIAL")
+
+        footage_header, footage_panel = layout.panel(f"{self.__class__.__name__}.clips", default_closed=True)
+        footage_header.label(text="Imported Footage")
+        if footage_panel:
+            footage_panel.enabled = False
+            footage_panel.prop(camera_props, "color_movie_clip")
+            footage_panel.prop(camera_props, "depth_movie_clip")
+            footage_panel.prop(camera_props, "hdri_image")
 
