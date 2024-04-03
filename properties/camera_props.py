@@ -1,7 +1,8 @@
-from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty, StringProperty
-from bpy.types import Camera, MovieClip, PropertyGroup, NodeTree, Image
+from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
+from bpy.types import Camera, Image, NodeTree, PropertyGroup
 
 from ..bpy_register import bpy_register_property
+from .render_texture_props import RenderTextureProperties
 
 
 @bpy_register_property(Camera, "outer_scout_camera")
@@ -27,31 +28,9 @@ class CameraProperties(PropertyGroup):
         options=set(),
     )
 
-    color_recording_path: StringProperty(
-        name="Color Recording Path",
-        description="The path to the file where the color recording will be saved",
-        subtype="FILE_PATH",
-        options=set(),
-    )
+    color_texture_settings: PointerProperty(type=RenderTextureProperties)
 
-    depth_recording_path: StringProperty(
-        name="Depth Recording Path",
-        description="The peth to the file where the depth recording will be saved",
-        subtype="FILE_PATH",
-        options=set(),
-    )
-
-    color_movie_clip: PointerProperty(
-        name="Color Movie Clip",
-        type=MovieClip,
-        options=set(),
-    )
-
-    depth_movie_clip: PointerProperty(
-        name="Depth Movie Clip",
-        type=MovieClip,
-        options=set(),
-    )
+    depth_texture_settings: PointerProperty(type=RenderTextureProperties)
 
     hdri_image: PointerProperty(
         name="HDRI Image",
@@ -74,10 +53,14 @@ class CameraProperties(PropertyGroup):
         return self.outer_scout_type != "NONE" and self.is_recording_enabled
 
     @property
-    def has_color_recording_path(self) -> bool:
-        return self.color_recording_path != ""
+    def color_texture_props(self) -> RenderTextureProperties:
+        return self.color_texture_settings
 
     @property
-    def has_depth_recording_path(self) -> bool:
-        return self.outer_scout_type != "equirectangular" and self.depth_recording_path != ""
+    def depth_texture_props(self) -> RenderTextureProperties:
+        return self.depth_texture_settings
+
+    @property
+    def has_any_recording_path(self) -> bool:
+        return self.color_texture_props.has_recording_path or self.depth_texture_props.has_recording_path
 

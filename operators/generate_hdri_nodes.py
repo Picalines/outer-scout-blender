@@ -2,7 +2,7 @@ from math import radians
 from os import path
 
 import bpy
-from bpy.path import abspath, clean_name
+from bpy.path import clean_name
 from bpy.types import Camera, Object, Operator
 from mathutils import Euler
 
@@ -25,16 +25,18 @@ class GenerateHDRINodesOperator(Operator):
             return False
 
         camera_props = CameraProperties.of_camera(active_object.data)
-        return camera_props.outer_scout_type == "EQUIRECTANGULAR" and camera_props.has_color_recording_path
+        return (
+            camera_props.outer_scout_type == "EQUIRECTANGULAR" and camera_props.color_texture_props.has_recording_path
+        )
 
     @operator_do
     def execute(self, context):
         camera: Camera = context.active_object.data
         equirect_camera = CameraProperties.of_camera(camera)
 
-        hdri_image_path = abspath(equirect_camera.color_recording_path)
+        hdri_image_path = equirect_camera.color_texture_props.absolute_recording_path
         if not path.isfile(hdri_image_path):
-            Result.do_error(f'file "{equirect_camera.color_recording_path}" not found')
+            Result.do_error(f'file "{equirect_camera.color_texture_props.recording_path}" not found')
 
         if equirect_camera.hdri_image:
             bpy.data.images.remove(equirect_camera.hdri_image, do_unlink=True)

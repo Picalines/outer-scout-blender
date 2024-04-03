@@ -4,7 +4,7 @@ from operator import delitem
 from typing import Callable
 
 import bpy
-from bpy.path import abspath, clean_name
+from bpy.path import clean_name
 from bpy.types import Camera, Context, Event, FCurve, Object
 from bpy_extras.anim_utils import BakeOptions, bake_action
 from mathutils import Matrix
@@ -136,27 +136,11 @@ class RecordOperator(AsyncOperator):
                 case not_implemented_camera_type:
                     raise NotImplementedError(f"camera of type {not_implemented_camera_type} is not implemented")
 
-            if camera_props.has_color_recording_path:
-                api_client.post_texture_recorder(
-                    object_name,
-                    {
-                        "property": "camera.renderTexture.color",
-                        "outputPath": abspath(camera_props.color_recording_path),
-                        "format": "mp4",
-                        "constantRateFactor": 18,  # TODO: expose property
-                    },
-                ).then()
+            if camera_props.color_texture_props.has_recording_path:
+                api_client.post_texture_recorder(object_name, "color", camera_props.color_texture_props).then()
 
-            if camera_props.has_depth_recording_path:
-                api_client.post_texture_recorder(
-                    object_name,
-                    {
-                        "property": "camera.renderTexture.depth",
-                        "outputPath": abspath(camera_props.depth_recording_path),
-                        "format": "mp4",
-                        "constantRateFactor": 18,  # TODO: expose property
-                    },
-                ).then()
+            if camera_props.depth_texture_props.has_recording_path:
+                api_client.post_texture_recorder(object_name, "depth", camera_props.depth_texture_props).then()
 
     @Result.do()
     @with_defers

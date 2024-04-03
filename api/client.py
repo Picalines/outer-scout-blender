@@ -1,8 +1,8 @@
-from typing import Any, Never
+from typing import Any, Literal, Never
 
 from bpy.types import Context
 
-from ..properties import OuterScoutPreferences
+from ..properties import OuterScoutPreferences, RenderTextureProperties
 from ..utils import Result
 from .http import Request, Response
 from .models import (
@@ -100,7 +100,15 @@ class APIClient:
     def post_equirect_camera(self, object_name: str, json: EquirectCameraJson):
         return self._post(f"objects/{object_name}/camera", data={**json, "type": "equirectangular"})
 
-    def post_texture_recorder(self, object_name: str, json: ColorTextureRecorderJson):
+    def post_texture_recorder(
+        self, object_name: str, texture_type: Literal["color", "depth"], texture_props: RenderTextureProperties
+    ):
+        json: ColorTextureRecorderJson = {
+            "property": f"camera.renderTexture.{texture_type}",
+            "format": "mp4",
+            "outputPath": texture_props.absolute_recording_path,
+            "constantRateFactor": texture_props.constant_rate_factor,
+        }
         return self._post(f"objects/{object_name}/recorders", data=json)
 
     def post_transform_recorder(self, object_name: str, json: TransformRecorderJson):
