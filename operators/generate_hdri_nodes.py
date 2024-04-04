@@ -3,7 +3,7 @@ from os import path
 
 import bpy
 from bpy.path import clean_name
-from bpy.types import Camera, Object, Operator
+from bpy.types import Camera, Image, Object, Operator
 from mathutils import Euler
 
 from ..bpy_register import bpy_register
@@ -32,19 +32,10 @@ class GenerateHDRINodesOperator(Operator):
     @operator_do
     def execute(self, context):
         camera: Camera = context.active_object.data
+
+        hdri_image = self._import_hdri_image(camera).then()
+
         equirect_camera = CameraProperties.of_camera(camera)
-
-        hdri_image_path = equirect_camera.color_texture_props.absolute_recording_path
-        if not path.isfile(hdri_image_path):
-            Result.do_error(f'file "{equirect_camera.color_texture_props.recording_path}" not found')
-
-        if equirect_camera.hdri_image:
-            bpy.data.images.remove(equirect_camera.hdri_image, do_unlink=True)
-
-        hdri_image = bpy.data.images.load(hdri_image_path)
-        hdri_image.name = f"HDRI.{clean_name(camera.name.removeprefix('//'))}"
-        equirect_camera.hdri_image = hdri_image
-
         if equirect_camera.hdri_node_group:
             hdri_node_group = equirect_camera.hdri_node_group
         else:
@@ -110,3 +101,27 @@ class GenerateHDRINodesOperator(Operator):
         warning_label_node.location = (75, 35)
 
         self.report({"INFO"}, f'node group "{hdri_node_group.name}" generated successfully')
+
+    @Result.do()
+    def _import_hdri_image(self, camera: Camera) -> Image:
+        camera_props = CameraProperties.of_camera(camera)
+
+        hdri_image_path = camera_props.color_texture_props.absolute_recording_path
+        if not path.isfile(hdri_image_path):
+            Result.do_error(f'file "{camera_props.color_texture_props.recording_path}" not found')
+
+        old_hdri_image: Image = camera_props.hdri_image
+        new_hdri_image = bpy.data.images.load(hdri_image_path)
+
+        if old_hdri_image is not None:
+            old_name = old_hdri_image.name
+            old_hdri_image.user_remap(new_hdri_image)
+            bpy.data.images.remove(old_hdri_image)
+            new_hdri_image.name = old_name
+        else:
+            new_hdri_image.name = f"HDRI.{clean_name(camera.name.removeprefix('//'))}"
+
+        camera_props.hdri_image = new_hdri_image
+
+        return new_hdri_image
+
