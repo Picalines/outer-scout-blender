@@ -53,18 +53,21 @@ class GenerateHDRINodesOperator(Operator):
 
         hdri_node_group.nodes.clear()
 
-        if set(hdri_node_group.interface.items_tree.keys()) != {"Strength", "Background"}:
+        STRENGTH_IN_NAME = "Strength"
+        BACKGROUND_OUT_NAME = "Background"
+
+        if set(hdri_node_group.interface.items_tree.keys()) != {STRENGTH_IN_NAME, BACKGROUND_OUT_NAME}:
             hdri_node_group.interface.clear()
 
             strength_input = hdri_node_group.interface.new_socket(
-                "Strength", socket_type=bpy.types.NodeSocketFloat.__name__, in_out="INPUT"
+                STRENGTH_IN_NAME, socket_type=bpy.types.NodeSocketFloat.__name__, in_out="INPUT"
             )
 
             strength_input.default_value = 3
             strength_input.min_value = 0
 
             hdri_node_group.interface.new_socket(
-                "Background", socket_type=bpy.types.NodeSocketShader.__name__, in_out="OUTPUT"
+                BACKGROUND_OUT_NAME, socket_type=bpy.types.NodeSocketShader.__name__, in_out="OUTPUT"
             )
 
         scene = context.scene
@@ -98,7 +101,7 @@ class GenerateHDRINodesOperator(Operator):
                             texture_coord_node.set_main_output("Generated")
 
                 with background_node.build_input("Strength", bpy.types.NodeGroupInput) as input_node:
-                    input_node.set_main_output("Strength")
+                    input_node.set_main_output(STRENGTH_IN_NAME)
 
         arrange_nodes(hdri_node_group)
 
@@ -107,4 +110,3 @@ class GenerateHDRINodesOperator(Operator):
         warning_label_node.location = (75, 35)
 
         self.report({"INFO"}, f'node group "{hdri_node_group.name}" generated successfully')
-
