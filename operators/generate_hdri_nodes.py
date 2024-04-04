@@ -8,7 +8,7 @@ from mathutils import Euler
 
 from ..bpy_register import bpy_register
 from ..properties import CameraProperties
-from ..utils import NodeBuilder, NodeTreeInterfaceBuilder, Result, add_single_prop_driver, arrange_nodes, operator_do
+from ..utils import NodeBuilder, NodeTreeInterfaceBuilder, Result, add_driver, arrange_nodes, operator_do
 
 
 @bpy_register
@@ -60,14 +60,7 @@ class GenerateHDRINodesOperator(Operator):
             image_user.frame_duration = 1
             image_user.use_auto_refresh = True
 
-            add_single_prop_driver(
-                image_user,
-                "frame_offset",
-                target_id=scene,
-                target_data_path="frame_start",
-                var_name="frame_start",
-                expression="frame - frame_start",
-            )
+            add_driver(image_user, "frame_offset", "frame - frame_start", frame_start=(scene, "frame_start"))
 
         with NodeBuilder(hdri_node_group, bpy.types.NodeGroupOutput) as output_node:
             with output_node.build_input(0, bpy.types.ShaderNodeBackground) as background_node:

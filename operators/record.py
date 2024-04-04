@@ -12,7 +12,7 @@ from mathutils import Matrix
 from ..api import LEFT_HANDED_TO_RIGHT, RIGHT_HANDED_TO_LEFT, APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import CameraProperties, RecordingProperties, SceneProperties
-from ..utils import Result, add_single_prop_driver, defer, operator_do, with_defers
+from ..utils import Result, add_driver, defer, operator_do, with_defers
 from .async_operator import AsyncOperator
 
 
@@ -162,12 +162,7 @@ class RecordOperator(AsyncOperator):
 
         for scene_prop, scene_prop_path in scene_props_to_track.items():
             origin_empty[scene_prop] = 0.0
-            add_single_prop_driver(
-                origin_empty,
-                f'["{scene_prop}"]',
-                target_id=scene,
-                target_data_path=scene_prop_path,
-            )
+            add_driver(origin_empty, f'["{scene_prop}"]', "value", value=(scene, scene_prop_path))
 
         track_action = bake_action(
             origin_empty,
@@ -269,12 +264,7 @@ class RecordOperator(AsyncOperator):
             if camera_props.outer_scout_type in camera_props_to_track:
                 for camera_prop, camera_prop_path in camera_props_to_track[camera_props.outer_scout_type].items():
                     camera_empty[camera_prop] = 0.0
-                    add_single_prop_driver(
-                        camera_empty,
-                        f'["{camera_prop}"]',
-                        target_id=camera,
-                        target_data_path=camera_prop_path,
-                    )
+                    add_driver(camera_empty, f'["{camera_prop}"]', "value", value=(camera, camera_prop_path))
 
             track_action = bake_action(
                 camera_empty,
@@ -384,27 +374,13 @@ def generate_inverted_transform_drivers(object: Object, matrix_source: Object):
     inverted_loc_expr = lambda i: f"{inverted_loc_func_name}({matrix_var_name})[{i}]"
     inverted_rot_expr = lambda i: f"{inverted_rot_func_name}({matrix_var_name})[{i}]"
 
+    vars = {matrix_var_name: (matrix_source, "matrix_world")}
+
     for loc_i in range(3):
-        add_single_prop_driver(
-            object,
-            "location",
-            array_index=loc_i,
-            target_id=matrix_source,
-            target_data_path="matrix_world",
-            var_name=matrix_var_name,
-            expression=inverted_loc_expr(loc_i),
-        )
+        add_driver(object, "location", inverted_loc_expr(loc_i), array_index=loc_i, **vars)
 
     for rot_i in range(4):
-        add_single_prop_driver(
-            object,
-            "rotation_quaternion",
-            array_index=rot_i,
-            target_id=matrix_source,
-            target_data_path="matrix_world",
-            var_name=matrix_var_name,
-            expression=inverted_rot_expr(rot_i),
-        )
+        add_driver(object, "rotation_quaternion", inverted_rot_expr(rot_i), array_index=rot_i, **vars)
 
 
 def temp_driver_namespace_func(prefix: str, func: Callable, postfix="_"):
