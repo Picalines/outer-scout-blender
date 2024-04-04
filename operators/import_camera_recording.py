@@ -32,24 +32,19 @@ class ImportCameraRecordingOperator(Operator):
 
         camera_props = CameraProperties.of_camera(camera)
 
-        color_movie_clip = camera_props.color_texture_props.movie_clip
-        camera_background: CameraBackgroundImage | None = (
-            next((bg for bg in camera.background_images if bg.clip == color_movie_clip), None)
-            if color_movie_clip is not None
-            else None
-        )
-
         color_movie_clip = self._import_texture(scene, camera_props.color_texture_props, f"{camera.name}.color").then()
+        self._import_texture(scene, camera_props.depth_texture_props, f"{camera.name}.depth").then()
 
         if camera_props.outer_scout_type == "PERSPECTIVE":
+            camera_background: CameraBackgroundImage | None = next(
+                (bg for bg in camera.background_images if bg.clip and bg.clip.name == color_movie_clip.name), None
+            )
+
             if camera_background is None:
                 camera_background = camera.background_images.new()
                 camera_background.alpha = 1
-
-            camera_background.source = "MOVIE_CLIP"
-            camera_background.clip = color_movie_clip
-
-        self._import_texture(scene, camera_props.depth_texture_props, f"{camera.name}.depth").then()
+                camera_background.source = "MOVIE_CLIP"
+                camera_background.clip = color_movie_clip
 
     @Result.do()
     def _import_texture(self, scene: Scene, texture_props: RenderTextureProperties, clip_id: str) -> MovieClip:
@@ -60,15 +55,19 @@ class ImportCameraRecordingOperator(Operator):
         if not path.isfile(recording_path):
             Result.do_error(f'file "{texture_props.recording_path}" is not a file')
 
-        movie_clip = texture_props.movie_clip
-        if movie_clip:
-            bpy.data.movieclips.remove(movie_clip, do_unlink=True)
+        old_movie_clip: MovieClip = texture_props.movie_clip
+        new_movie_clip = bpy.data.movieclips.load(recording_path)
 
-        movie_clip = bpy.data.movieclips.load(recording_path)
-        texture_props.movie_clip = movie_clip
+        if old_movie_clip is not None:
+            old_name = old_movie_clip.name
+            old_movie_clip.user_remap(new_movie_clip)
+            bpy.data.movieclips.remove(old_movie_clip)
+            new_movie_clip.name = old_name
+        else:
+            new_movie_clip.name = "outer_scout." + clip_id
 
-        movie_clip.name = "outer_scout." + clip_id
-        movie_clip.frame_start = scene.frame_start
+        texture_props.movie_clip = new_movie_clip
+        new_movie_clip.frame_start = scene.frame_start
 
-        return movie_clip
+        return new_movie_clip
 
