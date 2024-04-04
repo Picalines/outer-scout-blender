@@ -1,7 +1,15 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Type, TypeVar
 
-from bpy.types import Node, NodeLink, NodeSocket, NodeTree
+from bpy.types import (
+    Node,
+    NodeLink,
+    NodeSocket,
+    NodeTree,
+    NodeTreeInterface,
+    NodeTreeInterfaceItem,
+    NodeTreeInterfaceSocket,
+)
 
 TNode = TypeVar("TNode", bound=Node)
 
@@ -10,10 +18,99 @@ def create_node(node_tree: NodeTree, node_type: Type[TNode]) -> TNode:
     return node_tree.nodes.new(type=node_type.__name__)
 
 
-class NodeBuilderOutputConnection:
-    def __init__(self, builder: "NodeBuilder", output: int | str) -> None:
-        self.builder = builder
-        self.output = output
+class NodeTreeInterfaceBuilder:
+
+    @dataclass
+    class Socket:
+        type: type
+        description: str
+        default_value: Any | None
+        min_value: float | None
+        max_value: float | None
+
+    _interface: NodeTreeInterface
+    _input_sockets: dict[str, Socket]
+    _output_sockets: dict[str, Socket]
+
+    def __init__(self, interface: NodeTreeInterface):
+        super().__init__()
+
+        self._interface = interface
+        self._input_sockets = {}
+        self._output_sockets = {}
+
+    def add_input(
+        self,
+        name: str,
+        socket_type: type,
+        *,
+        description="",
+        default_value: Any | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+    ):
+        self._input_sockets[name] = self.Socket(socket_type, description, default_value, min_value, max_value)
+
+    def add_output(
+        self,
+        name: str,
+        socket_type: type,
+        *,
+        description="",
+        default_value: Any | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+    ):
+        self._output_sockets[name] = self.Socket(socket_type, description, default_value, min_value, max_value)
+
+    def __enter__(self) -> "NodeTreeInterfaceBuilder":
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        items: list[tuple[str, NodeTreeInterfaceItem]] = self._interface.items_tree.items()
+
+        missing_inputs: set[str] = set(self._input_sockets.keys())
+        missing_outputs: set[str] = set(self._output_sockets.keys())
+
+        # The point is to keep the old sockets, not rebuild the interface every time.
+        # Otherwise, node connections in the user's shader will be deleted
+
+        for item_name, item in items:
+            if not isinstance(item, NodeTreeInterfaceSocket):
+                continue
+
+            sockets_dict = self._input_sockets if item.in_out == "INPUT" else self._output_sockets
+            missing_socket_set = missing_inputs if item.in_out == "INPUT" else missing_outputs
+
+            if item_name not in sockets_dict or item_name not in missing_socket_set:
+                self._interface.remove(item)
+                continue
+
+            missing_socket_set.remove(item_name)
+            self._apply_socket(item, sockets_dict[item_name])
+
+        for missing_input_name in missing_inputs:
+            item = self._interface.new_socket(missing_input_name, in_out="INPUT")
+            self._apply_socket(item, self._input_sockets[missing_input_name])
+
+        for missing_output_name in missing_outputs:
+            item = self._interface.new_socket(missing_output_name, in_out="OUTPUT")
+            self._apply_socket(item, self._output_sockets[missing_output_name])
+
+    def _apply_socket(self, item: NodeTreeInterfaceSocket, socket: Socket):
+        item.socket_type = socket.type.__name__
+        item.description = socket.description
+
+        item = item.type_recast()
+
+        if socket.default_value is not None:
+            item.default_value = socket.default_value
+
+        if socket.min_value is not None:
+            item.min_value = socket.min_value
+
+        if socket.max_value is not None:
+            item.max_value = socket.max_value
 
 
 class NodeBuilder:
@@ -88,10 +185,10 @@ class NodeBuilder:
         self._assert_not_built()
 
         if self._node_tree is None:
-            raise ValueError(f"{NodeBuilder.__name__} exited without the node tree attribute")
+            raise ValueError(f"{self.__class__.__name__} exited without the node tree attribute")
 
         if self._node_type is None:
-            raise ValueError(f"{NodeBuilder.__name__} exited without the node type attribute")
+            raise ValueError(f"{self.__class__.__name__} exited without the node type attribute")
 
         node = create_node(self._node_tree, self._node_type)
 
@@ -111,13 +208,15 @@ class NodeBuilder:
             for connection in self._deferred_connections:
                 node_to_connect = connection.builder_to_connect.built_node
                 if node_to_connect is None:
-                    raise ValueError(f"{self.defer_connect.__name__} method used on busy {NodeBuilder.__name__}")
+                    raise ValueError(f"{self.defer_connect.__name__} method used on busy {self.__class__.__name__}")
 
                 self._node_tree.links.new(
                     node_to_connect.outputs[
-                        connection.output_key_to_connect
-                        if connection.output_key_to_connect is not None
-                        else connection.builder_to_connect._main_output
+                        (
+                            connection.output_key_to_connect
+                            if connection.output_key_to_connect is not None
+                            else connection.builder_to_connect._main_output
+                        )
                     ],
                     node.inputs[connection.self_input_key],
                 )
@@ -237,7 +336,7 @@ class PostfixNodeBuilder(NodeBuilder):
                             try:
                                 builder_from_stack = expr_stack.pop()
                             except IndexError:
-                                raise ValueError(f"not enough nodes on {PostfixNodeBuilder.__name__} stack")
+                                raise ValueError(f"not enough nodes on {self.__class__.__name__} stack")
 
                             node_builder.defer_connect(input_key, builder_from_stack, builder_from_stack._main_output)
             else:
@@ -254,3 +353,4 @@ class PostfixNodeBuilder(NodeBuilder):
 
         self._node_type = top_expr_node._node_type
         self.built_node = top_expr_node.built_node
+

@@ -8,7 +8,7 @@ from mathutils import Euler
 
 from ..bpy_register import bpy_register
 from ..properties import CameraProperties
-from ..utils import NodeBuilder, Result, add_single_prop_driver, arrange_nodes, operator_do
+from ..utils import NodeBuilder, NodeTreeInterfaceBuilder, Result, add_single_prop_driver, arrange_nodes, operator_do
 
 
 @bpy_register
@@ -47,19 +47,9 @@ class GenerateHDRINodesOperator(Operator):
         STRENGTH_IN_NAME = "Strength"
         BACKGROUND_OUT_NAME = "Background"
 
-        if set(hdri_node_group.interface.items_tree.keys()) != {STRENGTH_IN_NAME, BACKGROUND_OUT_NAME}:
-            hdri_node_group.interface.clear()
-
-            strength_input = hdri_node_group.interface.new_socket(
-                STRENGTH_IN_NAME, socket_type=bpy.types.NodeSocketFloat.__name__, in_out="INPUT"
-            )
-
-            strength_input.default_value = 3
-            strength_input.min_value = 0
-
-            hdri_node_group.interface.new_socket(
-                BACKGROUND_OUT_NAME, socket_type=bpy.types.NodeSocketShader.__name__, in_out="OUTPUT"
-            )
+        with NodeTreeInterfaceBuilder(hdri_node_group.interface) as interface_builder:
+            interface_builder.add_input(STRENGTH_IN_NAME, bpy.types.NodeSocketFloat, min_value=0, default_value=3)
+            interface_builder.add_output(BACKGROUND_OUT_NAME, bpy.types.NodeSocketShader)
 
         scene = context.scene
 
