@@ -165,7 +165,6 @@ class RecordOperator(AsyncOperator):
             add_single_prop_driver(
                 origin_empty,
                 f'["{scene_prop}"]',
-                target_id_type="SCENE",
                 target_id=scene,
                 target_data_path=scene_prop_path,
             )
@@ -273,7 +272,6 @@ class RecordOperator(AsyncOperator):
                     add_single_prop_driver(
                         camera_empty,
                         f'["{camera_prop}"]',
-                        target_id_type="CAMERA",
                         target_id=camera,
                         target_data_path=camera_prop_path,
                     )
@@ -391,7 +389,6 @@ def generate_inverted_transform_drivers(object: Object, matrix_source: Object):
             object,
             "location",
             array_index=loc_i,
-            target_id_type="OBJECT",
             target_id=matrix_source,
             target_data_path="matrix_world",
             var_name=matrix_var_name,
@@ -403,7 +400,6 @@ def generate_inverted_transform_drivers(object: Object, matrix_source: Object):
             object,
             "rotation_quaternion",
             array_index=rot_i,
-            target_id_type="OBJECT",
             target_id=matrix_source,
             target_data_path="matrix_world",
             var_name=matrix_var_name,

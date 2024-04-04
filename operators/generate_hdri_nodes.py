@@ -63,7 +63,6 @@ class GenerateHDRINodesOperator(Operator):
             add_single_prop_driver(
                 image_user,
                 "frame_offset",
-                target_id_type="SCENE",
                 target_id=scene,
                 target_data_path="frame_start",
                 var_name="frame_start",
