@@ -233,21 +233,27 @@ def arrange_nodes(node_tree: NodeTree):
         yield (node, level_y, level_x)
         visited.add(node)
 
-        linked_inputs = (input for input in node.inputs if input.is_linked)
+        linked_input_sockets = list(input for input in node.inputs if input.is_linked)
 
-        socket: NodeSocket
-        y_offset = 0
-        for socket in linked_inputs:
-            link: NodeLink
+        max_level_y = level_y
+        socket_i = 0
+        for socket in linked_input_sockets:
+            socket: NodeSocket
             for link in socket.links:
-                next_node = link.from_node if link.from_node != node else link.to_node
+                link: NodeLink
+                connected_node = link.from_node if link.from_node != node else link.to_node
+                if connected_node in visited:
+                    continue
 
-                if next_node not in visited:
-                    yield from iterate_nodes(next_node, visited, level_y + y_offset, level_x + 1)
-                    y_offset += 1
+                inner_level_y = yield from iterate_nodes(connected_node, visited, max_level_y + socket_i, level_x + 1)
+
+                max_level_y = max(max_level_y, inner_level_y)
+                socket_i += 1
+
+        return max_level_y
 
     margin_x = 50
-    margin_y = 300
+    margin_y = 250
 
     output_nodes = list(node for node in node_tree.nodes if any(node.inputs) and not any(node.outputs))
     primary_output_node = output_nodes[0]
