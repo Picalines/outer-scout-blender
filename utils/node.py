@@ -69,8 +69,8 @@ class NodeTreeInterfaceBuilder:
     def __exit__(self, exc_type, exc_value, traceback):
         items: list[tuple[str, NodeTreeInterfaceItem]] = self._interface.items_tree.items()
 
-        missing_inputs: set[str] = set(self._input_sockets.keys())
-        missing_outputs: set[str] = set(self._output_sockets.keys())
+        missing_inputs = list(self._input_sockets.keys())
+        missing_outputs = list(self._output_sockets.keys())
 
         # The point is to keep the old sockets, not rebuild the interface every time.
         # Otherwise, node connections in the user's shader will be deleted
@@ -80,13 +80,13 @@ class NodeTreeInterfaceBuilder:
                 continue
 
             sockets_dict = self._input_sockets if item.in_out == "INPUT" else self._output_sockets
-            missing_socket_set = missing_inputs if item.in_out == "INPUT" else missing_outputs
+            missing_socket_list = missing_inputs if item.in_out == "INPUT" else missing_outputs
 
-            if item_name not in sockets_dict or item_name not in missing_socket_set:
+            if item_name not in sockets_dict or item_name not in missing_socket_list:
                 self._interface.remove(item)
                 continue
 
-            missing_socket_set.remove(item_name)
+            missing_socket_list.remove(item_name)
             self._apply_socket(item, sockets_dict[item_name])
 
         for missing_input_name in missing_inputs:
