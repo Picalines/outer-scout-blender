@@ -1,7 +1,13 @@
 from bpy.types import Panel
 
 from ..bpy_register import bpy_register
-from ..operators import AlignGroundBodyOperator, ImportBodyOperator, SetSceneOriginOperator, WarpPlayerOperator
+from ..operators import (
+    AlignGroundBodyOperator,
+    GenerateCompositorNodesOperator,
+    ImportBodyOperator,
+    SetSceneOriginOperator,
+    WarpPlayerOperator,
+)
 from ..properties import SceneProperties
 
 
@@ -54,7 +60,6 @@ class ScenePanel(Panel):
 
             import_body_row = layout.row()
             import_body_row.operator_context = "INVOKE_DEFAULT"
-
             import_body_row.operator(
                 ImportBodyOperator.bl_idname,
                 text=(
@@ -64,6 +69,10 @@ class ScenePanel(Panel):
                 ),
                 icon="WORLD",
             )
+
+            compositor_row = layout.row()
+            compositor_row.operator_context = "EXEC_DEFAULT"
+            compositor_row.operator(GenerateCompositorNodesOperator.bl_idname, icon="NODE_COMPOSITING")
 
         if is_scene_created:
             animation_header, anim_panel = layout.panel(f"{self.bl_idname}.animation", default_closed=False)
