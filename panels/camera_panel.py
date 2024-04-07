@@ -44,7 +44,7 @@ class CameraPanel(Panel):
         if camera_props.outer_scout_type != "EQUIRECTANGULAR":
             self._draw_texture_panel(camera_props.depth_texture_props, label="Depth", id="depth", default_closed=True)
         else:
-            hdri_header, hdri_panel = layout.panel(f"{self.__class__.__name__}.hdri", default_closed=True)
+            hdri_header, hdri_panel = layout.panel(f"{self.bl_idname}.hdri", default_closed=True)
             hdri_header.label(text="HDRI")
 
             if hdri_panel:
@@ -64,7 +64,7 @@ class CameraPanel(Panel):
     ):
         layout = self.layout
 
-        texture_header, texture_panel = layout.panel(f"{self.__class__.__name__}.{id}", default_closed=default_closed)
+        texture_header, texture_panel = layout.panel(f"{self.bl_idname}.{id}", default_closed=default_closed)
         texture_header.label(text=label)
 
         if texture_panel:
