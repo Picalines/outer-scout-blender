@@ -51,10 +51,12 @@ class RecordOperator(AsyncOperator):
             }
         ).then()
 
+        defer(api_client.delete_scene)
+
         was_on_frame = scene.frame_current
         defer(scene.frame_set, was_on_frame)
 
-        self._create_cameras(context, api_client).then()
+        self._create_objects(context, api_client).then()
 
         self._send_scene_keyframes(context, api_client).then()
 
@@ -85,13 +87,11 @@ class RecordOperator(AsyncOperator):
 
             yield {"TIMER"}
 
-        api_client.delete_scene().then()
-
         bpy.ops.outer_scout.import_assets()
 
     @Result.do()
     @with_defers
-    def _create_cameras(self, context: Context, api_client: APIClient):
+    def _create_objects(self, context: Context, api_client: APIClient):
         scene = context.scene
         cameras: list[tuple[Object, Camera]] = [
             (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
