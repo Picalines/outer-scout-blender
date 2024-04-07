@@ -29,6 +29,6 @@ class TransformRecordingProperties(PropertyGroup):
         return self.recording_path != ""
 
     @property
-    def absolute_transform_recording_path(self) -> str:
+    def absolute_recording_path(self) -> str:
         return abspath(self.recording_path)
 
