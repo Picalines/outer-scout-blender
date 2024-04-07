@@ -23,6 +23,7 @@ class ScenePanel(Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
+        scene = context.scene
         scene_props = SceneProperties.from_context(context)
         recording_props = RecordingProperties.from_context(context)
 
@@ -48,10 +49,6 @@ class ScenePanel(Panel):
             ),
             icon="WORLD",
         )
-
-        compositor_row = layout.row()
-        compositor_row.operator_context = "EXEC_DEFAULT"
-        compositor_row.operator(GenerateCompositorNodesOperator.bl_idname, icon="NODE_COMPOSITING")
 
         assets_row = layout.row()
         assets_row.operator_context = "EXEC_DEFAULT"
@@ -112,4 +109,12 @@ class ScenePanel(Panel):
 
             if rsettings_panel:
                 rsettings_panel.prop(recording_props, "modal_timer_delay")
+
+        comp_header, comp_panel = layout.panel(f"{self.bl_idname}.comp", default_closed=True)
+        comp_header.label(text="Compositing")
+        if comp_panel:
+            if not scene.render.film_transparent:
+                comp_panel.label(text="Transparent rendering is not enabled", icon="ERROR")
+            comp_panel.operator_context = "EXEC_DEFAULT"
+            comp_panel.operator(GenerateCompositorNodesOperator.bl_idname, icon="NODE_COMPOSITING")
 
