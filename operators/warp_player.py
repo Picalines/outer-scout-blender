@@ -12,7 +12,7 @@ from ..utils import operator_do
 class WarpPlayerOperator(Operator):
     """Warp to the Outer Scout scene origin"""
 
-    bl_idname = "ow_recorder.warp"
+    bl_idname = "outer_scout.warp_player"
     bl_label = "Warp"
 
     destination: EnumProperty(name="Destination", items=[("ORIGIN", "Scene Origin", ""), ("CURSOR", "Cursor", "")])
