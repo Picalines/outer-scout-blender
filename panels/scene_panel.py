@@ -55,12 +55,12 @@ class ScenePanel(Panel):
         assets_row.operator(ImportAssetsOperator.bl_idname, icon="FILE_REFRESH")
 
         animation_header, anim_panel = layout.panel(f"{self.bl_idname}.animation", default_closed=False)
-        animation_header.label(text="Animation")
+        animation_header.label(text="Animation", icon="GRAPH")
         if anim_panel:
             anim_panel.prop(scene_props, "time_scale")
 
         origin_header, origin_panel = layout.panel(f"{self.bl_idname}.origin", default_closed=False)
-        origin_header.label(text="Origin")
+        origin_header.label(text="Origin", icon="ORIENTATION_VIEW")
         if origin_panel:
             origin_row = origin_panel.row()
 
@@ -96,7 +96,7 @@ class ScenePanel(Panel):
                 transform_column.prop(scene_props, "origin_rotation")
 
         record_header, record_panel = layout.panel(f"{self.bl_idname}.record", default_closed=False)
-        record_header.label(text="Record")
+        record_header.label(text="Record", icon="VIEW_CAMERA")
         if record_panel:
             if recording_props.in_progress:
                 record_panel.progress(text="Recording...", factor=recording_props.progress, type="BAR")
@@ -111,7 +111,7 @@ class ScenePanel(Panel):
                 rsettings_panel.prop(recording_props, "modal_timer_delay")
 
         comp_header, comp_panel = layout.panel(f"{self.bl_idname}.comp", default_closed=True)
-        comp_header.label(text="Compositing")
+        comp_header.label(text="Compositing", icon="NODE_COMPOSITING")
         if comp_panel:
             if not scene.render.film_transparent:
                 comp_panel.label(text="Transparent rendering is not enabled", icon="ERROR")
