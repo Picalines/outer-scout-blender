@@ -1,4 +1,4 @@
-from bpy.props import BoolProperty, FloatProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, FloatProperty, StringProperty
 from bpy.types import Context, PropertyGroup, Scene
 
 from ..bpy_register import bpy_register_property
@@ -11,14 +11,6 @@ class RecordingProperties(PropertyGroup):
         description="The path to the folder there the recordings will be saved",
         subtype="DIR_PATH",
         default="",
-    )
-
-    animation_chunk_size: IntProperty(
-        name="Animation Chunk Size",
-        description="How much keyframes at a time will be sent to Outer Wilds",
-        default=50,
-        min=1,
-        options=set(),
     )
 
     modal_timer_delay: FloatProperty(

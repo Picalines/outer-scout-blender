@@ -31,10 +31,9 @@ class OW_RECORDER_PT_recorder(Panel):
         else:
             layout.operator(operator=RecordOperator.bl_idname, icon="RENDER_ANIMATION")
 
-        settings_header, settings_panel = layout.panel(f"{self.__class__.__name__}.settings", default_closed=True)
+        settings_header, settings_panel = layout.panel(f"{self.bl_idname}.settings", default_closed=True)
         settings_header.label(text="Editor Settings")
 
         if settings_panel:
-            settings_panel.prop(recording_props, "animation_chunk_size")
             settings_panel.prop(recording_props, "modal_timer_delay")
 
