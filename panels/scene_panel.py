@@ -38,22 +38,6 @@ class ScenePanel(Panel):
             set_origin_column.operator(SetSceneOriginOperator.bl_idname, text="Create Scene", icon="WORLD")
             return
 
-        has_ground_body = scene_props.has_ground_body
-
-        import_body_row = layout.row()
-        import_body_row.operator_context = "INVOKE_DEFAULT"
-        import_body_row.operator(
-            ImportBodyOperator.bl_idname,
-            text=(
-                f"Add {scene_props.origin_parent} sectors" if has_ground_body else f"Import {scene_props.origin_parent}"
-            ),
-            icon="WORLD",
-        )
-
-        assets_row = layout.row()
-        assets_row.operator_context = "EXEC_DEFAULT"
-        assets_row.operator(ImportAssetsOperator.bl_idname, icon="FILE_REFRESH")
-
         animation_header, anim_panel = layout.panel(f"{self.bl_idname}.animation", default_closed=False)
         animation_header.label(text="Animation", icon="GRAPH")
         if anim_panel:
@@ -95,6 +79,22 @@ class ScenePanel(Panel):
                 transform_column.prop(scene_props, "origin_position")
                 transform_column.prop(scene_props, "origin_rotation")
 
+        ground_header, ground_panel = layout.panel(f"{self.bl_idname}.ground_body", default_closed=False)
+        ground_header.label(text="Ground Body", icon="WORLD")
+        if ground_panel:
+            has_ground_body = scene_props.has_ground_body
+
+            ground_panel.operator_context = "INVOKE_DEFAULT"
+            ground_panel.operator(
+                ImportBodyOperator.bl_idname,
+                text=(
+                    f"Add {scene_props.origin_parent} sectors"
+                    if has_ground_body
+                    else f"Import {scene_props.origin_parent}"
+                ),
+                icon=("OVERLAY" if has_ground_body else "LINKED"),
+            )
+
         record_header, record_panel = layout.panel(f"{self.bl_idname}.record", default_closed=False)
         record_header.label(text="Record", icon="VIEW_CAMERA")
         if record_panel:
@@ -117,4 +117,8 @@ class ScenePanel(Panel):
                 comp_panel.label(text="Transparent rendering is not enabled", icon="ERROR")
             comp_panel.operator_context = "EXEC_DEFAULT"
             comp_panel.operator(GenerateCompositorNodesOperator.bl_idname, icon="NODE_COMPOSITING")
+
+        assets_row = layout.row()
+        assets_row.operator_context = "EXEC_DEFAULT"
+        assets_row.operator(ImportAssetsOperator.bl_idname, icon="FILE_REFRESH")
 
