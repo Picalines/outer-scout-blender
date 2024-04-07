@@ -90,57 +90,61 @@ class RecordOperator(AsyncOperator):
         bpy.ops.outer_scout.import_assets()
 
     @Result.do()
-    @with_defers
     def _create_objects(self, context: Context, api_client: APIClient):
         scene = context.scene
-        cameras: list[tuple[Object, Camera]] = [
-            (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
-        ]
 
         scene.frame_set(scene.frame_start)
 
-        for object, camera in cameras:
-            camera_props = CameraProperties.of_camera(camera)
-            if not camera_props.is_used_in_scene:
-                continue
+        for object in scene.objects:
+            object: Object
 
-            object_name = get_camera_api_name(camera)
+            if object.type == "CAMERA":
+                self._create_camera(context, api_client, object).then()
 
-            camera_transform = Transform.from_matrix(object.matrix_world @ Matrix.Rotation(radians(-90), 4, "X"))
+    @Result.do()
+    def _create_camera(self, context: Context, api_client: APIClient, object: Object):
+        camera: Camera = object.data
+        camera_props = CameraProperties.of_camera(camera)
+        if not camera_props.is_used_in_scene:
+            return
 
-            api_client.post_object(name=object_name, transform=camera_transform.to_left()).then()
+        scene = context.scene
 
-            match camera_props.outer_scout_type:
-                case "PERSPECTIVE":
-                    camera.lens_unit = "MILLIMETERS"
-                    api_client.post_perspective_camera(
-                        object_name,
-                        {
-                            "gateFit": get_camera_gate_fit(context, camera),
-                            "resolution": {"width": scene.render.resolution_x, "height": scene.render.resolution_y},
-                            "perspective": {
-                                "focalLength": camera.lens,
-                                "sensorSize": (camera.sensor_width, camera.sensor_height),
-                                "lensShift": (camera.shift_x, camera.shift_y),
-                                "nearClipPlane": camera.clip_start,
-                                "farClipPlane": camera.clip_end,
-                            },
+        object_name = get_camera_api_name(camera)
+
+        camera_transform = Transform.from_matrix(object.matrix_world @ Matrix.Rotation(radians(-90), 4, "X"))
+
+        api_client.post_object(name=object_name, transform=camera_transform.to_left()).then()
+
+        match camera_props.outer_scout_type:
+            case "PERSPECTIVE":
+                camera.lens_unit = "MILLIMETERS"
+                api_client.post_perspective_camera(
+                    object_name,
+                    {
+                        "gateFit": get_camera_gate_fit(context, camera),
+                        "resolution": {"width": scene.render.resolution_x, "height": scene.render.resolution_y},
+                        "perspective": {
+                            "focalLength": camera.lens,
+                            "sensorSize": (camera.sensor_width, camera.sensor_height),
+                            "lensShift": (camera.shift_x, camera.shift_y),
+                            "nearClipPlane": camera.clip_start,
+                            "farClipPlane": camera.clip_end,
                         },
-                    ).then()
+                    },
+                ).then()
 
-                case "EQUIRECTANGULAR":
-                    api_client.post_equirect_camera(
-                        object_name, {"faceResolution": camera_props.equirect_face_size}
-                    ).then()
+            case "EQUIRECTANGULAR":
+                api_client.post_equirect_camera(object_name, {"faceResolution": camera_props.equirect_face_size}).then()
 
-                case not_implemented_camera_type:
-                    raise NotImplementedError(f"camera of type {not_implemented_camera_type} is not implemented")
+            case not_implemented_camera_type:
+                raise NotImplementedError(f"camera of type {not_implemented_camera_type} is not implemented")
 
-            if camera_props.color_texture_props.has_recording_path:
-                api_client.post_texture_recorder(object_name, "color", camera_props.color_texture_props).then()
+        if camera_props.color_texture_props.has_recording_path:
+            api_client.post_texture_recorder(object_name, "color", camera_props.color_texture_props).then()
 
-            if camera_props.depth_texture_props.has_recording_path:
-                api_client.post_texture_recorder(object_name, "depth", camera_props.depth_texture_props).then()
+        if camera_props.depth_texture_props.has_recording_path:
+            api_client.post_texture_recorder(object_name, "depth", camera_props.depth_texture_props).then()
 
     @Result.do()
     @with_defers
