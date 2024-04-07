@@ -19,7 +19,7 @@ class TransformRecordingProperties(PropertyGroup):
         default="RECORD",
         items=[
             ("RECORD", "Record", "Record Unity object transform and import it as keyframes of this object"),
-            ("REPLAY", "Replay", "Send this object's transform keyframes to Outer Wilds"),
+            ("APPLY", "Replay", "Send this object's transform keyframes to Outer Wilds"),
         ],
         options=set(),
     )

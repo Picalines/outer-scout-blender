@@ -6,8 +6,11 @@ from .transform_recording_props import TransformRecordingProperties
 
 
 def on_unity_object_name_update(object_props: "ObjectProperties", _):
-    if object_props.unity_object_name == "scene.origin":
-        object_props.unity_object_name = ""
+    if object_props.unity_object_name.startswith("__"):
+        object_props.unity_object_name = object_props.unity_object_name.removeprefix("__")
+
+    if "/" in object_props.unity_object_name:
+        object_props.unity_object_name = object_props.unity_object_name.replace("/", "_")
 
 
 @bpy_register_property(Object, "outer_scout_object")
@@ -22,9 +25,9 @@ class ObjectProperties(PropertyGroup):
 
     object_type: EnumProperty(
         name="Unity Object Mode",
-        default="NEW",
+        default="CUSTOM",
         items=[
-            ("NEW", "Custom", "Creates new empty GameObject in Unity"),
+            ("CUSTOM", "Custom", "Creates new empty GameObject in Unity"),
             ("EXISTING", "Existing", "Uses existing Unity GameObject"),
         ],
     )

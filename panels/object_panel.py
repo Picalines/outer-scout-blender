@@ -15,7 +15,9 @@ class ObjectPanel(Panel):
 
     @classmethod
     def poll(cls, context) -> bool:
-        return SceneProperties.from_context(context).is_scene_created
+        active_object: Object = context.active_object
+        scene_props = SceneProperties.from_context(context)
+        return scene_props.is_scene_created and active_object is not scene_props.ground_body
 
     def draw(self, context):
         active_object: Object = context.active_object
@@ -32,10 +34,14 @@ class ObjectPanel(Panel):
 
         layout.prop(object_props, "unity_object_name")
 
+        layout.prop(object_props, "object_type", expand=True)
+
         if active_object.type != "CAMERA":
             transform_header, transform_panel = layout.panel(f"{self.bl_idname}.transform", default_closed=False)
             transform_header.label(text="Transform Recording")
             if transform_panel:
                 transform_panel.prop(transform_props, "recording_path")
-                transform_panel.prop(transform_props, "mode", expand=True)
+
+                if transform_props.has_recording_path:
+                    transform_panel.prop(transform_props, "mode", expand=True)
 
