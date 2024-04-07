@@ -73,10 +73,10 @@ class APIClient:
     def get_recording_status(self) -> Result[RecordingStatusJson, str]:
         return self._get("scene/recording/status").bind(self._parse_json_response)
 
-    def get_object(self, name: str, *, origin: str | None = None) -> Result[ObjectJson, str]:
+    def get_object(self, name: str, *, origin: str) -> Result[ObjectJson, str]:
         return self._get(f"objects/{name}", query={"origin": origin}).bind(self._parse_json_response)
 
-    def post_object(self, *, name: str, transform: Transform | None = None, parent: str | None = None):
+    def post_object(self, *, name: str, transform: Transform, parent: str):
         return self._post("objects", data={"name": name, "transform": transform.to_json(parent=parent)})
 
     def get_object_mesh(
