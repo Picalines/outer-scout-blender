@@ -6,7 +6,7 @@ from ..bpy_register import bpy_register
 
 
 @bpy_register
-class RenderTextureProperties(PropertyGroup):
+class TextureRecordingProperties(PropertyGroup):
     recording_path: StringProperty(
         name="Recording Path",
         description="The path to the file where the texture recording will be saved",

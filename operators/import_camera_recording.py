@@ -4,7 +4,7 @@ import bpy
 from bpy.types import Camera, CameraBackgroundImage, MovieClip, Object, Operator, Scene
 
 from ..bpy_register import bpy_register
-from ..properties import CameraProperties, RenderTextureProperties
+from ..properties import CameraProperties, TextureRecordingProperties
 from ..utils import Result, operator_do
 
 
@@ -47,7 +47,7 @@ class ImportCameraRecordingOperator(Operator):
                 camera_background.clip = color_movie_clip
 
     @Result.do()
-    def _import_texture(self, scene: Scene, texture_props: RenderTextureProperties, clip_id: str) -> MovieClip:
+    def _import_texture(self, scene: Scene, texture_props: TextureRecordingProperties, clip_id: str) -> MovieClip:
         if not texture_props.has_recording_path:
             return
 

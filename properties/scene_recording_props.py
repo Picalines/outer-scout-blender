@@ -1,18 +1,11 @@
-from bpy.props import BoolProperty, FloatProperty, StringProperty
+from bpy.props import BoolProperty, FloatProperty
 from bpy.types import Context, PropertyGroup, Scene
 
 from ..bpy_register import bpy_register_property
 
 
 @bpy_register_property(Scene, "outer_scout_recording")
-class RecordingProperties(PropertyGroup):
-    output_path: StringProperty(
-        name="Output Path",
-        description="The path to the folder there the recordings will be saved",
-        subtype="DIR_PATH",
-        default="",
-    )
-
+class SceneRecordingProperties(PropertyGroup):
     modal_timer_delay: FloatProperty(
         name="Modal Delay",
         description="Time interval in seconds. Controls how frequently the addon will send data to Outer Wilds",
@@ -34,6 +27,6 @@ class RecordingProperties(PropertyGroup):
     )
 
     @staticmethod
-    def from_context(context: Context) -> "RecordingProperties":
+    def from_context(context: Context) -> "SceneRecordingProperties":
         return context.scene.outer_scout_recording
 

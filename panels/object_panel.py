@@ -19,14 +19,23 @@ class ObjectPanel(Panel):
 
     def draw(self, context):
         active_object: Object = context.active_object
+        scene_props = SceneProperties.from_context(context)
         object_props = ObjectProperties.of_object(active_object)
+        transform_props = object_props.transform_props
         layout = self.layout
 
         layout.use_property_split = True
 
-        layout.prop(object_props, "transform_recording_path")
+        if scene_props.ground_body == active_object:
+            layout.label(text="This is the ground body object")
+            return
 
-        if object_props.has_transform_recording_path:
-            layout.prop(object_props, "unity_object_name")
-            layout.prop(object_props, "transform_mode", expand=True)
+        layout.prop(object_props, "unity_object_name")
+
+        if active_object.type != "CAMERA":
+            transform_header, transform_panel = layout.panel(f"{self.bl_idname}.transform", default_closed=False)
+            transform_header.label(text="Transform Recording")
+            if transform_panel:
+                transform_panel.prop(transform_props, "recording_path")
+                transform_panel.prop(transform_props, "mode", expand=True)
 

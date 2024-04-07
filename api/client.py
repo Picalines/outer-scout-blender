@@ -2,7 +2,7 @@ from typing import Any, Literal, Never
 
 from bpy.types import Context
 
-from ..properties import OuterScoutPreferences, RenderTextureProperties
+from ..properties import OuterScoutPreferences, TextureRecordingProperties
 from ..utils import Result
 from .http import Request, Response
 from .models import (
@@ -101,7 +101,7 @@ class APIClient:
         return self._post(f"objects/{object_name}/camera", data={**json, "type": "equirectangular"})
 
     def post_texture_recorder(
-        self, object_name: str, texture_type: Literal["color", "depth"], texture_props: RenderTextureProperties
+        self, object_name: str, texture_type: Literal["color", "depth"], texture_props: TextureRecordingProperties
     ):
         json: ColorTextureRecorderJson = {
             "property": f"camera.renderTexture.{texture_type}",

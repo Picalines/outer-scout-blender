@@ -10,7 +10,7 @@ from ..operators import (
     SetSceneOriginOperator,
     WarpPlayerOperator,
 )
-from ..properties import RecordingProperties, SceneProperties
+from ..properties import SceneRecordingProperties, SceneProperties
 
 
 @bpy_register
@@ -25,7 +25,7 @@ class ScenePanel(Panel):
     def draw(self, context):
         scene = context.scene
         scene_props = SceneProperties.from_context(context)
-        recording_props = RecordingProperties.from_context(context)
+        recording_props = SceneRecordingProperties.from_context(context)
 
         layout = self.layout
         layout.enabled = not recording_props.in_progress

@@ -1,8 +1,8 @@
-from bpy.types import Camera, Panel
+from bpy.types import Camera, Object, Panel
 
 from ..bpy_register import bpy_register
 from ..operators import GenerateHDRINodesOperator, ImportCameraRecordingOperator
-from ..properties import CameraProperties, RenderTextureProperties, SceneProperties
+from ..properties import CameraProperties, ObjectProperties, SceneProperties, TextureRecordingProperties
 
 
 @bpy_register
@@ -25,7 +25,8 @@ class CameraPanel(Panel):
     def draw(self, context):
         layout = self.layout
 
-        camera: Camera = context.active_object.data
+        object: Object = context.active_object
+        camera: Camera = object.data
         camera_props = CameraProperties.of_camera(camera)
 
         layout.use_property_split = True
@@ -34,6 +35,10 @@ class CameraPanel(Panel):
 
         if camera_props.outer_scout_type == "NONE":
             return
+
+        object_props = ObjectProperties.of_object(object)
+        if not object_props.has_unity_object_name:
+            layout.label(text="Unity object name is not set. Check the Object Properties tab", icon="ERROR")
 
         layout.prop(camera_props, "is_recording_enabled")
         if camera_props.outer_scout_type == "EQUIRECTANGULAR":
@@ -60,7 +65,7 @@ class CameraPanel(Panel):
             hdri_row.operator(GenerateHDRINodesOperator.bl_idname, icon="NODE_MATERIAL")
 
     def _draw_texture_panel(
-        self, ffmpeg_options: RenderTextureProperties, *, label: str, id: str, default_closed: bool
+        self, ffmpeg_options: TextureRecordingProperties, *, label: str, id: str, default_closed: bool
     ):
         layout = self.layout
 

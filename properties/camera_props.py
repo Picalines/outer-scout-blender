@@ -2,7 +2,7 @@ from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 from bpy.types import Camera, Image, NodeTree, PropertyGroup
 
 from ..bpy_register import bpy_register_property
-from .render_texture_props import RenderTextureProperties
+from .texture_recording_props import TextureRecordingProperties
 
 
 @bpy_register_property(Camera, "outer_scout_camera")
@@ -28,9 +28,9 @@ class CameraProperties(PropertyGroup):
         options=set(),
     )
 
-    color_texture_settings: PointerProperty(type=RenderTextureProperties)
+    color_texture_recording: PointerProperty(type=TextureRecordingProperties)
 
-    depth_texture_settings: PointerProperty(type=RenderTextureProperties)
+    depth_texture_recording: PointerProperty(type=TextureRecordingProperties)
 
     hdri_image: PointerProperty(
         name="HDRI Image",
@@ -53,12 +53,12 @@ class CameraProperties(PropertyGroup):
         return self.outer_scout_type != "NONE" and self.is_recording_enabled
 
     @property
-    def color_texture_props(self) -> RenderTextureProperties:
-        return self.color_texture_settings
+    def color_texture_props(self) -> TextureRecordingProperties:
+        return self.color_texture_recording
 
     @property
-    def depth_texture_props(self) -> RenderTextureProperties:
-        return self.depth_texture_settings
+    def depth_texture_props(self) -> TextureRecordingProperties:
+        return self.depth_texture_recording
 
     @property
     def has_any_recording_path(self) -> bool:
