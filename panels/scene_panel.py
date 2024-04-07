@@ -6,10 +6,11 @@ from ..operators import (
     GenerateCompositorNodesOperator,
     ImportAssetsOperator,
     ImportBodyOperator,
+    RecordOperator,
     SetSceneOriginOperator,
     WarpPlayerOperator,
 )
-from ..properties import SceneProperties
+from ..properties import RecordingProperties, SceneProperties
 
 
 @bpy_register
@@ -23,8 +24,10 @@ class ScenePanel(Panel):
 
     def draw(self, context):
         scene_props = SceneProperties.from_context(context)
+        recording_props = RecordingProperties.from_context(context)
 
         layout = self.layout
+        layout.enabled = not recording_props.in_progress
         layout.use_property_split = True
         layout.use_property_decorate = True
 
@@ -84,7 +87,9 @@ class ScenePanel(Panel):
             )
             warp_props.destination = "ORIGIN"
 
-            transform_header, transform_panel = origin_panel.panel(f"{self.bl_idname}.origin.transform", default_closed=True)
+            transform_header, transform_panel = origin_panel.panel(
+                f"{self.bl_idname}.origin.transform", default_closed=True
+            )
             transform_header.label(text="Origin Transform")
             if transform_panel:
                 transform_column = transform_panel.column()
@@ -92,4 +97,19 @@ class ScenePanel(Panel):
                 transform_column.prop(scene_props, "origin_parent")
                 transform_column.prop(scene_props, "origin_position")
                 transform_column.prop(scene_props, "origin_rotation")
+
+        record_header, record_panel = layout.panel(f"{self.bl_idname}.record", default_closed=False)
+        record_header.label(text="Record")
+        if record_panel:
+            if recording_props.in_progress:
+                record_panel.progress(text="Recording...", factor=recording_props.progress, type="BAR")
+            else:
+                record_panel.operator_context = "INVOKE_DEFAULT"
+                record_panel.operator(operator=RecordOperator.bl_idname, icon="RENDER_ANIMATION")
+
+            rsettings_header, rsettings_panel = record_panel.panel(f"{self.bl_idname}.settings", default_closed=True)
+            rsettings_header.label(text="Recording Settings")
+
+            if rsettings_panel:
+                rsettings_panel.prop(recording_props, "modal_timer_delay")
 
