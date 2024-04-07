@@ -82,7 +82,7 @@ class GenerateHDRINodesOperator(Operator):
         warning_label_node.label = "This node tree is auto-generated!"
         warning_label_node.location = (75, 35)
 
-        self.report({"INFO"}, f'node group "{hdri_node_group.name}" generated successfully')
+        self.report({"INFO"}, f"node group '{hdri_node_group.name}' generated successfully")
 
     @Result.do()
     def _import_hdri_image(self, camera: Camera) -> Image:
