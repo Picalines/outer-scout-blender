@@ -157,6 +157,8 @@ class GenerateCompositorNodesOperator(Operator):
         get_clip: Callable[[Object], MovieClip | None],
         _camera_index=0,
     ):
+        if not len(cameras):
+            return
 
         with dest_builder.build_input(dest_input, bpy.types.CompositorNodeMixRGB) as mix_node:
             mix_node.set_attr("blend_type", "MIX")
