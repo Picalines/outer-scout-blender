@@ -6,6 +6,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from typing import Any, Literal
+from urllib.parse import quote as url_encode
 from urllib.request import Request as UrllibRequest
 
 from .response import Response
@@ -43,7 +44,7 @@ class Request:
             raise
 
     def _to_urllib_request(self) -> UrllibRequest:
-        url = self.url
+        url = url_encode(self.url, safe="/:")
 
         if not url.startswith("http"):
             raise ValueError("only http urls are supported")
