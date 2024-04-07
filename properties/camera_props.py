@@ -49,7 +49,7 @@ class CameraProperties(PropertyGroup):
         return camera.outer_scout_camera
 
     @property
-    def is_used_in_scene(self) -> bool:
+    def is_active(self) -> bool:
         return self.outer_scout_type != "NONE" and self.is_recording_enabled
 
     @property

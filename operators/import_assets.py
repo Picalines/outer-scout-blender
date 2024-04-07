@@ -26,7 +26,7 @@ class ImportAssetsOperator(Operator):
             (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
         ]:
             camera_props = CameraProperties.of_camera(camera)
-            if not camera_props.is_used_in_scene:
+            if not camera_props.is_active:
                 continue
 
             with context.temp_override(active_object=camera_object):

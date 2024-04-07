@@ -41,7 +41,7 @@ class GenerateCompositorNodesOperator(Operator):
                 for camera_object in scene.objects
                 if camera_object.type == "CAMERA"
             )
-            if camera_props.is_used_in_scene and camera_props.outer_scout_type == "PERSPECTIVE"
+            if camera_props.is_active and camera_props.outer_scout_type == "PERSPECTIVE"
         ]
 
         for i, camera_object in enumerate(cameras):
