@@ -14,7 +14,7 @@ CAMERA_ID_CUSTOM_PROP = "outer_scout.camera_id"
 class GenerateCompositorNodesOperator(Operator):
     """Generates compositor nodes"""
 
-    bl_idname = "ow_recorder.generate_compositor_nodes"
+    bl_idname = "outer_scout.generate_compositor_nodes"
     bl_label = "Generate compositor nodes"
 
     @classmethod

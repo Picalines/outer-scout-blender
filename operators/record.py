@@ -87,7 +87,7 @@ class RecordOperator(AsyncOperator):
 
         api_client.delete_scene().then()
 
-        self._reimport_camera_recordings(context)
+        bpy.ops.outer_scout.import_assets()
 
     @Result.do()
     @with_defers
@@ -306,22 +306,6 @@ class RecordOperator(AsyncOperator):
                 }
 
             api_client.put_object_keyframes(object_name, {"properties": animation_properties_json}).then()
-
-    def _reimport_camera_recordings(self, context: Context):
-        scene = context.scene
-        cameras: list[tuple[Object, Camera]] = [
-            (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
-        ]
-
-        for camera_object, camera in cameras:
-            camera_props = CameraProperties.of_camera(camera)
-            if not camera_props.is_used_in_scene:
-                continue
-
-            with context.temp_override(active_object=camera_object):
-                bpy.ops.outer_scout.import_camera_recording()
-                if camera_props.hdri_node_group:
-                    bpy.ops.outer_scout.generate_hdri_nodes()
 
     def _after_event(self, context: Context, _: Event):
         context.area.tag_redraw()

@@ -4,6 +4,7 @@ from ..bpy_register import bpy_register
 from ..operators import (
     AlignGroundBodyOperator,
     GenerateCompositorNodesOperator,
+    ImportAssetsOperator,
     ImportBodyOperator,
     SetSceneOriginOperator,
     WarpPlayerOperator,
@@ -73,6 +74,10 @@ class ScenePanel(Panel):
             compositor_row = layout.row()
             compositor_row.operator_context = "EXEC_DEFAULT"
             compositor_row.operator(GenerateCompositorNodesOperator.bl_idname, icon="NODE_COMPOSITING")
+
+            assets_row = layout.row()
+            assets_row.operator_context = "EXEC_DEFAULT"
+            assets_row.operator(ImportAssetsOperator.bl_idname, icon="FILE_REFRESH")
 
         if is_scene_created:
             animation_header, anim_panel = layout.panel(f"{self.bl_idname}.animation", default_closed=False)
