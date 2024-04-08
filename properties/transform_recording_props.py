@@ -1,5 +1,5 @@
 from bpy.path import abspath
-from bpy.props import EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy.types import PropertyGroup
 
 from ..bpy_register import bpy_register
@@ -22,6 +22,13 @@ class TransformRecordingProperties(PropertyGroup):
             ("RECORD", "Record", "Record Unity object transform and import it as keyframes of this object"),
             ("APPLY", "Replay", "Send this object's transform keyframes to Outer Wilds"),
         ],
+        options=set(),
+    )
+
+    record_once: BoolProperty(
+        name="Record Once",
+        description="After the first recording, the addon will automatically set the 'Replay' mode",
+        default=True,
         options=set(),
     )
 
