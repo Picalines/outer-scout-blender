@@ -1,8 +1,8 @@
 import bpy
-from bpy.types import Operator
+from bpy.types import Camera, Object, Operator
 
 from ..bpy_register import bpy_register
-from ..properties import CameraProperties, SceneProperties
+from ..properties import CameraProperties, ObjectProperties, SceneProperties
 from ..utils import operator_do
 
 
@@ -22,17 +22,30 @@ class ImportAssetsOperator(Operator):
     def execute(self, context):
         scene = context.scene
 
-        for camera_object, camera in [
-            (camera_obj, camera_obj.data) for camera_obj in scene.objects if camera_obj.type == "CAMERA"
-        ]:
-            camera_props = CameraProperties.of_camera(camera)
-            if not camera_props.is_active:
-                continue
+        for object in scene.objects:
+            object: Object
 
-            with context.temp_override(active_object=camera_object):
-                bpy.ops.outer_scout.import_camera_recording()
-                if camera_props.hdri_node_group:
-                    bpy.ops.outer_scout.generate_hdri_nodes()
+            match object.type:
+                case "CAMERA":
+                    camera: Camera = object.data
+                    camera_props = CameraProperties.of_camera(camera)
+                    if not camera_props.is_active:
+                        continue
+
+                    with context.temp_override(active_object=object):
+                        bpy.ops.outer_scout.import_camera_recording()
+                        if camera_props.hdri_node_group:
+                            bpy.ops.outer_scout.generate_hdri_nodes()
+                case _:
+                    object_props = ObjectProperties.of_object(object)
+                    transform_props = object_props.transform_props
+
+                    if transform_props.has_recording_path and transform_props.mode == "RECORD":
+                        with context.temp_override(active_object=object):
+                            bpy.ops.outer_scout.import_transform_recording()
+
+                        if transform_props.record_once:
+                            transform_props.mode = "APPLY"
 
         scene_props = SceneProperties.from_context(context)
         if scene_props.compositor_node_group:
