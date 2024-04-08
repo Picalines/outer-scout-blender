@@ -30,9 +30,10 @@ class ObjectProperties(PropertyGroup):
             ("CUSTOM", "Custom", "Creates new empty GameObject in Unity"),
             ("EXISTING", "Existing", "Uses existing Unity GameObject"),
         ],
+        options=set(),
     )
 
-    transform_recording: PointerProperty(type=TransformRecordingProperties)
+    transform_recording: PointerProperty(type=TransformRecordingProperties, options=set())
 
     @staticmethod
     def of_object(object: Object) -> "ObjectProperties":
