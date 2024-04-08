@@ -1,6 +1,7 @@
 from bpy.types import Object, Panel
 
 from ..bpy_register import bpy_register
+from ..operators import ImportTransformRecordingOperator
 from ..properties import ObjectProperties, SceneProperties
 
 
@@ -36,12 +37,13 @@ class ObjectPanel(Panel):
 
         layout.prop(object_props, "object_type", expand=True)
 
-        if active_object.type != "CAMERA":
+        if active_object.type != "CAMERA" and object_props.object_type == "EXISTING":
             transform_header, transform_panel = layout.panel(f"{self.bl_idname}.transform", default_closed=False)
-            transform_header.label(text="Transform Recording")
+            transform_header.label(text="Transform Recording", icon="ORIENTATION_LOCAL")
             if transform_panel:
                 transform_panel.prop(transform_props, "recording_path")
 
                 if transform_props.has_recording_path:
                     transform_panel.prop(transform_props, "mode", expand=True)
+                    transform_panel.operator(ImportTransformRecordingOperator.bl_idname, icon="IMPORT")
 
