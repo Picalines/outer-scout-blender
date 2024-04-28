@@ -45,6 +45,8 @@ class RecordOperator(AsyncOperator):
         api_client = APIClient.from_context(context)
         scene = context.scene
 
+        api_client.delete_scene().then()
+
         api_client.post_scene(
             {
                 "origin": Transform.from_matrix(scene_props.origin_matrix).to_json(parent=scene_props.origin_parent),
