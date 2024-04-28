@@ -232,7 +232,7 @@ class RecordOperator(AsyncOperator):
 
             camera_props = CameraProperties.of_camera(object.data) if object.type == "CAMERA" else None
 
-            if camera_props and camera_props.outer_scout_type in camera_props_to_track:
+            if camera_props and camera_props.is_active and camera_props.outer_scout_type in camera_props_to_track:
                 for camera_prop, camera_prop_path in camera_props_to_track[camera_props.outer_scout_type].items():
                     object_track_empty[camera_prop] = 0.0
                     add_driver(object_track_empty, f'["{camera_prop}"]', "value", value=(object.data, camera_prop_path))
