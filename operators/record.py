@@ -14,7 +14,7 @@ from ..properties import CameraProperties, ObjectProperties, SceneProperties, Sc
 from ..utils import Result, add_driver, defer, operator_do, with_defers
 from .async_operator import AsyncOperator
 
-ORIGIN_OBJECT_NAME = "__scene_origin"
+ORIGIN_OBJECT_NAME = "scene.origin"
 
 
 @bpy_register
@@ -45,7 +45,12 @@ class RecordOperator(AsyncOperator):
         api_client = APIClient.from_context(context)
         scene = context.scene
 
-        api_client.post_scene({"hidePlayerModel": scene_props.hide_player_model}).then()
+        api_client.post_scene(
+            {
+                "origin": Transform.from_matrix(scene_props.origin_matrix).to_json(parent=scene_props.origin_parent),
+                "hidePlayerModel": scene_props.hide_player_model,
+            }
+        ).then()
 
         defer(api_client.delete_scene)
 
@@ -86,15 +91,8 @@ class RecordOperator(AsyncOperator):
     @Result.do()
     def _create_objects(self, context: Context, api_client: APIClient):
         scene = context.scene
-        scene_props = SceneProperties.from_context(context)
 
         scene.frame_set(scene.frame_start)
-
-        api_client.post_object(
-            name=ORIGIN_OBJECT_NAME,
-            transform=Transform.from_matrix(scene_props.origin_matrix),
-            parent=scene_props.origin_parent,
-        ).then()
 
         for object in scene.objects:
             object: Object
