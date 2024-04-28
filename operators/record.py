@@ -102,7 +102,7 @@ class RecordOperator(AsyncOperator):
                 continue
 
             if object.type == "CAMERA" or object_props.object_type == "CUSTOM":
-                object_matrix = object.matrix_world
+                object_matrix = object.matrix_world.copy()
                 if object.type == "CAMERA":
                     object_matrix @= Matrix.Rotation(radians(-90), 4, "X")
 
