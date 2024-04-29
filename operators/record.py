@@ -30,6 +30,10 @@ class RecordOperator(AsyncOperator):
             cls.poll_message_set("Save project before recording")
             return False
 
+        if context.mode != 'OBJECT':
+            cls.poll_message_set("Not in object mode")
+            return False
+
         scene_props = SceneProperties.from_context(context)
         return scene_props.is_scene_created
 
