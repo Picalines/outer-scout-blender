@@ -18,7 +18,7 @@ class CameraProperties(PropertyGroup):
         options=set(),
     )
 
-    is_recording_enabled: BoolProperty(name="Recording Enabled", default=True)
+    is_recording_enabled: BoolProperty(name="Recording Enabled", default=True, options=set())
 
     equirect_face_size: IntProperty(
         name="Equirectangular Face Size",
