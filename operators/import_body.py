@@ -32,6 +32,10 @@ class ImportBodyOperator(Operator):
 
     @classmethod
     def poll(cls, context) -> bool:
+        if context.mode != "OBJECT":
+            cls.poll_message_set("Not in object mode")
+            return False
+
         scene_props = SceneProperties.from_context(context)
         return scene_props.has_origin
 
