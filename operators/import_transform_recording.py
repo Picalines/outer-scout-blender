@@ -13,10 +13,10 @@ from ..utils import Result, operator_do
 
 @bpy_register
 class ImportTransformRecordingOperator(Operator):
-    """Imports the footage recorded by the camera in Outer Wilds"""
+    """Import recording file as transform keyframes"""
 
     bl_idname = "outer_scout.import_transform_recording"
-    bl_label = "Import Recordings"
+    bl_label = "Import Transform Recording"
 
     @classmethod
     def poll(cls, context) -> bool:
