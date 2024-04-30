@@ -30,7 +30,7 @@ class RecordOperator(AsyncOperator):
             cls.poll_message_set("Save project before recording")
             return False
 
-        if context.mode != 'OBJECT':
+        if context.mode != "OBJECT":
             cls.poll_message_set("Not in object mode")
             return False
 
@@ -47,7 +47,12 @@ class RecordOperator(AsyncOperator):
 
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
-        scene = context.scene
+
+        if (
+            scene_props.outer_wilds_scene != ""
+            and api_client.get_environment().then()["outerWildsScene"] != scene_props.outer_wilds_scene
+        ):
+            Result.do_error(f"not in the {scene_props.outer_wilds_scene} scene")
 
         api_client.delete_scene().then()
 
@@ -60,6 +65,7 @@ class RecordOperator(AsyncOperator):
 
         defer(api_client.delete_scene)
 
+        scene = context.scene
         was_on_frame = scene.frame_current
         defer(scene.frame_set, was_on_frame)
 
@@ -377,4 +383,3 @@ def temp_driver_namespace_func(prefix: str, func: Callable, postfix="_"):
     defer(delitem, bpy.app.driver_namespace, func_name)
 
     return func_name
-
