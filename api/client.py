@@ -8,6 +8,7 @@ from .http import Request, Response
 from .models import (
     ApiVersionJson,
     ColorTextureRecorderJson,
+    EnvironmentJson,
     EquirectCameraJson,
     GenericError,
     GetCameraJson,
@@ -60,6 +61,9 @@ class APIClient:
                 if self.api_version is not None
                 else "failed to connect to the Outer Scout API"
             )
+
+    def get_environment(self) -> Result[EnvironmentJson, str]:
+        return self._get("environment").bind(self._parse_json_response)
 
     def post_scene(self, scene: PostSceneJson) -> Result[Never, str]:
         return self._post("scene", data=scene)
@@ -171,4 +175,3 @@ class APIClient:
 
     def _delete(self, route: str, data: Any | None = None, query: dict[str, str] | None = None):
         return self._get_response(route=route, method="DELETE", data=data, query=query)
-
