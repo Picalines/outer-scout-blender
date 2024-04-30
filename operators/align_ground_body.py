@@ -27,7 +27,12 @@ class AlignGroundBodyOperator(Operator):
     @classmethod
     def poll(cls, context) -> bool:
         scene_props = SceneProperties.from_context(context)
-        return scene_props.has_origin and scene_props.has_ground_body
+
+        if not scene_props.has_ground_body:
+            cls.poll_message_set("Ground body is not imported")
+            return False
+
+        return scene_props.has_origin
 
     @operator_do
     def execute(self, context):
