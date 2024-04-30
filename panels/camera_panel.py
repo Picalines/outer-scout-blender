@@ -28,17 +28,20 @@ class CameraPanel(Panel):
         object: Object = context.active_object
         camera: Camera = object.data
         camera_props = CameraProperties.of_camera(camera)
+        object_props = ObjectProperties.of_object(object)
 
         layout.use_property_split = True
 
+        is_outer_scout_camera = camera_props.outer_scout_type != "NONE"
+
+        if is_outer_scout_camera and not object_props.has_unity_object_name:
+            layout.box().label(text="Unity object name is not set. Check the Object Properties tab", icon="ERROR")
+            layout.separator()
+
         layout.prop(camera_props, "outer_scout_type")
 
-        if camera_props.outer_scout_type == "NONE":
+        if not is_outer_scout_camera:
             return
-
-        object_props = ObjectProperties.of_object(object)
-        if not object_props.has_unity_object_name:
-            layout.label(text="Unity object name is not set. Check the Object Properties tab", icon="ERROR")
 
         layout.prop(camera_props, "is_recording_enabled")
         if camera_props.outer_scout_type == "EQUIRECTANGULAR":
