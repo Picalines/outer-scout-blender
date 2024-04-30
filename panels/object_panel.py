@@ -39,7 +39,7 @@ class ObjectPanel(Panel):
 
         if active_object.type != "CAMERA" and object_props.object_type == "EXISTING":
             transform_header, transform_panel = layout.panel(f"{self.bl_idname}.transform", default_closed=False)
-            transform_header.label(text="Transform Recording", icon="ORIENTATION_LOCAL")
+            transform_header.label(text="Transform Recording")
             if transform_panel:
                 transform_panel.prop(transform_props, "recording_path")
 
