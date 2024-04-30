@@ -10,7 +10,7 @@ from ..operators import (
     SetSceneOriginOperator,
     WarpPlayerOperator,
 )
-from ..properties import SceneRecordingProperties, SceneProperties
+from ..properties import SceneProperties, SceneRecordingProperties
 
 
 @bpy_register
@@ -82,6 +82,8 @@ class ScenePanel(Panel):
         ground_header, ground_panel = layout.panel(f"{self.bl_idname}.ground_body", default_closed=False)
         ground_header.label(text="Ground Body", icon="WORLD")
         if ground_panel:
+            ground_panel.prop(scene_props, "outer_wilds_scene")
+
             has_ground_body = scene_props.has_ground_body
 
             ground_panel.operator_context = "INVOKE_DEFAULT"
@@ -121,4 +123,3 @@ class ScenePanel(Panel):
         assets_row = layout.row()
         assets_row.operator_context = "EXEC_DEFAULT"
         assets_row.operator(ImportAssetsOperator.bl_idname, icon="FILE_REFRESH")
-

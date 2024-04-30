@@ -7,6 +7,13 @@ from ..bpy_register import bpy_register_property
 
 @bpy_register_property(Scene, "outer_scout_scene")
 class SceneProperties(PropertyGroup):
+    outer_wilds_scene: StringProperty(
+        name="Outer Wilds Scene",
+        description="Name of the Outer Wilds scene. It's used for safety checks, clear to ignore",
+        default="",
+        options=set(),
+    )
+
     origin_parent: StringProperty(
         name="Scene Origin Parent",
         description="Outer Wilds GameObject that the origin is attached to",
