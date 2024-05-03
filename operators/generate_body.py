@@ -25,8 +25,8 @@ class GenerateBodyOperator(Operator):
     @operator_do
     def execute(self, context):
         preferences = OuterScoutPreferences.from_context(context)
-        if not preferences.are_valid:
-            self._log("ERROR", "plugin preferences are not valid")
+        if not preferences.has_file_paths:
+            self._log("ERROR", "addon preferences are not valid")
             return {"CANCELLED"}
 
         ow_assets_folder, ow_bodies_folder = map(Path, (preferences.ow_assets_folder, preferences.ow_bodies_folder))

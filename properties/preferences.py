@@ -129,7 +129,7 @@ class OuterScoutPreferences(AddonPreferences):
         )
 
     @property
-    def are_valid(self) -> bool:
+    def has_file_paths(self) -> bool:
         return bool(self.ow_bodies_folder) and bool(self.ow_assets_folder)
 
 

@@ -36,6 +36,11 @@ class ImportBodyOperator(Operator):
             cls.poll_message_set("Not in object mode")
             return False
 
+        preferences = OuterScoutPreferences.from_context(context)
+        if not preferences.has_file_paths:
+            cls.poll_message_set("Please, set the Bodies and Assets directory paths in the addon preferences")
+            return False
+
         scene_props = SceneProperties.from_context(context)
         return scene_props.has_origin
 
@@ -51,9 +56,6 @@ class ImportBodyOperator(Operator):
     @operator_do
     def execute(self, context):
         preferences = OuterScoutPreferences.from_context(context)
-        if not preferences.are_valid:
-            # TODO: call operator to fill preferences?
-            Result.do_error("plugin preferences are not valid")
 
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
