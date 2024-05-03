@@ -10,7 +10,13 @@ from mathutils import Matrix
 
 from ..api import LEFT_HANDED_TO_RIGHT, RIGHT_HANDED_TO_LEFT, APIClient, Transform
 from ..bpy_register import bpy_register
-from ..properties import CameraProperties, ObjectProperties, SceneProperties, SceneRecordingProperties
+from ..properties import (
+    CameraProperties,
+    ObjectProperties,
+    OuterScoutPreferences,
+    SceneProperties,
+    SceneRecordingProperties,
+)
 from ..utils import Result, add_driver, defer, operator_do, with_defers
 from .async_operator import AsyncOperator
 
@@ -85,7 +91,8 @@ class RecordOperator(AsyncOperator):
         recording_props.in_progress = True
         defer(setattr, recording_props, "in_progress", False)
 
-        self._add_timer(context, recording_props.modal_timer_delay)
+        preferences = OuterScoutPreferences.from_context(context)
+        self._add_timer(context, preferences.modal_timer_delay)
 
         frame_count = scene.frame_end - scene.frame_start + 1
 

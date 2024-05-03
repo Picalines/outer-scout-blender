@@ -1,4 +1,4 @@
-from bpy.props import IntProperty, StringProperty
+from bpy.props import IntProperty, StringProperty, FloatProperty
 from bpy.types import AddonPreferences, Context
 
 from ..bpy_register import bpy_register
@@ -40,6 +40,14 @@ class OuterScoutPreferences(AddonPreferences):
         default="DreamSimulation",
     )
 
+    modal_timer_delay: FloatProperty(
+        name="Modal Delay",
+        description="Time interval in seconds. Controls how often the addon will ask Outer Wilds about the recording progress",
+        default=0.1,
+        min=0.001,
+        options=set(),
+    )
+
     @staticmethod
     def from_context(context: Context) -> "OuterScoutPreferences":
         return context.preferences.addons[ADDON_PACKAGE].preferences
@@ -52,6 +60,7 @@ class OuterScoutPreferences(AddonPreferences):
         self.layout.prop(self, "ow_assets_folder")
         self.layout.prop(self, "import_ignore_paths")
         self.layout.prop(self, "import_ignore_layers")
+        self.layout.prop(self, "modal_timer_delay")
 
     @property
     def are_valid(self) -> bool:
