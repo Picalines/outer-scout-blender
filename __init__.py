@@ -19,7 +19,12 @@ def register():
     from . import operators as _
     from . import panels as _
     from . import properties as _
-    from .bpy_register import CLASSES_TO_REGISTER, PANEL_EXTENSIONS_TO_REGISTER, PROPERTIES_TO_REGISTER
+    from .bpy_register import (
+        CLASSES_TO_REGISTER,
+        LOAD_POST_HANDLERS_TO_REGISTER,
+        PANEL_EXTENSIONS_TO_REGISTER,
+        PROPERTIES_TO_REGISTER,
+    )
 
     registered_classes: set[type] = set()
     for cls in CLASSES_TO_REGISTER:
@@ -41,9 +46,17 @@ def register():
         for draw_func in draw_funcs:
             panel_type.append(draw_func)
 
+    for load_post_handler in LOAD_POST_HANDLERS_TO_REGISTER:
+        bpy.app.handlers.load_post.append(load_post_handler)
+
 
 def unregister():
-    from .bpy_register import CLASSES_TO_REGISTER, PANEL_EXTENSIONS_TO_REGISTER, PROPERTIES_TO_REGISTER
+    from .bpy_register import (
+        CLASSES_TO_REGISTER,
+        LOAD_POST_HANDLERS_TO_REGISTER,
+        PANEL_EXTENSIONS_TO_REGISTER,
+        PROPERTIES_TO_REGISTER,
+    )
 
     for cls in CLASSES_TO_REGISTER:
         if cls in PROPERTIES_TO_REGISTER:
@@ -55,6 +68,9 @@ def unregister():
     for panel_type, draw_funcs in PANEL_EXTENSIONS_TO_REGISTER.items():
         for draw_func in reversed(draw_funcs):
             panel_type.remove(draw_func)
+
+    for load_post_handler in LOAD_POST_HANDLERS_TO_REGISTER:
+        bpy.app.handlers.load_post.remove(load_post_handler)
 
 
 def reload_addon():

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from typing import Callable, TypeVar
+from functools import wraps
+from typing import Any, Callable, TypeVar
 
+import bpy.app.handlers
 from bpy.props import PointerProperty
 
 TType = TypeVar("TType", bound=type)
@@ -20,6 +22,9 @@ PROPERTIES_TO_REGISTER: dict[type, RegisteredProperty] = {}
 
 
 PANEL_EXTENSIONS_TO_REGISTER: dict[type, list[Callable]] = {}
+
+
+LOAD_POST_HANDLERS_TO_REGISTER: list[Callable[[], Any]] = []
 
 
 def bpy_register(cls: TType) -> TType:
@@ -43,4 +48,15 @@ def bpy_extend_panel(panel_type: type):
         return draw
 
     return decorator
+
+
+def bpy_load_post(func: Callable[[], Any]):
+    @wraps(func)
+    @bpy.app.handlers.persistent
+    def wrapped_func(_: str):
+        func()
+
+    LOAD_POST_HANDLERS_TO_REGISTER.append(wrapped_func)
+
+    return wrapped_func
 
