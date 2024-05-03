@@ -45,8 +45,8 @@ class GenerateBodyOperator(Operator):
         api_client = APIClient.from_context(context)
         body_mesh_json = api_client.get_object_mesh(
             body_name,
-            ignore_paths=preferences.import_ignore_paths.split(","),
-            ignore_layers=preferences.import_ignore_layers.split(","),
+            ignore_paths=list(map(lambda i: i.name, preferences.import_ignore_paths)),
+            ignore_layers=list(map(lambda i: i.name, preferences.import_ignore_layers)),
             case_sensitive=False,
         ).then()
 
