@@ -57,7 +57,7 @@ class APIClient:
     def assert_compatability(self):
         if not self.is_api_supported():
             raise AssertionError(
-                "current Outer Scout version is not supported"
+                f'versions of Outer Scout mod and addon are incompatible. Please, update the addon to support version {ACCEPTED_API_VERSION[0]}.{ACCEPTED_API_VERSION[1]}.x'
                 if self.api_version is not None
                 else "failed to connect to the Outer Scout API"
             )
