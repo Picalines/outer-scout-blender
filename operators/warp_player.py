@@ -5,7 +5,7 @@ from mathutils import Matrix
 from ..api import APIClient, Transform
 from ..bpy_register import bpy_register
 from ..properties import SceneProperties
-from ..utils import operator_do
+from ..utils import operator_do, Result
 
 
 @bpy_register
@@ -35,6 +35,12 @@ class WarpPlayerOperator(Operator):
         scene_props = SceneProperties.from_context(context)
         api_client = APIClient.from_context(context)
 
+        current_ow_scene = api_client.get_environment().then()["outerWildsScene"]
+        if current_ow_scene != scene_props.outer_wilds_scene:
+            Result.do_error(
+                f"the warp destination is in another game scene ({scene_props.outer_wilds_scene} expected, currently on {current_ow_scene})"
+            )
+
         warp_matrix = Transform.from_matrix(scene_props.origin_matrix).to_right_matrix()
 
         match self.destination:
@@ -55,4 +61,3 @@ class WarpPlayerOperator(Operator):
         api_client.warp_player(
             ground_body=scene_props.origin_parent, local_transform=Transform.from_matrix(warp_matrix).to_left()
         ).then()
-
