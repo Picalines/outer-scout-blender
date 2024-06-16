@@ -18,7 +18,7 @@ class ParentSuggestion:
 ORIGIN_PARENT_SUGGESTIONS = {
     "Player": ParentSuggestion("Player_Body", ow_scene="SolarSystem"),
     "Player Ship": ParentSuggestion("Ship_Body", ow_scene="SolarSystem"),
-    "Sun > Station": ParentSuggestion("SunStation_Pivot", ow_scene="SolarSystem"),
+    "Sun > Station": ParentSuggestion("SunStation_Body", ow_scene="SolarSystem"),
     "Hourglass > Ember Twin": ParentSuggestion("CaveTwin_Body", ow_scene="SolarSystem"),
     "Hourglass > Tower Twin": ParentSuggestion("TowerTwin_Body", ow_scene="SolarSystem"),
     "Hourglass > Tower Twin > ATP": ParentSuggestion("TimeLoopRing_Body", ow_scene="SolarSystem"),
