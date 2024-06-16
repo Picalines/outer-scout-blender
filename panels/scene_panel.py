@@ -44,6 +44,7 @@ class ScenePanel(Panel):
 
         layout.prop(scene_props, "outer_wilds_scene")
         layout.prop(scene_props, "time_scale")
+        layout.prop(scene_props, "hide_player_model", text="Show Player Model", invert_checkbox=True)
 
         layout.separator()
 
