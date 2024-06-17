@@ -54,9 +54,9 @@ Click the record button in the scene properties tab. After recording, all config
 
 ### 6. Setup compositor
 
-The main idea of the mod and addon is to render blender models *on top* of the game's footages. To do this, click on the button and add the generated node group to the compositor tree. After that, you can do anything with your scene - you can even add effects on the footages of the game using the compositing nodes, or pull them into some editing program.
+The main idea of the mod and addon is to render blender models *on top* of the game's footages. To do this, click on the button and add the generated node group to the compositor tree
 
-The idea is that you can make complex scenes with [multiple cameras at once](https://docs.blender.org/manual/en/latest/animation/markers.html#bind-camera-to-markers), and the addon will generate the necessary nodes for this
+After that, you can do anything with your scene - you can even add effects on the footages of the game using the compositing nodes, or pull them into some editing program. You can make complex scenes with [multiple cameras](https://docs.blender.org/manual/en/latest/animation/markers.html#bind-camera-to-markers), and the addon will generate the necessary nodes for you
 
 <p>
   <img alt="generate nodes button" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/eaa4259d-dd77-4747-ba66-77a586b640fd" width="30%" align="middle">
