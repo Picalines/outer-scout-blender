@@ -31,7 +31,7 @@ See more in the [asset extraction guide](##extracting-game-assets). Planet model
 
 ### 4. Make a camera
 
-Put the camera in Blender and animate it
+Put the camera in Blender and animate it. In addition to position and rotation, you can animate its `focal length`, `lens shift`, `clip start/end` and `sensor size`. You can try adding camera shake using the [camera shakify addon](https://github.com/EatTheFuture/camera_shakify)
 
 <p>
   <img alt="camera configuration" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/dcfa8e15-fc74-4b4d-b74b-df7997b08cd1" width="30%" align="middle">
@@ -102,6 +102,18 @@ The mod can record several textures from one camera at once. In this way, you ca
   <img alt="depth config" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/7f0a3c4f-e225-417f-b528-7f66713a2ffc" width="30%" align="middle">
   <img alt="cropped render" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/8ce9d119-0253-444d-84b2-4fb7e55785d0" width="65%" align="middle">
 </p>
+
+### Miscellaneous
+
+#### `Sidebar > View > Outer Scout`
+
+- Toggle the planet model visibility
+- Warp the player to a position in the game corresponding to the position of the 3D cursor
+- Reposition the scene using the 3D cursor
+
+#### Planet model animation
+
+You can try to animate the rotation of the planet object, rather than the camera itself - then you will be able to make an orbit flight! *Just don't read [the code](https://github.com/Picalines/outer-scout-blender/blob/aa85ec6b886e7feecec7d7a8a4e9ff652deb775b/operators/record.py#L259) of this thing*
 
 ## Extracting game assets
 
