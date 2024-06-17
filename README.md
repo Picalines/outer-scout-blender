@@ -63,6 +63,8 @@ The idea is that you can make complex scenes with [multiple cameras at once](htt
   <img alt="compositing tab" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/a657ecc9-d0ec-4591-97d9-d040f1cda91b" width="65%" align="middle">
 </p>
 
+<video src="https://github.com/Picalines/outer-scout-blender/assets/42614422/5d9a02ae-21e3-46d0-a6f2-16b3b79f7906"></video>
+
 ## Requirements
 
 - Outer Wilds patch 15
@@ -73,6 +75,33 @@ The idea is that you can make complex scenes with [multiple cameras at once](htt
 
 - Download this repo as a `.zip`
 - [Install](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html#installing-add-ons) the archive in the Blender addon preferences
+
+## Additional Features
+
+### HDRI recording
+
+You can select the `Equirectangular` type in the camera settings. In this case, the mod will record something like a 360 video from the point of that camera, which is suitable for creating [HDRI](https://docs.blender.org/manual/en/latest/render/lights/world.html) in a Blender
+
+The "Generate HDRI nodes" button generates the desired node group to be added to the world shader. There can only be one HDR camera on one scene
+
+<p>
+  <img alt="equirectangular camera" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/726cb775-7dcd-410f-9d31-68b2e367b74d" width="30%" align="middle">
+  <img alt="suzanne with hdri" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/5cf63c0a-b382-4430-812a-f9f67906eab0" width="65%" align="middle">
+</p>
+
+### Depth recording
+
+The mod can record several textures from one camera at once. In this way, you can get both a color channel and a depth channel at the same time. The latter is used in the generated compositing nodes to put the blender object "[behind](https://docs.blender.org/manual/en/latest/compositing/types/color/z_combine.html)" the game object
+
+> [!WARNING]
+> This feature works well only when your object is blocked by something from the foreground. Most likely, I incorrectly implemented the conversion of the Unity depth to Blender
+>
+> The result depends on the [clip planes](https://docs.blender.org/manual/en/latest/render/cameras.html#:~:text=it%20off%2Dcenter.-,Clip%20Start%20and%20End,-The%20interval%20in). The greater the distance, the worse
+
+<p>
+  <img alt="depth config" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/7f0a3c4f-e225-417f-b528-7f66713a2ffc" width="30%" align="middle">
+  <img alt="cropped render" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/8ce9d119-0253-444d-84b2-4fb7e55785d0" width="65%" align="middle">
+</p>
 
 ## Extracting game assets
 
