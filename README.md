@@ -82,7 +82,7 @@ After that, you can do anything with your scene - you can even add effects on th
 
 You can select the `Equirectangular` type in the camera settings. In this case, the mod will record something like a 360 video from the point of that camera, which is suitable for creating [HDRI](https://docs.blender.org/manual/en/latest/render/lights/world.html) in a Blender
 
-The "Generate HDRI nodes" button generates the desired node group to be added to the world shader. There can only be one HDR camera on one scene
+The "Generate HDRI nodes" button generates the desired node group to be added to the world shader. There can only be one HDRI camera on one scene
 
 <p>
   <img alt="equirectangular camera" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/726cb775-7dcd-410f-9d31-68b2e367b74d" width="30%" align="middle">
