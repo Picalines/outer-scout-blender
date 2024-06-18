@@ -79,6 +79,29 @@ After that, you can do anything with your scene - you can even add effects on th
 
 ## Additional Features
 
+### Game Object Replay
+
+Use this feature to add interaction between game objects and your blender models:
+1. Create an Empty in the Blender, and give it the name of the Unity object from Outer Wilds <ins>in the Outer Scout panel</ins>. The easiest way to find out the name of an object is using [Unity Explorer](https://outerwildsmods.com/mods/unityexplorer/)
+2. Set the `Unity Object Mode` to `Existing`. In this mode, the mod will not create a new empty `UnityEngine.GameObject`, but search for an existing one
+3. Specify the path to the file where the mod will record information about this object on each frame
+
+After that, the `Transform Mode` property will appear, which tells the mod what to do after the next recording starts:
+- In `Record` mode, the mod will capture the transformation parameters of the object on each frame of the animation, and then import them as key frames of the blender
+- In `Replay` mode, the mod, on the contrary, imports the key frames of the blender into the game and assigns them to the object on each frame of the animation
+
+*Yes, it's a bit complicated*, but the final algorithm is like this:
+- Create an object in `Record` mode and hit the "record" button in the scene properties tab
+- The mod *automatically* sets all `Record` objects to `Replay`
+- Now you can animate your blender models based on the position of something from the game! *Dreams come true!*
+
+<p>
+  <img alt="game object config" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/5968963d-4ded-436c-b41e-9e7958c81da6" width="30%" align="middle">
+  <img alt="imported keyframes" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/8693ddd5-11de-4017-a481-33cfc5a7f4dc" width="65%" align="middle">
+</p>
+
+<video src="https://github.com/Picalines/outer-scout-blender/assets/42614422/4a864760-80dd-45ce-a10a-99b70b194d76"></video>
+
 ### HDRI recording
 
 You can select the `Equirectangular` type in the camera settings. In this case, the mod will record something like a 360 video from the point of that camera, which is suitable for creating [HDRI](https://docs.blender.org/manual/en/latest/render/lights/world.html) in a Blender
