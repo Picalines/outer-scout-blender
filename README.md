@@ -69,6 +69,7 @@ After that, you can do anything with your scene - you can even add effects on th
 
 - Outer Wilds patch 15
 - Blender 4.1
+- [FFmpeg](https://ffmpeg.org/about.html) for video recording. See the [mod's requirements](https://github.com/Picalines/outer-scout/blob/master/README.md#requirements) for more details
 - [AssetStudio](https://github.com/Perfare/AssetStudio) for planet model extraction
 
 ## Installation
