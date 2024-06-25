@@ -172,9 +172,12 @@ In order to import planet models into Blender you need to extract mesh assets fr
 
 6. `Export > Filtered assets` to the *extracted* assets folder
   
-7. Select the planets of interest, and then `Model > Export selected objects (split)`
+7. Select the planets of interest, and then `Model > Export selected objects (split)` to the *bodies* folder
 
 <img alt="export planets" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/2fef80dc-38b5-4923-bbe8-0ae2574604f8" width="40%">
+
+> [!NOTE]
+> All the planets can be put in one *bodies* folder - the addon will only search for `.fbx` and `.blend` files in there by the name of the desired planet. You don't need to change these paths more than once after installation
 
 > [!WARNING]
 > Each planet subtree must have object with `_Body` postfix within. You *can't* select the `SolarSystemRoot`, because each planet should be in a separate `.fbx` file
