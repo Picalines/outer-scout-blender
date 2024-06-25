@@ -135,6 +135,12 @@ The mod can record several textures from one camera at once. In this way, you ca
 - Warp the player to a position in the game corresponding to the position of the 3D cursor
 - Reposition the scene using the 3D cursor
 
+#### Planet sectors
+
+The planets in the game are divided into separate sectors by points of interest to optimize their loading time. When creating a scene, you can stand in the right place in the game, and by default the addon imports only those sectors in which the player is located
+
+This saves performance, especially on large planets with many separate enclosed rooms - inaccessible locations will be skipped. If desired, you still have the option to import the entire planet, or select a planet not according to the player's position (see the [asset extraction guide](##extracting-game-assets) for details)
+
 #### Planet model animation
 
 You can try to animate the rotation of the planet object, rather than the camera itself - then you will be able to make an orbit flight! *Just don't read [the code](https://github.com/Picalines/outer-scout-blender/blob/aa85ec6b886e7feecec7d7a8a4e9ff652deb775b/operators/record.py#L259) of this thing*
