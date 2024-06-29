@@ -53,7 +53,7 @@ class ImportCameraRecordingOperator(Operator):
 
         recording_path = texture_props.absolute_recording_path
         if not path.isfile(recording_path):
-            Result.do_error(f'file "{texture_props.recording_path}" is not a file')
+            Result.do_error(f'"{texture_props.recording_path}" is not a file')
 
         old_movie_clip: MovieClip = texture_props.movie_clip
         new_movie_clip = bpy.data.movieclips.load(recording_path)
