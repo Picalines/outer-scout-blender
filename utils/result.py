@@ -82,17 +82,28 @@ class Result(Generic[T, E]):
     @staticmethod
     def do(*, error: type[UE] = object) -> "Callable[[Callable[TArgs, UT]], Callable[TArgs, Result[UT, UE]]]":
         def decorator(func):
+            def handle_exception(raised: Exception):
+                match raised:
+                    case ResultDoError() as do_error:
+                        return Result.error(do_error.value)
+                    case Exception() as unknown_exception:
+                        print('[outer-scout-blender]', unknown_exception)
+                return Result.error(str(raised))
+
+            def wrap_return_value(return_value):
+                if isinstance(return_value, Result):
+                    return return_value
+                return Result.ok(return_value)
+
             if isgeneratorfunction(func):
 
                 @wraps(func)
                 def wrapper(*args, **kwargs):
                     try:
                         return_value = yield from func(*args, **kwargs)
-                    except ResultDoError as do_error:
-                        return_value = Result.error(do_error.value)
-                    if not isinstance(return_value, Result):
-                        return_value = Result.ok(return_value)
-                    return return_value
+                    except Exception as exception:
+                        return_value = handle_exception(exception)
+                    return wrap_return_value(return_value)
 
             else:
 
@@ -100,11 +111,9 @@ class Result(Generic[T, E]):
                 def wrapper(*args, **kwargs):
                     try:
                         return_value = func(*args, **kwargs)
-                    except ResultDoError as do_error:
-                        return_value = Result.error(do_error.value)
-                    if not isinstance(return_value, Result):
-                        return_value = Result.ok(return_value)
-                    return return_value
+                    except Exception as exception:
+                        return_value = handle_exception(exception)
+                    return wrap_return_value(return_value)
 
             return wrapper
 
@@ -124,4 +133,3 @@ class Result(Generic[T, E]):
         if self.is_ok:
             return f"Ok({self.__value!r})"
         return f"Error({self.__error!r})"
-
