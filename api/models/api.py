@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, NotRequired
 
 
 class ApiVersionJson(TypedDict):
@@ -7,6 +7,7 @@ class ApiVersionJson(TypedDict):
     major: int
 
 
-class GenericError(TypedDict):
-    error: str
-
+class ProblemJson(TypedDict):
+    type: str
+    title: NotRequired[str]
+    detail: NotRequired[str]

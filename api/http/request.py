@@ -23,7 +23,7 @@ class Request:
     query_params: dict[str, str] | None = None
     headers: dict[str, str] = field(default_factory=dict)
 
-    def send(self) -> Response:
+    def send(self) -> Response | None:
         http_request = self._to_urllib_request()
 
         try:
@@ -41,7 +41,8 @@ class Request:
             )
         except OSError as os_error:
             print(os_error)
-            raise
+
+        return None
 
     def _to_urllib_request(self) -> UrllibRequest:
         url = url_encode(self.url, safe="/:")

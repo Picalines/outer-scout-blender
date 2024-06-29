@@ -10,7 +10,7 @@ from .models import (
     ColorTextureRecorderJson,
     EnvironmentJson,
     EquirectCameraJson,
-    GenericError,
+    ProblemJson,
     GetCameraJson,
     GroundBodyJson,
     ObjectJson,
@@ -43,23 +43,26 @@ class APIClient:
     def get_api_version(self) -> Result[ApiVersionJson, str]:
         return self._get("api/version", assert_compat=False).bind(self._parse_json_response)
 
-    def is_api_supported(self) -> bool:
-        if self.api_version is None:
-            api_version = self.get_api_version().unwrap_or(None)
-            if api_version:
-                self.api_version = (api_version["major"], api_version["minor"])
-
-        if self.api_version is None:
-            return False
-
-        return self.api_version[0] == ACCEPTED_API_VERSION[0] and self.api_version[1] >= ACCEPTED_API_VERSION[1]
-
     def assert_compatability(self):
-        if not self.is_api_supported():
+        get_version_error: str | None = None
+
+        if self.api_version is None:
+            get_version_result = self.get_api_version()
+            if get_version_result.is_ok:
+                api_version = get_version_result.unwrap()
+                self.api_version = (api_version["major"], api_version["minor"])
+            else:
+                get_version_error = get_version_result.unwrap_error()
+
+        is_api_supported = self.api_version is not None and (
+            self.api_version[0] == ACCEPTED_API_VERSION[0] and self.api_version[1] >= ACCEPTED_API_VERSION[1]
+        )
+
+        if not is_api_supported:
             raise AssertionError(
-                f'versions of Outer Scout mod and addon are incompatible. Please, update the addon to support version {ACCEPTED_API_VERSION[0]}.{ACCEPTED_API_VERSION[1]}.x'
+                f"versions of Outer Scout mod and addon are incompatible. Please, update the addon to support version {ACCEPTED_API_VERSION[0]}.{ACCEPTED_API_VERSION[1]}.x"
                 if self.api_version is not None
-                else "failed to connect to the Outer Scout API"
+                else get_version_error
             )
 
     def get_environment(self) -> Result[EnvironmentJson, str]:
@@ -151,12 +154,20 @@ class APIClient:
         request = Request(url=self.base_url + route, method=method, data=data, query_params=query)
 
         response = request.send()
+        if response is None:
+            Result.do_error(
+                f"couldn't get a response from the Outer Scout API. Make sure that it's available at {self.base_url}"
+            )
 
-        error_prefix = "Outer Scout API error: "
-
-        if not response.is_success:
-            generic_error = response.json(GenericError).map_error(lambda _: error_prefix + response.body).then()
-            Result.do_error(error_prefix + generic_error["error"] if "error" in generic_error else response.body)
+        if response.is_error:
+            Result.do_error(
+                response.json(ProblemJson)
+                .map(
+                    lambda p: (f"[{p['type']}]" if "title" not in p else p["title"])
+                    + (f": {p['detail']}" if "detail" in p else "")
+                )
+                .unwrap_or_else(lambda _: f"Outer Scout API error: {response.body}")
+            )
 
         return response
 
