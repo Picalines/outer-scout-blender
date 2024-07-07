@@ -26,17 +26,17 @@ class CameraPanel(Panel):
         layout = self.layout
 
         object: Object = context.active_object
-        camera: Camera = object.data
-        camera_props = CameraProperties.of_camera(camera)
         object_props = ObjectProperties.of_object(object)
+
+        if not object_props.has_unity_object_name:
+            layout.box().label(text="Unity object name is not set. Check the Object Properties tab", icon="ERROR")
+            return
 
         layout.use_property_split = True
 
+        camera: Camera = object.data
+        camera_props = CameraProperties.of_camera(camera)
         is_outer_scout_camera = camera_props.outer_scout_type != "NONE"
-
-        if is_outer_scout_camera and not object_props.has_unity_object_name:
-            layout.box().label(text="Unity object name is not set. Check the Object Properties tab", icon="ERROR")
-            layout.separator()
 
         layout.prop(camera_props, "outer_scout_type")
 
@@ -82,4 +82,3 @@ class CameraPanel(Panel):
             footage_column = texture_panel.column()
             footage_column.enabled = False
             footage_column.prop(ffmpeg_options, "movie_clip")
-

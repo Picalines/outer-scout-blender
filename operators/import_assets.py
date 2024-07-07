@@ -25,6 +25,10 @@ class ImportAssetsOperator(Operator):
         for object in scene.objects:
             object: Object
 
+            object_props = ObjectProperties.of_object(object)
+            if not object_props.has_unity_object_name:
+                continue
+
             match object.type:
                 case "CAMERA":
                     camera: Camera = object.data
@@ -37,7 +41,6 @@ class ImportAssetsOperator(Operator):
                         if camera_props.hdri_node_group:
                             bpy.ops.outer_scout.generate_hdri_nodes()
                 case _:
-                    object_props = ObjectProperties.of_object(object)
                     transform_props = object_props.transform_props
 
                     if transform_props.has_recording_path and transform_props.mode == "RECORD":
@@ -50,4 +53,3 @@ class ImportAssetsOperator(Operator):
         scene_props = SceneProperties.from_context(context)
         if scene_props.compositor_node_group:
             bpy.ops.outer_scout.generate_compositor_nodes()
-
