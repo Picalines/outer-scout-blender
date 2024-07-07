@@ -49,19 +49,23 @@ class GenerateCompositorNodesOperator(Operator):
 
         comp_node_group.nodes.clear()
 
-        IMAGE_IN = "Image Pass"
-        DEPTH_IN = "Depth Pass"
+        IMAGE_IN = "Image"
+        DEPTH_IN = "Z"
         BLUR_IN = "Blur Edges"
         IMAGE_OUT = "Image"
+        DEPTH_OUT = "Z"
 
         with NodeTreeInterfaceBuilder(comp_node_group.interface) as interface_builder:
             interface_builder.add_input(IMAGE_IN, bpy.types.NodeSocketColor, default_value=(0, 0, 0, 0))
             interface_builder.add_input(DEPTH_IN, bpy.types.NodeSocketFloat)
             interface_builder.add_input(BLUR_IN, bpy.types.NodeSocketFloat, default_value=0.3, min_value=0, max_value=1)
             interface_builder.add_output(IMAGE_OUT, bpy.types.NodeSocketColor)
+            interface_builder.add_output(DEPTH_OUT, bpy.types.NodeSocketFloat)
 
         with NodeBuilder(comp_node_group, bpy.types.NodeGroupOutput) as output_node:
-            with output_node.build_input(0, bpy.types.CompositorNodeZcombine) as z_combine_node:
+            with output_node.build_input(IMAGE_OUT, bpy.types.CompositorNodeZcombine) as z_combine_node:
+                output_node.defer_connect(DEPTH_OUT, z_combine_node, 1)
+
                 z_combine_node.set_attr("use_alpha", True)
 
                 with z_combine_node.build_input(0, bpy.types.NodeGroupInput) as group_input_node:
@@ -187,4 +191,3 @@ class GenerateCompositorNodesOperator(Operator):
                 )
             else:
                 mix_node.set_input_value(1, (0, 0, 0, 1))
-
