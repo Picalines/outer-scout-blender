@@ -1,6 +1,7 @@
 from typing import Callable
 
 import bpy
+from math import inf
 from bpy.types import MovieClip, Object, Operator, Scene
 
 from ..bpy_register import bpy_register
@@ -53,13 +54,15 @@ class GenerateCompositorNodesOperator(Operator):
         DEPTH_IN = "Z"
         BLUR_IN = "Blur Edges"
         IMAGE_OUT = "Image"
+        BACKGROUND_OUT = "Background"
         DEPTH_OUT = "Z"
 
         with NodeTreeInterfaceBuilder(comp_node_group.interface) as interface_builder:
             interface_builder.add_input(IMAGE_IN, bpy.types.NodeSocketColor, default_value=(0, 0, 0, 0))
-            interface_builder.add_input(DEPTH_IN, bpy.types.NodeSocketFloat)
+            interface_builder.add_input(DEPTH_IN, bpy.types.NodeSocketFloat, default_value=inf, hide_value=True)
             interface_builder.add_input(BLUR_IN, bpy.types.NodeSocketFloat, default_value=0.3, min_value=0, max_value=1)
-            interface_builder.add_output(IMAGE_OUT, bpy.types.NodeSocketColor)
+            interface_builder.add_output(IMAGE_OUT, bpy.types.NodeSocketColor, default_value=(0, 0, 0, 0))
+            interface_builder.add_output(BACKGROUND_OUT, bpy.types.NodeSocketColor)
             interface_builder.add_output(DEPTH_OUT, bpy.types.NodeSocketFloat)
 
         with NodeBuilder(comp_node_group, bpy.types.NodeGroupOutput) as output_node:
@@ -73,13 +76,16 @@ class GenerateCompositorNodesOperator(Operator):
 
                 z_combine_node.defer_connect(1, group_input_node, DEPTH_IN)
 
-                self._build_camera_clip_switch(
+                background_node = self._build_camera_clip_switch(
                     z_combine_node,
                     2,
                     scene=scene,
                     cameras=cameras,
                     get_clip=lambda c: CameraProperties.of_camera(c.data).color_texture_props.movie_clip,
                 )
+
+                if background_node is not None:
+                    output_node.defer_connect(BACKGROUND_OUT, background_node, "Image")
 
                 with PostfixNodeBuilder(
                     comp_node_group, "far far near / 1 - raw_depth * 1 + /".split()
@@ -160,9 +166,9 @@ class GenerateCompositorNodesOperator(Operator):
         cameras: list[Object],
         get_clip: Callable[[Object], MovieClip | None],
         _camera_index=0,
-    ):
+    ) -> NodeBuilder | None:
         if not len(cameras):
-            return
+            return None
 
         with dest_builder.build_input(dest_input, bpy.types.CompositorNodeMixRGB) as mix_node:
             mix_node.set_attr("blend_type", "MIX")
@@ -191,3 +197,5 @@ class GenerateCompositorNodesOperator(Operator):
                 )
             else:
                 mix_node.set_input_value(1, (0, 0, 0, 1))
+
+        return mix_node
