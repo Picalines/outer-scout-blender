@@ -28,6 +28,7 @@ class NodeTreeInterfaceBuilder:
         default_value: Any | None
         min_value: float | None
         max_value: float | None
+        hide_value: bool
 
     _interface: NodeTreeInterface
     _input_sockets: dict[str, Socket]
@@ -49,9 +50,12 @@ class NodeTreeInterfaceBuilder:
         default_value: Any | None = None,
         min_value: float | None = None,
         max_value: float | None = None,
+        hide_value: bool = False,
     ):
         index = len(self._input_sockets)
-        self._input_sockets[name] = self.Socket(socket_type, index, description, default_value, min_value, max_value)
+        self._input_sockets[name] = self.Socket(
+            socket_type, index, description, default_value, min_value, max_value, hide_value
+        )
 
     def add_output(
         self,
@@ -62,9 +66,12 @@ class NodeTreeInterfaceBuilder:
         default_value: Any | None = None,
         min_value: float | None = None,
         max_value: float | None = None,
+        hide_value: bool = False,
     ):
         index = len(self._output_sockets)
-        self._output_sockets[name] = self.Socket(socket_type, index, description, default_value, min_value, max_value)
+        self._output_sockets[name] = self.Socket(
+            socket_type, index, description, default_value, min_value, max_value, hide_value
+        )
 
     def __enter__(self) -> "NodeTreeInterfaceBuilder":
         return self
@@ -117,6 +124,8 @@ class NodeTreeInterfaceBuilder:
         if socket.max_value is not None:
             item.max_value = socket.max_value
 
+        item.hide_value = socket.hide_value
+
     def _apply_sockets_order(self):
         items: list[tuple[str, NodeTreeInterfaceItem]] = self._interface.items_tree.items()
 
@@ -129,7 +138,6 @@ class NodeTreeInterfaceBuilder:
             socket_index = socket.index if item.in_out == "OUTPUT" else len(self._output_sockets) + socket.index
 
             self._interface.move(item, socket_index)
-
 
 
 class NodeBuilder:
