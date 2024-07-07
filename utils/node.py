@@ -23,6 +23,7 @@ class NodeTreeInterfaceBuilder:
     @dataclass
     class Socket:
         type: type
+        index: int
         description: str
         default_value: Any | None
         min_value: float | None
@@ -49,7 +50,8 @@ class NodeTreeInterfaceBuilder:
         min_value: float | None = None,
         max_value: float | None = None,
     ):
-        self._input_sockets[name] = self.Socket(socket_type, description, default_value, min_value, max_value)
+        index = len(self._input_sockets)
+        self._input_sockets[name] = self.Socket(socket_type, index, description, default_value, min_value, max_value)
 
     def add_output(
         self,
@@ -61,7 +63,8 @@ class NodeTreeInterfaceBuilder:
         min_value: float | None = None,
         max_value: float | None = None,
     ):
-        self._output_sockets[name] = self.Socket(socket_type, description, default_value, min_value, max_value)
+        index = len(self._output_sockets)
+        self._output_sockets[name] = self.Socket(socket_type, index, description, default_value, min_value, max_value)
 
     def __enter__(self) -> "NodeTreeInterfaceBuilder":
         return self
@@ -97,6 +100,8 @@ class NodeTreeInterfaceBuilder:
             item = self._interface.new_socket(missing_output_name, in_out="OUTPUT")
             self._apply_socket(item, self._output_sockets[missing_output_name])
 
+        self._apply_sockets_order()
+
     def _apply_socket(self, item: NodeTreeInterfaceSocket, socket: Socket):
         item.socket_type = socket.type.__name__
         item.description = socket.description
@@ -111,6 +116,20 @@ class NodeTreeInterfaceBuilder:
 
         if socket.max_value is not None:
             item.max_value = socket.max_value
+
+    def _apply_sockets_order(self):
+        items: list[tuple[str, NodeTreeInterfaceItem]] = self._interface.items_tree.items()
+
+        for item_name, item in items:
+            if not isinstance(item, NodeTreeInterfaceSocket):
+                continue
+
+            sockets_dict = self._input_sockets if item.in_out == "INPUT" else self._output_sockets
+            socket = sockets_dict[item_name]
+            socket_index = socket.index if item.in_out == "OUTPUT" else len(self._output_sockets) + socket.index
+
+            self._interface.move(item, socket_index)
+
 
 
 class NodeBuilder:
@@ -359,4 +378,3 @@ class PostfixNodeBuilder(NodeBuilder):
 
         self._node_type = top_expr_node._node_type
         self.built_node = top_expr_node.built_node
-
