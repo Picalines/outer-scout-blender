@@ -6,19 +6,21 @@ from ..properties import OuterScoutPreferences, TextureRecordingProperties
 from ..utils import Result
 from .http import Request, Response
 from .models import (
+    ActiveCameraJson,
     ApiVersionJson,
+    CameraJson,
     ColorTextureRecorderJson,
     EnvironmentJson,
     EquirectCameraJson,
-    ProblemJson,
-    GetCameraJson,
     GroundBodyJson,
     ObjectJson,
     ObjectMeshJson,
     PerspectiveCameraJson,
+    PerspectiveJson,
     PlayerSectorListJson,
     PostRecordingJson,
     PostSceneJson,
+    ProblemJson,
     PutKeyframesJson,
     RecordingStatusJson,
     Transform,
@@ -80,11 +82,21 @@ class APIClient:
     def get_recording_status(self) -> Result[RecordingStatusJson, str]:
         return self._get("scene/recording/status").bind(self._parse_json_response)
 
+    def get_active_camera(self) -> Result[ActiveCameraJson, str]:
+        return self._get("scene/active-camera").bind(self._parse_json_response)
+
     def get_object(self, name: str, *, origin: str) -> Result[ObjectJson, str]:
         return self._get(f"objects/{name}", query={"origin": origin}).bind(self._parse_json_response)
 
     def post_object(self, *, name: str, transform: Transform, parent: str):
         return self._post("objects", data={"name": name, "transform": transform.to_json(parent=parent)})
+
+    def put_object(self, *, name: str, transform: Transform | None = None, origin: str | None = None):
+        return self._put(
+            f"objects/{name}",
+            query={"origin": origin},
+            data={"transform": transform.to_json() if transform is not None else None},
+        )
 
     def get_object_mesh(
         self, name: str, *, ignore_paths: list[str], ignore_layers: list[str], case_sensitive: bool
@@ -98,8 +110,11 @@ class APIClient:
             },
         ).bind(self._parse_json_response)
 
-    def get_camera(self, object_name: str) -> Result[GetCameraJson, str]:
+    def get_camera(self, object_name: str) -> Result[CameraJson, str]:
         return self._get(f"objects/{object_name}/camera").bind(self._parse_json_response)
+
+    def put_camera(self, *, object_name: str, perspective: PerspectiveJson | None = None):
+        return self._put(f"objects/{object_name}/camera", data={"perspective": perspective})
 
     def post_perspective_camera(self, object_name: str, json: PerspectiveCameraJson):
         return self._post(f"objects/{object_name}/camera", data={**json, "type": "perspective"})

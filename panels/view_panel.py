@@ -1,8 +1,13 @@
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, SpaceView3D
 
 from ..bpy_register import bpy_register
-from ..operators import AlignGroundBodyOperator, ToggleGroundBodyOperator, WarpPlayerOperator
+from ..operators import (
+    AlignGroundBodyOperator,
+    SynchronizeOperator,
+    ToggleGroundBodyOperator,
+    WarpPlayerOperator,
+)
 from ..properties import SceneProperties
 
 
@@ -46,29 +51,28 @@ class ViewPanel(Panel):
         )
         align_body_props.target_origin = "CURSOR"
 
-        return  # TODO: implement synchronize operator
-
         space: SpaceView3D = context.space_data
+
+        sync_row = layout.row()
+        sync_row.operator_context = "INVOKE_DEFAULT"
 
         active_object = bpy.context.active_object
         has_active_object = active_object is not None
-        is_camera_active = has_active_object and active_object.type == "CAMERA"
-        is_in_camera_view = context.scene.camera and space.region_3d.view_perspective == "CAMERA"
+        is_camera_selected = has_active_object and active_object.type == "CAMERA"
+        is_in_camera_perspective = context.scene.camera and space.region_3d.view_perspective == "CAMERA"
 
-        if is_in_camera_view:
-            operator_text = "Sync with free camera"
-        elif has_active_object:
-            operator_text = "Sync with player " + ("camera" if is_camera_active else "body")
+        if is_in_camera_perspective or is_camera_selected:
+            operator_text = "Sync with active camera"
         else:
-            operator_text = "Sync with Outer Wilds"
+            operator_text = "Sync with player body"
 
-        sync_props = self.layout.operator(
-            operator=OW_RECORDER_OT_synchronize.bl_idname,
+        sync_props = sync_row.operator(
+            operator=SynchronizeOperator.bl_idname,
             icon="UV_SYNC_SELECT",
             text=operator_text,
         )
 
-        if is_in_camera_view:
-            sync_props.ow_item = "free-camera"
+        if is_in_camera_perspective:
+            sync_props.ow_item = "ACTIVE_CAMERA"
         elif has_active_object:
-            sync_props.ow_item = "player/camera" if is_camera_active else "player/body"
+            sync_props.ow_item = "ACTIVE_CAMERA" if is_camera_selected else "PLAYER_BODY"
