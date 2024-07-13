@@ -172,7 +172,7 @@ In order to import planet models into Blender you need to extract mesh assets fr
 > <p>
 >   <img alt="asset folders" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/34d66cf3-eb6f-4dda-98db-cc4383e04a21" width="55%">
 > </p>
-> 
+>
 > We use `.fbx` to find out the structure of the planet's assets, and then put in the right places those `.obj` that we could find in the second folder. The addon does this in a separate `.blend` file, and then links it to your main file. In subsequent times `.blend` of the planet is being reused
 >
 > At the time of the first generation of the planet `.blend` file, you need to be on that planet in the game. This is necessary so that the addon receives information about streamed assets that is not available in `.fbx` files. The addon will save it to the *bodies* folder in a `.json` file, after which you can safely close the game. You can always edit the planet file to your needs - the addon only cares about its name
@@ -184,7 +184,7 @@ In order to import planet models into Blender you need to extract mesh assets fr
 5. `Filter type > Mesh`
 
 6. `Export > Filtered assets` to the *extracted* assets folder
-  
+
 7. Select the planets of interest, and then `Model > Export selected objects (split)` to the *bodies* folder
 
 <img alt="export planets" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/2fef80dc-38b5-4923-bbe8-0ae2574604f8" width="40%">
