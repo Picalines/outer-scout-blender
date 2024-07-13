@@ -87,7 +87,7 @@ class Result(Generic[T, E]):
                     case ResultDoError() as do_error:
                         return Result.error(do_error.value)
                     case Exception() as unknown_exception:
-                        print('[outer-scout-blender]', unknown_exception)
+                        print("[outer-scout-blender]", unknown_exception)
                 return Result.error(str(raised))
 
             def wrap_return_value(return_value):

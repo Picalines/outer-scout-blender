@@ -9,4 +9,3 @@ class PlayerSectorJson(TypedDict):
 class PlayerSectorListJson(TypedDict):
     lastEntered: str
     sectors: list[PlayerSectorJson]
-

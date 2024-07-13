@@ -42,10 +42,9 @@ def get_child_by_path(object: Object, path: Iterable[str], mask_duplicates=True)
     return current
 
 
-def iter_parents(object: Object):
+def iter_parents(obj: Object):
     while True:
-        object = object.parent
-        if object is None:
+        obj: Object | None = obj.parent
+        if obj is None:
             break
-        yield object
-
+        yield obj

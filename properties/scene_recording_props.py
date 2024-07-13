@@ -21,4 +21,3 @@ class SceneRecordingProperties(PropertyGroup):
     @staticmethod
     def from_context(context: Context) -> "SceneRecordingProperties":
         return context.scene.outer_scout_recording
-

@@ -69,4 +69,3 @@ class Request:
                 request_data = urllib.parse.urlencode(data).encode()
 
         return UrllibRequest(url, data=request_data, headers=headers, method=method)
-

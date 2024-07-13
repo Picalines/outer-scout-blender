@@ -148,4 +148,3 @@ def set_default_lists_in_preferences():
         for layer_name in IGNORED_LAYERS_DEFAULT:
             ignored_layer = preferences.import_ignore_layers.add()
             ignored_layer.name = layer_name
-

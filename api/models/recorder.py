@@ -12,4 +12,3 @@ class TransformRecorderJson(TypedDict):
     outputPath: str
     format: Literal["json"]
     origin: str
-

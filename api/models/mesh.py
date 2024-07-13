@@ -23,4 +23,3 @@ class MeshSectorJson(TypedDict):
 class ObjectMeshJson(TypedDict):
     body: MeshBodyJson
     sectors: list[MeshSectorJson]
-

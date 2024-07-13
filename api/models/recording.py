@@ -13,4 +13,3 @@ class RecordingStatusJson(TypedDict):
     endFrame: int
     currentFrame: int
     framesRecorded: int
-

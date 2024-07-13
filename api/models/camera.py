@@ -27,4 +27,3 @@ class EquirectCameraJson(TypedDict):
 class GetCameraJson(TypedDict):
     type: Literal["perspective", "equirectangular", "unity"]
     perspective: NotRequired[PerspectiveJson]
-

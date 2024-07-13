@@ -1,2 +1,2 @@
 blender-stubs==3.12.27
-black==23.1.0
+black==24.4.2

@@ -63,4 +63,3 @@ class CameraProperties(PropertyGroup):
     @property
     def has_any_recording_path(self) -> bool:
         return self.color_texture_props.has_recording_path or self.depth_texture_props.has_recording_path
-

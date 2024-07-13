@@ -46,4 +46,3 @@ class ObjectPanel(Panel):
                 if transform_props.has_recording_path:
                     transform_panel.prop(transform_props, "mode", expand=True)
                     transform_panel.operator(ImportTransformRecordingOperator.bl_idname, icon="IMPORT")
-

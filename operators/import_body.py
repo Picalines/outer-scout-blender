@@ -153,4 +153,3 @@ class ImportBodyOperator(Operator):
             autoselect=True,
             instance_collections=True,
         )
-

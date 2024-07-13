@@ -11,4 +11,3 @@ class PropertyAnimationJson(TypedDict):
 
 class PutKeyframesJson(TypedDict):
     properties: dict[str, PropertyAnimationJson]
-

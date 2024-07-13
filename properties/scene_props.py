@@ -80,4 +80,3 @@ class SceneProperties(PropertyGroup):
     @property
     def origin_matrix(self) -> Matrix:
         return Matrix.LocRotScale(Vector(self.origin_position), Quaternion(self.origin_rotation), None)
-

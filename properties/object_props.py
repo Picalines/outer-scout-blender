@@ -46,4 +46,3 @@ class ObjectProperties(PropertyGroup):
     @property
     def has_unity_object_name(self) -> bool:
         return self.unity_object_name != ""
-

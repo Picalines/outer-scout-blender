@@ -46,4 +46,3 @@ def operator_do(
                 return {"CANCELLED"}
 
     return wrapper
-

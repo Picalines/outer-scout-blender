@@ -37,4 +37,3 @@ class TextureRecordingProperties(PropertyGroup):
     @property
     def absolute_recording_path(self) -> str:
         return abspath(self.recording_path)
-

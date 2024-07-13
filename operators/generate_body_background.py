@@ -42,4 +42,3 @@ class GenerateBodyBackgroundOperator(Operator):
 
         bpy.ops.wm.quit_blender()
         return {"FINISHED"}
-

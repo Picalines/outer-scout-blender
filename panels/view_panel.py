@@ -72,4 +72,3 @@ class ViewPanel(Panel):
             sync_props.ow_item = "free-camera"
         elif has_active_object:
             sync_props.ow_item = "player/camera" if is_camera_active else "player/body"
-

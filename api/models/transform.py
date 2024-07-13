@@ -81,4 +81,3 @@ class Transform:
 
     def to_right(self) -> "Transform":
         return Transform.from_matrix(self.to_right_matrix())
-

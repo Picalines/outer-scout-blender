@@ -37,4 +37,3 @@ class GeneratorWithState(Generic[TYield, TSend, TReturn]):
             self.returned = stop.value
             self.stopped = True
             raise
-

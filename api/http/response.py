@@ -37,4 +37,3 @@ class Response:
             return Result.ok(json.loads(self.body))
         except Exception as e:
             return Result.error(e)
-

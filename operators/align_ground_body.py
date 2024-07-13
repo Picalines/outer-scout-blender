@@ -46,4 +46,3 @@ class AlignGroundBodyOperator(Operator):
                 cursor = context.scene.cursor
                 ground_body.matrix_world = cursor.matrix.inverted() @ ground_body.matrix_world
                 cursor.matrix = Matrix.Identity(4)
-

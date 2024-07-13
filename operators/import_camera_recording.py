@@ -70,4 +70,3 @@ class ImportCameraRecordingOperator(Operator):
         new_movie_clip.frame_start = scene.frame_start
 
         return new_movie_clip
-

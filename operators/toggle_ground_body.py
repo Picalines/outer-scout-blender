@@ -37,4 +37,3 @@ class ToggleGroundBodyOperator(Operator):
             child.hide_set(state=hide)
 
         return {"FINISHED"}
-

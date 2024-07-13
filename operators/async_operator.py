@@ -55,4 +55,3 @@ class AsyncOperator(Operator):
         self._after_event(context, event)
 
         return self.__poll_async_generator(context)
-

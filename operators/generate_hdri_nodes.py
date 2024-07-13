@@ -106,4 +106,3 @@ class GenerateHDRINodesOperator(Operator):
         camera_props.hdri_image = new_hdri_image
 
         return new_hdri_image
-

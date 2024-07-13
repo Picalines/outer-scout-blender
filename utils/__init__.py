@@ -5,4 +5,3 @@ from .node import *
 from .object import *
 from .operator import *
 from .result import *
-

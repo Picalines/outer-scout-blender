@@ -41,4 +41,3 @@ def with_defers(func):
                     callback()
 
     return wrapper
-

@@ -59,4 +59,3 @@ def bpy_load_post(func: Callable[[], Any]):
     LOAD_POST_HANDLERS_TO_REGISTER.append(wrapped_func)
 
     return wrapped_func
-

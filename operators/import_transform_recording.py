@@ -61,4 +61,3 @@ class ImportTransformRecordingOperator(Operator):
             active_object.keyframe_insert("location", frame=frame)
             active_object.keyframe_insert("rotation_quaternion", frame=frame)
             active_object.keyframe_insert("scale", frame=frame)
-

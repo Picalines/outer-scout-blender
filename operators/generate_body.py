@@ -204,4 +204,3 @@ class GenerateBodyOperator(Operator):
         print(f"[{type}] {message}")
         # reports don't appear dynamically in console window
         # self.report({type}, message)
-
