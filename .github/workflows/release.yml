@@ -71,13 +71,15 @@ jobs:
       - name: Remove Dev Files
         working-directory: ./sources
         run: |
+          rm -rf .git
+          rm -rf .github
           rm .gitignore
           rm .pre-commit-config.yaml
           rm pyproject.toml
           rm requirements-dev.txt
 
       - name: Zip For Release
-        run: 7z a ./${{ env.ARCHIVE_NAME }}.zip ./sources
+        run: 7z a ./${{ env.ARCHIVE_NAME }}.zip "./sources/*"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
