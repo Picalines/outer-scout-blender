@@ -96,37 +96,55 @@ class OuterScoutPreferences(AddonPreferences):
         layout = self.layout
         layout.use_property_split = True
 
-        layout.prop(self, "api_port")
-        layout.prop(self, "ow_bodies_folder")
-        layout.prop(self, "ow_assets_folder")
-        layout.prop(self, "modal_timer_delay")
+        mod_panel_header, mod_panel = layout.panel(f"{self.bl_idname}.mod", default_closed=False)
+        mod_panel_header.label(text="Mod Integration")
 
-        prefs_path = f'preferences.addons["{ADDON_PACKAGE}"].preferences'
+        if mod_panel:
+            mod_panel.prop(self, "api_port")
 
-        ignore_lists_box = layout.box()
+        assets_panel_header, assets_panel = layout.panel(f"{self.bl_idname}.paths", default_closed=False)
+        assets_panel_header.label(text="Asset Folders")
 
-        ignore_lists_box.label(text="Ignore Unity objects with:")
-        ignore_lists_row = ignore_lists_box.row()
+        if assets_panel:
+            assets_panel.prop(self, "ow_bodies_folder", icon="ERROR" if not self.ow_bodies_folder else "NONE")
+            assets_panel.prop(self, "ow_assets_folder", icon="ERROR" if not self.ow_assets_folder else "NONE")
 
-        ignore_paths_col = ignore_lists_row.column()
-        ignore_paths_col.label(text="Asset Path")
-        draw_ui_list(
-            ignore_paths_col,
-            context,
-            list_path=f"{prefs_path}.import_ignore_paths",
-            active_index_path=f"{prefs_path}.import_ignore_paths_active_index",
-            unique_id="import_ignore_paths",
-        )
+            if not (self.ow_bodies_folder and self.ow_assets_folder):
+                assets_panel.box().label(text="Folder paths are required for planet .blend generation", icon="ERROR")
 
-        ignore_layers_col = ignore_lists_row.column()
-        ignore_layers_col.label(text="Unity Layer")
-        draw_ui_list(
-            ignore_layers_col,
-            context,
-            list_path=f"{prefs_path}.import_ignore_layers",
-            active_index_path=f"{prefs_path}.import_ignore_layers_active_index",
-            unique_id="import_ignore_layers",
-        )
+        unity_panel_header, unity_panel = layout.panel(f"{self.bl_idname}.unity", default_closed=True)
+        unity_panel_header.label(text="Ignored Unity Objects")
+
+        if unity_panel:
+            ignore_lists_row = unity_panel.row()
+
+            ignore_paths_col = ignore_lists_row.column()
+            ignore_paths_col.label(text="Asset Path")
+
+            prefs_path = f'preferences.addons["{ADDON_PACKAGE}"].preferences'
+            draw_ui_list(
+                ignore_paths_col,
+                context,
+                list_path=f"{prefs_path}.import_ignore_paths",
+                active_index_path=f"{prefs_path}.import_ignore_paths_active_index",
+                unique_id=f"{self.bl_idname}.import_ignore_paths",
+            )
+
+            ignore_layers_col = ignore_lists_row.column()
+            ignore_layers_col.label(text="Unity Layer")
+            draw_ui_list(
+                ignore_layers_col,
+                context,
+                list_path=f"{prefs_path}.import_ignore_layers",
+                active_index_path=f"{prefs_path}.import_ignore_layers_active_index",
+                unique_id=f"{self.bl_idname}.import_ignore_layers",
+            )
+
+        misc_panel_header, misc_panel = layout.panel(f"{self.bl_idname}.misc", default_closed=True)
+        misc_panel_header.label(text="Miscellaneous")
+
+        if misc_panel:
+            misc_panel.prop(self, "modal_timer_delay")
 
     @property
     def has_file_paths(self) -> bool:
