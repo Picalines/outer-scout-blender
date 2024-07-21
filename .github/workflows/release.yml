@@ -48,7 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Error If Release Exists
-        if: ${{ steps.check-tag.outputs.exists }}
+        if: ${{ steps.check-tag.outputs.exists != 'false' }}
         run: |
           echo "::error file=blender_manifest.toml,title=Refusing to Release::There is already a release with the version in blender_manifest.toml"
           exit 1
