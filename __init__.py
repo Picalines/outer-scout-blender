@@ -24,6 +24,7 @@ def register():
         LOAD_POST_HANDLERS_TO_REGISTER,
         PANEL_EXTENSIONS_TO_REGISTER,
         PROPERTIES_TO_REGISTER,
+        REGISTER_POST_HANDLERS_TO_CALL,
     )
 
     registered_classes: set[type] = set()
@@ -48,6 +49,12 @@ def register():
 
     for load_post_handler in LOAD_POST_HANDLERS_TO_REGISTER:
         bpy.app.handlers.load_post.append(load_post_handler)
+
+    for register_post_handler in REGISTER_POST_HANDLERS_TO_CALL:
+        try:
+            register_post_handler()
+        except Exception as exception:
+            print("[outer-scout-blender]", exception)
 
 
 def unregister():

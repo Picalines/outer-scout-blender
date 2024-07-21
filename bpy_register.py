@@ -27,6 +27,9 @@ PANEL_EXTENSIONS_TO_REGISTER: dict[type, list[Callable]] = {}
 LOAD_POST_HANDLERS_TO_REGISTER: list[Callable[[], Any]] = []
 
 
+REGISTER_POST_HANDLERS_TO_CALL: list[Callable[[], Any]] = []
+
+
 def bpy_register(cls: TType) -> TType:
     CLASSES_TO_REGISTER.append(cls)
     return cls
@@ -59,3 +62,9 @@ def bpy_load_post(func: Callable[[], Any]):
     LOAD_POST_HANDLERS_TO_REGISTER.append(wrapped_func)
 
     return wrapped_func
+
+
+def bpy_register_post(func: Callable[[], Any]):
+    REGISTER_POST_HANDLERS_TO_CALL.append(func)
+
+    return func
