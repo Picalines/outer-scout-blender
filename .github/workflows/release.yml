@@ -29,12 +29,14 @@ jobs:
         uses: actions-ecosystem/action-regex-match@v2
         id: validate-manifest-version
         with:
-          text: ${{ steps.read-manifest-version.outputs.value }}
+          text: "${{ steps.read-manifest-version.outputs.value }}"
           regex: '^\d+\.\d+\.\d+$'
 
       - name: Error If Version Is Invalid
         if: ${{ steps.validate-manifest-version }}
-        run: echo "::error file=blender_manifest.toml,title=Refusing to Release::New release was not created because version format is invalid"
+        run: |
+          echo "::error file=blender_manifest.toml,title=Refusing to Release::New release was not created because version format is invalid"
+          exit 1
 
       - name: Check For Release
         id: check-tag
@@ -46,7 +48,9 @@ jobs:
 
       - name: Error If Release Exists
         if: ${{ steps.check-tag.outputs.exists }}
-        run: echo "::error file=blender_manifest.toml,title=Refusing to Release::New release was not created because there is already a release with the version in blender_manifest.toml"
+        run: |
+          echo "::error file=blender_manifest.toml,title=Refusing to Release::New release was not created because there is already a release with the version in blender_manifest.toml"
+          exit 1
 
       - name: Output
         id: out
