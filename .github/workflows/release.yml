@@ -1,7 +1,7 @@
 name: Create Release Draft
 
 on:
-  workflow_run:
+  workflow_dispatch:
   push:
     branches: [master]
 
