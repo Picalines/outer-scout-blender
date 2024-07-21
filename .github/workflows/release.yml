@@ -76,7 +76,7 @@ jobs:
           tag: v${{ needs.check-manifest.outputs.version }}
           name: Version ${{ needs.check-manifest.outputs.version }}
           omitBodyDuringUpdate: true
-          artifacts: ${{ ARCHIVE_NAME }}.zip
+          artifacts: ${{ env.ARCHIVE_NAME }}.zip
           draft: true
           prerelease: false
           generateReleaseNotes: true
