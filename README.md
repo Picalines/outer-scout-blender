@@ -75,8 +75,12 @@ After that, you can do anything with your scene - you can even add effects on th
 
 ## Installation
 
-- Download this repo as a `.zip`
-- [Install](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html#installing-add-ons) the archive in the Blender addon preferences
+- Go to the [Releases tab](https://github.com/Picalines/outer-scout-blender/releases) and download the `outer_scout.zip` file of the latest version
+- Open Blender, `Edit > Preferences > Get Extensions`
+- Click on the arrow in the upper right corner, `Install from Disk...`
+- Select the archive you downloaded earlier
+
+See the [asset extraction section](##extracting-game-assets) to learn more about the addon settings
 
 ## Additional Features
 
@@ -170,7 +174,7 @@ In order to import planet models into Blender you need to extract mesh assets fr
 > There are two folders with assets: one for `.fbx` files (*bodies*), and another one for `.obj` files (*extracted*). `.fbx` contains static planet assets, and they have a low quality. `.obj` is for streamed assets - they have high quality, *but there're a lot of them*
 >
 > <p>
->   <img alt="asset folders" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/34d66cf3-eb6f-4dda-98db-cc4383e04a21" width="55%">
+>   <img alt="asset folders" src="https://github.com/user-attachments/assets/363307fa-7dae-4c61-af8d-c3a47f4f889c" width="55%">
 > </p>
 >
 > We use `.fbx` to find out the structure of the planet's assets, and then put in the right places those `.obj` that we could find in the second folder. The addon does this in a separate `.blend` file, and then links it to your main file. In subsequent times `.blend` of the planet is being reused
