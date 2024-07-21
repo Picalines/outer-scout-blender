@@ -1,0 +1,14 @@
+schema_version = "1.0.0"
+blender_version_min = "4.2.0"
+
+id = "outer_scout"
+version = "0.3.0"
+type = "add-on"
+name = "Outer Scout"
+tagline = "A cinematic toolbox for Outer Wilds & Blender"
+maintainer = "picalines"
+website = "https://github.com/Picalines/outer-scout-blender"
+tags = ["Compositing"]
+license = ["SPDX:MIT"]
+
+permissions = ["files"]

@@ -4,7 +4,7 @@ from bpy.types import AddonPreferences, Context, PropertyGroup
 
 from ..bpy_register import bpy_load_post, bpy_register, bpy_register_post
 
-ADDON_PACKAGE = __package__.split(".")[0]
+from .. import __package__ as ADDON_PACKAGE
 
 
 @bpy_register

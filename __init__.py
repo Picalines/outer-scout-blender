@@ -1,12 +1,3 @@
-bl_info = {
-    "name": "outer-scout-blender",
-    "author": "picalines",
-    "description": "A cinematic toolbox for Outer Wilds & Blender",
-    "blender": (4, 1, 0),
-    "version": (0, 2, 0),
-    "category": "Compositing",
-}
-
 import importlib
 import sys
 
@@ -16,9 +7,9 @@ import bpy
 def register():
     reload_addon()
 
+    from . import properties as _
     from . import operators as _
     from . import panels as _
-    from . import properties as _
     from .bpy_register import (
         CLASSES_TO_REGISTER,
         LOAD_POST_HANDLERS_TO_REGISTER,
@@ -54,7 +45,7 @@ def register():
         try:
             register_post_handler()
         except Exception as exception:
-            print("[outer-scout-blender]", exception)
+            print("[outer_scout]", exception)
 
 
 def unregister():
