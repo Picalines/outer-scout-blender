@@ -2,7 +2,7 @@ from bl_ui.generic_ui_list import draw_ui_list  # pyright: ignore [reportMissing
 from bpy.props import CollectionProperty, FloatProperty, IntProperty, StringProperty
 from bpy.types import AddonPreferences, Context, PropertyGroup
 
-from ..bpy_register import bpy_load_post, bpy_register
+from ..bpy_register import bpy_load_post, bpy_register, bpy_register_post
 
 ADDON_PACKAGE = __package__.split(".")[0]
 
@@ -134,17 +134,19 @@ class OuterScoutPreferences(AddonPreferences):
 
 
 @bpy_load_post
+@bpy_register_post
 def set_default_lists_in_preferences():
     import bpy
 
     preferences = OuterScoutPreferences.from_context(bpy.context)
 
-    if not preferences.import_ignore_paths:
+    should_set_defaults = not preferences.import_ignore_paths and not preferences.import_ignore_layers
+
+    if should_set_defaults:
         for path_value in IGNORED_ASSET_PATHS_DEFAULT:
             ignored_path = preferences.import_ignore_paths.add()
             ignored_path.name = path_value
 
-    if not preferences.import_ignore_layers:
         for layer_name in IGNORED_LAYERS_DEFAULT:
             ignored_layer = preferences.import_ignore_layers.add()
             ignored_layer.name = layer_name
