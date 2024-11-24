@@ -120,7 +120,7 @@ The "Generate HDRI nodes" button generates the desired node group to be added to
 
 ### Depth recording
 
-The mod can record several textures from one camera at once. In this way, you can get both a color channel and a depth channel at the same time. The latter is used in the generated compositing nodes to put the blender object "[behind](https://docs.blender.org/manual/en/latest/compositing/types/color/z_combine.html)" the game object
+The mod can record several textures from one camera at once. In this way, you can get both a color channel and a depth channel at the same time. The latter is used in the generated compositing nodes to put the blender object "[behind](https://docs.blender.org/manual/en/latest/compositing/types/color/mix/z_combine.html#z-combine-node)" the game object
 
 > [!WARNING]
 > This feature works well only when your object is blocked by something from the foreground. Most likely, I incorrectly implemented the conversion of the Unity depth to Blender
