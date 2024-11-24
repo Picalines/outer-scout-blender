@@ -171,33 +171,35 @@ In order to import planet models into Blender you need to extract mesh assets fr
 </details>
 
 > [!IMPORTANT]
-> There are two folders with assets: one for `.fbx` files (*bodies*), and another one for `.obj` files (*extracted*). `.fbx` contains static planet assets, and they have a low quality. `.obj` is for streamed assets - they have high quality, *but there're a lot of them*
+> There are two folders with planet assets:
+>  1. `bodies`: static low detailed `.fbx` meshes. They contain basic structure of the planet, but they're not useful for the human artists
+>  2. `extracted`: dynamic for high detailed `.obj` meshes. They're the ones you want to see in your viewport
 >
 > <p>
->   <img alt="asset folders" src="https://github.com/user-attachments/assets/363307fa-7dae-4c61-af8d-c3a47f4f889c" width="55%">
+>   <img alt="asset folders" src="https://github.com/user-attachments/assets/eb73ea00-dddb-4372-992c-4d544e5fe240" width="55%">
 > </p>
 >
-> We use `.fbx` to find out the structure of the planet's assets, and then put in the right places those `.obj` that we could find in the second folder. The addon does this in a separate `.blend` file, and then links it to your main file. In subsequent times `.blend` of the planet is being reused
->
-> At the time of the first generation of the planet `.blend` file, you need to be on that planet in the game. This is necessary so that the addon receives information about streamed assets that is not available in `.fbx` files. The addon will save it to the *bodies* folder in a `.json` file, after which you can safely close the game. You can always edit the planet file to your needs - the addon only cares about its name
->
-> Generation of the `.blend` file can take up to several minutes, while the main Blender window will not respond - this is normal. Planet generation takes place in a background process, and you should be able to see the progress console. The addon will not be able to find some assets - *this is also normal*
->
-> The generation step is long, but it needs to be endured only once - in subsequent times the addon will find the `.blend` file in the *bodies* folder and reuse it
+> I **highly** recommend you to name them that way, so it'll be easier to troubleshoot your folders
 
 5. `Filter type > Mesh`
 
-6. `Export > Filtered assets` to the *extracted* assets folder
+6. `Export > Filtered assets` to the `extracted` assets folder
 
-7. Select the planets of interest, and then `Model > Export selected objects (split)` to the *bodies* folder
+7. Select the planets of interest, and then `Model > Export selected objects (split)` to the `bodies` folder
+    - You should put all planets in one *bodies* folder - the addon will only search for `.fbx` and `.blend` files in there by the name. You don't need to change these paths more than once after installation
+    - Each planet subtree must have object with `_Body` postfix within. You *can't* select the `SolarSystemRoot`, because each planet should be in a separate `.fbx` file
+    - AssetStudio will emit the texture `.png` files along side with `.fbx`, but they're not required for this addon.
 
 <img alt="export planets" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/2fef80dc-38b5-4923-bbe8-0ae2574604f8" width="40%">
 
-> [!NOTE]
-> All the planets can be put in one *bodies* folder - the addon will only search for `.fbx` and `.blend` files in there by the name of the desired planet. You don't need to change these paths more than once after installation
+8. Close the AssetStudio, open Outer Wilds and Blender at the same time
 
-> [!WARNING]
-> Each planet subtree must have object with `_Body` postfix within. You *can't* select the `SolarSystemRoot`, because each planet should be in a separate `.fbx` file
+9. In Outer Wilds, **go** to the planet you want to import. The addon will later "talk" to your game to find out about `.obj`'s it needs to import. You can pause the game, it doesn't matter
 
-> [!NOTE]
-> AssetStudio will emit the texture `.png` files along side with `.fbx`, but they're not required for this addon.
+10. In Blender, open the `Properties > Scene > Outer Scout` panel and press the `Import` button. Keep the default options, it doesn't matter at the moment
+
+11. If it's the first time you import the `X` planet, the addon will launch another Blender instance that'll generate a `bodies/X.blend` file for you
+    - Look for the console window, in which the addon'll print the import progress
+    - Your main Blender window will freeze with the "not responding" message - don't close it, it's waiting until the generation is done
+   
+12. If everything went okay, the `X` planet model will appear in your Blender scene. That means you now have the `bodies/X.blend` file, and you <ins>don't need to open AssetStudio or Outer Wilds to import the `X` planet anymore</ins>. Congratulations!
