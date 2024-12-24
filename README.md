@@ -155,16 +155,15 @@ You can try to animate the rotation of the planet object, rather than the camera
 In order to import planet models into Blender you need to extract mesh assets from the game
 
 > [!TIP]
-> You can watch the video version on [YouTube](https://youtu.be/utD7gLyEBK8)! Thanks @ShVanes for making it! 
+> You can watch the video version on [YouTube](https://youtu.be/utD7gLyEBK8)! Thanks @ShVanes for making it!
+
+Here're the steps:
 
 1. Open the [AssetStudio](https://github.com/Perfare/AssetStudio)
 
 2. Click `File > Load Folder`
 
-3. Select your Outer Wilds's data folder (`OuterWilds_Data`)
-
-> [!TIP]
-> For Steam users, `Properties... > Installed Files > Browse...`
+3. Select your Outer Wilds's data folder (`OuterWilds_Data`). For Steam users: `Properties... > Installed Files > Browse...`
 
 4. `Options > Export options`, set the `Group exported assets by` option to `container path`
 
