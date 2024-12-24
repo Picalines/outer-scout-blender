@@ -155,7 +155,10 @@ You can try to animate the rotation of the planet object, rather than the camera
 In order to import planet models into Blender you need to extract mesh assets from the game
 
 > [!TIP]
-> You can watch the video version on [YouTube](https://youtu.be/utD7gLyEBK8)! Thanks @ShVanes for making it!
+> <p>You can watch the video version on <a href="https://youtu.be/utD7gLyEBK8">YouTube</a>! Thanks @ShVanes for making it!</p>
+> <a href="https://youtu.be/utD7gLyEBK8">
+>  <img src="https://img.youtube.com/vi/utD7gLyEBK8/mqdefault.jpg" alt="drawing" width="33%"/>
+> </a>
 
 Here're the steps:
 
@@ -177,11 +180,11 @@ Here're the steps:
 >  1. `bodies`: static low detailed `.fbx` meshes. They contain basic structure of the planet, but they're not useful for the human artists
 >  2. `extracted`: dynamic for high detailed `.obj` meshes. They're the ones you want to see in your viewport
 >
+> I **highly** recommend you to name them that way, so it'll be easier to troubleshoot your folders
+>
 > <p>
 >   <img alt="asset folders" src="https://github.com/user-attachments/assets/eb73ea00-dddb-4372-992c-4d544e5fe240" width="55%">
 > </p>
->
-> I **highly** recommend you to name them that way, so it'll be easier to troubleshoot your folders
 
 5. `Filter type > Mesh`
 
