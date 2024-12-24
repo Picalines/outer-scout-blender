@@ -154,6 +154,9 @@ You can try to animate the rotation of the planet object, rather than the camera
 
 In order to import planet models into Blender you need to extract mesh assets from the game
 
+> [!TIP]
+> You can watch the video version on [YouTube](https://youtu.be/utD7gLyEBK8)! Thanks @ShVanes for making it! 
+
 1. Open the [AssetStudio](https://github.com/Perfare/AssetStudio)
 
 2. Click `File > Load Folder`
