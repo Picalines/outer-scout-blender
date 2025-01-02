@@ -162,6 +162,7 @@ In order to import planet models into Blender you need to extract mesh assets fr
 > <a href="https://youtu.be/utD7gLyEBK8">
 >  <img src="https://img.youtube.com/vi/utD7gLyEBK8/mqdefault.jpg" alt="drawing" width="33%"/>
 > </a>
+> <p>Please don't ask questions in the comments, as I may not see them - <a href="https://github.com/Picalines/outer-scout-blender/issues/new">Create an issue on GitHub</a></p>
 
 Here're the steps:
 
@@ -196,7 +197,7 @@ Here're the steps:
 7. Open the `bodies` folder. Notice how AssetStudio has put all the files in the GameObject subfolder
 
 > [!IMPORTANT]
-> Set the *Bodies Folder* to the `GameObject` subfolder 
+> Set the *Bodies Folder* to the `GameObject` subfolder (`Edit > Preferences > Add-ons > Outer Scout > AssetFolders`)
 
 8. Select the planets of interest, and then `Model > Export selected objects (split)` to the `bodies` folder
     - You should put all planets in one *bodies* folder - the addon will only search for `.fbx` and `.blend` files in there by the name. You don't need to change these paths more than once after installation
