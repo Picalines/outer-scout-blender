@@ -22,7 +22,10 @@ Get to the desired location in Outer Wilds and click "Create Scene" in the scene
 
 ### 3. Import the planet model
 
-See more in the [asset extraction guide](#extracting-game-assets). Planet models are only needed for convenient positioning of your objects - they shouldn't be on the final render of the scene
+> [!IMPORTANT]
+> See more in the [asset extraction guide](#extracting-game-assets). You **will not** be able to do this without prior preparation
+
+Planet models are only needed for convenient positioning of your objects - they shouldn't be on the final render of the scene
 
 <p>
   <img alt="import button" src="https://github.com/Picalines/outer-scout-blender/assets/42614422/3e25224c-0e7c-4b24-99c4-96e39f8d7d97" width="30%" align="middle">
