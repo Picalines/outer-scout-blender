@@ -12,7 +12,7 @@ class TransformRecordingProperties(PropertyGroup):
         description="The path to the file where the transform recording (json) will be saved",
         subtype="FILE_PATH",
         default="",
-        options=set(),
+        options={"PATH_SUPPORTS_BLEND_RELATIVE"},
     )
 
     mode: EnumProperty(
