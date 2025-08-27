@@ -41,6 +41,10 @@ class ImportBodyOperator(Operator):
             cls.poll_message_set("Please, set the Bodies and Assets directory paths in the addon preferences")
             return False
 
+        if context.preferences.is_dirty:
+            cls.poll_message_set("Please, save your preferences")
+            return False
+
         scene_props = SceneProperties.from_context(context)
         return scene_props.has_origin
 
