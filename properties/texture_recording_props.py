@@ -12,7 +12,7 @@ class TextureRecordingProperties(PropertyGroup):
         description="The path to the file where the texture recording will be saved",
         subtype="FILE_PATH",
         default="",
-        options=set(),
+        options={"PATH_SUPPORTS_BLEND_RELATIVE"},
     )
 
     constant_rate_factor: IntProperty(
