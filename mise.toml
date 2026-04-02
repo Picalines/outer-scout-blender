@@ -5,11 +5,16 @@ python.venv_stdlib = true
 python = "3.11"
 
 [env]
+_.file = ".env"
 _.python.venv = { path = ".venv", create = true }
 
 [tasks.install]
 alias = "i"
 depends = "install:*"
+
+[tasks.lint]
+alias = "l"
+depends = "lint:*"
 
 [tasks.pre-commit]
 depends = "install:requirements"
@@ -19,6 +24,11 @@ run = "black --check ."
 depends = "install:requirements"
 sources = ["**/*.py"]
 run = "black ."
+
+[tasks."lint:blender-extension"]
+sources = [".env", "blender_manifest.toml"]
+shell = "bash -c"
+run = "'{{ env.BLENDER_BIN }}' --command extension validate"
 
 [tasks."install:requirements"]
 sources = ["requirements-dev.txt"]
