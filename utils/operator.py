@@ -11,7 +11,7 @@ OperatorResult: TypeAlias = set[str]
 
 
 def operator_do(
-    func: Callable[[Operator, Context], Result[object, object]]
+    func: Callable[[Operator, Context], Result[object, object]],
 ) -> Callable[[Operator, Context], OperatorResult]:
     func = Result.do()(func)
 
