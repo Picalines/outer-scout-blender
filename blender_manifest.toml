@@ -11,4 +11,5 @@ website = "https://github.com/Picalines/outer-scout-blender"
 tags = ["Compositing"]
 license = ["SPDX:MIT"]
 
-permissions = ["files"]
+[permissions]
+files = "Read files made by the Outer Wilds mod"
