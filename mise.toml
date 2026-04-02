@@ -9,9 +9,20 @@ _.python.venv = { path = ".venv", create = true }
 
 [tasks.install]
 alias = "i"
+depends = "install:*"
+
+[tasks.pre-commit]
+depends = "install:requirements"
+run = "black --check ."
+
+[tasks.format]
+depends = "install:requirements"
+sources = ["**/*.py"]
+run = "black ."
+
+[tasks."install:requirements"]
 sources = ["requirements-dev.txt"]
 run = "pip install -r requirements-dev.txt"
 
-[tasks.format]
-depends = ["install"]
-run = "black ."
+[tasks."install:git-hooks"]
+run = "mise generate git-pre-commit --write"
