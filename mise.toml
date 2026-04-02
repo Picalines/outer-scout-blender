@@ -1,0 +1,17 @@
+[settings]
+python.venv_stdlib = true
+
+[tools]
+python = "3.11"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+alias = "i"
+sources = ["requirements-dev.txt"]
+run = "pip install -r requirements-dev.txt"
+
+[tasks.format]
+depends = ["install"]
+run = "black ."
