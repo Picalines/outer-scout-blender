@@ -7,6 +7,7 @@ python = "3.11"
 [env]
 _.file = ".env"
 _.python.venv = { path = ".venv", create = true }
+PROJECT_NAME = "{{ config_root | basename }}"
 
 [tasks.install]
 alias = "i"
@@ -39,6 +40,13 @@ rm -rf build/*
 sources = [".env", "src/blender_manifest.toml"]
 shell = "bash -c"
 run = "'{{ env.BLENDER_BIN }}' --command extension validate src"
+
+[tasks."install:blender-extension-symlink"]
+env.LINK_PATH = "\"{{ env.BLENDER_EXTENSION_REPO }}/{{ env.PROJECT_NAME }}\""
+env.SRC_PATH = "\"{{ [config_root] | concat(with='src') | join_path }}\""
+shell = "bash -c"
+run = "ln -s {{ env.SRC_PATH }} {{ env.LINK_PATH }}"
+run_windows = "pwsh -c 'New-Item -ItemType SymbolicLink -Path {{ env.LINK_PATH }} -Value {{ env.SRC_PATH }} -Force'"
 
 [tasks."install:requirements"]
 sources = ["requirements-dev.txt"]
