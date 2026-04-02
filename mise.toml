@@ -18,8 +18,10 @@ alias = "l"
 depends = "lint:*"
 
 [tasks.pre-commit]
-depends = "install:requirements"
-run = "black --check ."
+depends = ["lint:format"]
+
+[tasks.pre-push]
+depends = ["lint:blender-extension"]
 
 [tasks.format]
 depends = "install:requirements"
@@ -41,6 +43,11 @@ sources = [".env", "src/blender_manifest.toml"]
 shell = "bash -c"
 run = "'{{ env.BLENDER_BIN }}' --command extension validate src"
 
+[tasks."lint:format"]
+depends = "install:requirements"
+sources = ["**/*.py"]
+run = "black --check ."
+
 [tasks."install:blender-extension-symlink"]
 env.LINK_PATH = "\"{{ env.BLENDER_EXTENSION_REPO }}/{{ env.PROJECT_NAME }}\""
 env.SRC_PATH = "\"{{ [config_root] | concat(with='src') | join_path }}\""
@@ -53,4 +60,7 @@ sources = ["requirements-dev.txt"]
 run = "pip install -r requirements-dev.txt"
 
 [tasks."install:git-hooks"]
-run = "mise generate git-pre-commit --write"
+run = [
+	"mise generate git-pre-commit --write --hook pre-commit --task pre-commit",
+	"mise generate git-pre-commit --write --hook pre-push --task pre-push"
+]
