@@ -25,10 +25,20 @@ depends = "install:requirements"
 sources = ["**/*.py"]
 run = "black ."
 
+[tasks.build]
+depends = "lint:blender-extension"
+sources = ["src/**/*"]
+run = '''
+#!/bin/bash
+mkdir -p build
+rm -rf build/*
+'{{ env.BLENDER_BIN }}' --command extension build --source-dir src --output-dir build
+'''
+
 [tasks."lint:blender-extension"]
-sources = [".env", "blender_manifest.toml"]
+sources = [".env", "src/blender_manifest.toml"]
 shell = "bash -c"
-run = "'{{ env.BLENDER_BIN }}' --command extension validate"
+run = "'{{ env.BLENDER_BIN }}' --command extension validate src"
 
 [tasks."install:requirements"]
 sources = ["requirements-dev.txt"]
