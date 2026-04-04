@@ -9,6 +9,7 @@ _.file = ".env"
 _.python.venv = { path = ".venv", create = true }
 PROJECT_NAME = "{{ config_root | basename }}"
 REPO_PATH = "{{ config_root }}"
+BLENDER_BIN = "{{ env.BLENDER_BIN | default(value='blender') }}"
 
 [tasks.pre-commit]
 depends = ["lint:format"]
