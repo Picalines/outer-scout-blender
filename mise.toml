@@ -10,26 +10,32 @@ _.python.venv = { path = ".venv", create = true }
 PROJECT_NAME = "{{ config_root | basename }}"
 REPO_PATH = "{{ config_root }}"
 
-[tasks.install]
-alias = "i"
-depends = "install:*"
-
-[tasks.lint]
-alias = "l"
-depends = "lint:*"
-
 [tasks.pre-commit]
 depends = ["lint:format"]
 
 [tasks.pre-push]
 depends = ["lint:blender-extension"]
 
+[tasks.install]
+description = "Setup stuff for local development. Note: the addon itself does not have any dependencies!"
+alias = "i"
+depends = "install:*"
+
+[tasks.lint]
+description = "Run common code & configuration checks"
+alias = "l"
+depends = "lint:*"
+
 [tasks.format]
+description = "Format the source code"
+alias = "f"
 depends = "install:requirements"
 sources = ["**/*.py"]
 run = "black ."
 
 [tasks.build]
+description = "Build addon zip with Blender CLI"
+alias = "b"
 depends = "lint:blender-extension"
 sources = ["src/**/*"]
 run = '''
@@ -40,20 +46,24 @@ rm -rf build/*
 '''
 
 [tasks."lint:blender-extension"]
+description = "Validate the blender_manifest.toml with Blender CLI"
 sources = [".env", "src/blender_manifest.toml"]
 shell = "bash -c"
 run = "'{{ env.BLENDER_BIN }}' --command extension validate src"
 
 [tasks."lint:format"]
+description = "Check the source code formatting"
 depends = "install:requirements"
 sources = ["**/*.py"]
 run = "black --check ."
 
 [tasks."install:requirements"]
+description = "Install dependencies for local development. Not required for building the addon"
 sources = ["requirements-dev.txt"]
 run = "pip install -r requirements-dev.txt"
 
 [tasks."install:git-hooks"]
+description = "Setup git hooks for common checks before comitting and pushing"
 run = [
 	"mise generate git-pre-commit --write --hook pre-commit --task pre-commit",
 	"mise generate git-pre-commit --write --hook pre-push --task pre-push"
