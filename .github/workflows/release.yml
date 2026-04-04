@@ -6,38 +6,35 @@ on:
     branches: [master]
 
 env:
-  ARCHIVE_NAME: outer_scout
+  BLENDER_VERSION: '5.1'
 
 jobs:
   check-manifest:
-    name: Check For Existing Release
+    name: Check the Manifest
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.out.outputs.version }}
     steps:
+      - name: Setup Blender
+        uses: bradyajohnston/setup-blender@v5
+        with:
+          version: ${{ env.BLENDER_VERSION }}
+
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install mise
+        uses: jdx/mise-action@v4
+
+      - name: Validate blender_manifest.toml
+        run: mise run lint:blender-extension
 
       - name: Read Addon Version
         id: read-version
         uses: SebRollen/toml-action@v1.2.0
         with:
-          file: blender_manifest.toml
+          file: src/blender_manifest.toml
           field: version
-
-      - name: Validate Version
-        uses: FidelusAleksander/gh-action-regex@v0.3.0
-        id: validate-version
-        continue-on-error: true
-        with:
-          regex_pattern: '^\d+\.\d+\.\d+$'
-          text: "${{ steps.read-version.outputs.value }}"
-
-      - name: Error If Version Is Invalid
-        if: ${{ steps.validate-version.outputs.match == 'false' }}
-        run: |
-          echo "::error file=blender_manifest.toml,title=Refusing to Release::Version string is invalid"
-          exit 1
 
       - name: Check For Release
         id: check-tag
@@ -50,7 +47,7 @@ jobs:
       - name: Error If Release Exists
         if: ${{ steps.check-tag.outputs.exists != 'false' }}
         run: |
-          echo "::error file=blender_manifest.toml,title=Refusing to Release::There is already a release with the version in blender_manifest.toml"
+          echo "::error file=src/blender_manifest.toml,title=Refusing to Release::There is already a release with the version in src/blender_manifest.toml"
           exit 1
 
       - name: Output
@@ -63,29 +60,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-manifest
     steps:
+      - name: Setup Blender
+        uses: bradyajohnston/setup-blender@v5
+        with:
+          version: ${{ env.BLENDER_VERSION }}
+
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: ./sources
 
-      - name: Remove Dev Files
-        working-directory: ./sources
-        run: |
-          rm -rf .git
-          rm -rf .github
-          rm .gitignore
-          rm mise.toml
-          rm pyproject.toml
-          rm requirements-dev.txt
+      - name: Install mise
+        uses: jdx/mise-action@v4
 
-      - name: Zip For Release
-        run: 7z a ./${{ env.ARCHIVE_NAME }}.zip "./sources/*"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARCHIVE_NAME }}.zip
-          path: ./${{ env.ARCHIVE_NAME }}.zip
+      - name: Build the archive
+        run: mise run build
 
       - name: Create Release
         uses: ncipollo/release-action@v1
@@ -95,7 +82,7 @@ jobs:
           tag: v${{ needs.check-manifest.outputs.version }}
           name: Version ${{ needs.check-manifest.outputs.version }}
           omitBodyDuringUpdate: true
-          artifacts: ${{ env.ARCHIVE_NAME }}.zip
+          artifacts: ./build/*
           draft: true
           prerelease: false
           generateReleaseNotes: true
