@@ -38,12 +38,14 @@ run = "black ."
 description = "Build addon zip with Blender CLI"
 alias = "b"
 depends = "lint:blender-extension"
-sources = ["src/**/*"]
+usage = '''
+arg "<filename>" default="{{ env.PROJECT_NAME }}.zip"
+'''
 run = '''
 #!/bin/bash
 mkdir -p build
 rm -rf build/*
-'{{ env.BLENDER_BIN }}' --command extension build --source-dir src --output-dir build
+'{{ env.BLENDER_BIN }}' --command extension build --source-dir src --output-filepath "build/{{ usage.filename }}"
 '''
 
 [tasks."lint:blender-extension"]
