@@ -1,4 +1,5 @@
 #!python
+# [MISE] description="Create a symlink link in the Blender Extension Repository for script reloading"
 import os
 import sys
 from pathlib import Path
