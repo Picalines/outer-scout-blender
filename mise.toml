@@ -68,6 +68,6 @@ run = "pip install -r requirements-dev.txt"
 [tasks."install:git-hooks"]
 description = "Setup git hooks for common checks before comitting and pushing"
 run = [
-	"mise generate git-pre-commit --write --hook pre-commit --task pre-commit",
-	"mise generate git-pre-commit --write --hook pre-push --task pre-push"
+  "mise generate git-pre-commit --write --hook pre-commit --task pre-commit",
+  "mise generate git-pre-commit --write --hook pre-push --task pre-push"
 ]
